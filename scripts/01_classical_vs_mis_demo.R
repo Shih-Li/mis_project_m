@@ -1,7 +1,7 @@
 # ==============================================================================
-# Script: /script/01_demo_masking.R
+# Script: /script/01_classical_vs_mis_demo.R
 # Purpose: Demonstrate classical LOO failure vs MIS under masking.
-# Outputs: ../output/fig1_masking_demo.pdf&png
+# Outputs: ../output/fig1_classical_vs_mis_demo.pdf&png
 # ==============================================================================
 
 # 1. Setup & Dependencies
@@ -173,12 +173,12 @@ draw_panels <- function() {
 }
 
 # PDF
-pdf("../output/fig1_masking_demo.pdf", width = 14, height = 12)
+pdf("../output/fig1_classical_vs_mis_demo.pdf", width = 14, height = 12)
 draw_panels()
 dev.off()
 
 # PNG
-png("../output/fig1_masking_demo.png", width = 14, height = 12,
+png("../output/fig1_classical_vs_mis_demo.png", width = 14, height = 12,
     units = "in", res = 300)
 draw_panels()
 dev.off()
