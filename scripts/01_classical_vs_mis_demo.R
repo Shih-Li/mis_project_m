@@ -1,10 +1,11 @@
 # ==============================================================================
 # Script: /script/01_classical_vs_mis_demo.R
 # Purpose: Demonstrate classical LOO failure vs MIS under masking.
+# Inputs: None (Synthetic Data Generation Process defined internally)
 # Outputs: ../output/fig1_classical_vs_mis_demo.pdf&png
 # ==============================================================================
 
-# 1. Setup & Dependencies
+# 1. Setup
 library(influence)
 source("../R/diagnostics_classical.R") 
 dir.create("../output", showWarnings = FALSE)
@@ -63,7 +64,7 @@ for (tool in tool_names) {
   agreement_mat[as.character(flagged[[tool]]), tool] <- TRUE
 }
 
-# Draw 2×2 panel set (for both pdf and png)
+# Plot of 2×2 panel (for both pdf and png)
 draw_panels <- function() {
   par(mfrow = c(2, 2), mar = c(4, 4, 3, 1))
   
