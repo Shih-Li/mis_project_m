@@ -7,7 +7,7 @@
 #          Quantifies detection accuracy, EVD convergence, and runtime scaling.
 # Inputs:  ../R/03_scaling_dgp.R, ../R/exact_dfb_bmx.R, ../R/evt_iter.R,
 #          ../R/evt_iter_dm.R, ../R/utils_checkpoint.R
-# Outputs: ../output/temp/03_chunk_*.rds -> ../output/03_scaling_results_master.rds
+# Outputs: ../output/temp_03_03/03_chunk_*.rds -> ../output/03_scaling_results_master.rds
 # Paper Section: Algorithmic Exactness and Computational Scalability
 # ==============================================================================
 
@@ -27,8 +27,7 @@ source("../R/exact_dfb_bmx.R")
 source("../R/evt_iter_dm.R")
 source("../R/evt_iter.R")
 
-# Clear stale cache from any prior partial run
-unlink("../output/temp", recursive = TRUE)
+
 
 # Set up parallel processing (leave 2 threads for OS stability)
 plan(multisession, workers = 14)
@@ -39,7 +38,7 @@ cat("Parallel processing initialized with 14 workers.\n\n")
 # ------------------------------------------------------------------------------
 sim_params <- list(
   n_iters   = 1,
-  magnitude = 4,
+  magnitude = 5,
   seed      = 20260421
 )
 
@@ -130,35 +129,38 @@ run_scaling_iteration <- function(iter_id, N, k, B, architecture,
     )
     t_greedy <- as.numeric(difftime(Sys.time(), t_greedy_start, units = "secs"))
     
-    # G. Run Exact Dinkelbach EVT
-    tpos <- dgp_poisoned$target_pos
-    
+    # G. Dual-sign detection (Oracle: pick the direction that finds more outliers)
     sens_pos <- influence::sens(mod, lambda = influence::set_lambda("beta_i", pos = tpos, sign = 1))
     sens_neg <- influence::sens(mod, lambda = influence::set_lambda("beta_i", pos = tpos, sign = -1))
     
-    # Extract the top-k influential points from both directions
-    detected_pos <- sens_pos$influence$id[1:row_params$k]
-    detected_neg <- sens_neg$influence$id[1:row_params$k]
+    detected_pos <- sens_pos$influence$id[1:k]
+    detected_neg <- sens_neg$influence$id[1:k]
     
-    # Calculate detection success for both
     overlap_pos <- length(intersect(detected_pos, dgp_poisoned$true_outliers))
     overlap_neg <- length(intersect(detected_neg, dgp_poisoned$true_outliers))
     
-    # Take the best detection rate (Oracle evaluation)
     if (overlap_neg > overlap_pos) {
       detected_set_exact <- detected_neg
-      exact_success_rate <- overlap_neg / row_params$k
     } else {
       detected_set_exact <- detected_pos
-      exact_success_rate <- overlap_pos / row_params$k
     }
     
-    # H. Detection metric
-    detection_rate <- length(intersect(detected_set, dgp_poisoned$true_outliers)) / k
+    # H. Run Exact Dinkelbach EVT on the best-direction set
+    t_exact_start <- Sys.time()
+    res_exact <- evt_iter_dm(
+      y = y_vec, x = x_target, Z = Z_fwl,
+      set = detected_set_exact, block_count = B
+    )
+    t_exact <- as.numeric(difftime(Sys.time(), t_exact_start, units = "secs"))
+    
+    # I. Detection metrics (greedy = single-sign, exact = oracle dual-sign)
+    detection_rate       <- length(intersect(detected_set, dgp_poisoned$true_outliers)) / k
+    detection_rate_exact <- length(intersect(detected_set_exact, dgp_poisoned$true_outliers)) / k
     
     data.frame(
-      iter           = iter_id,
-      detection_rate = detection_rate,
+      iter               = iter_id,
+      detection_rate       = detection_rate,
+      detection_rate_exact = detection_rate_exact,
       p_greedy         = res_greedy$p_value,
       converged_greedy = res_greedy$converged,
       p_exact          = res_exact$p_value,
@@ -172,8 +174,9 @@ run_scaling_iteration <- function(iter_id, N, k, B, architecture,
   }, error = function(e) {
     warning(sprintf("Iter %d failed: %s", iter_id, e$message))
     data.frame(
-      iter           = iter_id,
-      detection_rate = NA_real_,
+      iter               = iter_id,
+      detection_rate       = NA_real_,
+      detection_rate_exact = NA_real_,
       p_greedy         = NA_real_,
       converged_greedy = FALSE,
       p_exact          = NA_real_,
@@ -191,7 +194,7 @@ run_scaling_iteration <- function(iter_id, N, k, B, architecture,
 # ------------------------------------------------------------------------------
 scenario_grid <- expand.grid(
   N            = c(500, 1000, 2000, 5000),
-  k            = c(1, 3, 5, 10, 20),
+  k            = c(1, 3, 5, 10, 15, 20),
   B_type       = c("20", "50", "100", "sqrt"),
   architecture = c("simple", "complex", "interaction",
                    "triple_interaction", "nonlinear_nuisance"),
@@ -202,7 +205,7 @@ n_scenarios <- nrow(scenario_grid)
 n_iters     <- sim_params$n_iters
 total_rows  <- n_scenarios * n_iters
 
-dir.create("../output/temp", recursive = TRUE, showWarnings = FALSE)
+dir.create("../output/temp_03_03", recursive = TRUE, showWarnings = FALSE)
 
 cat(sprintf(paste0(
   "Starting 03 Scaling Suite.\n",
@@ -219,7 +222,7 @@ cat(sprintf(paste0(
 for (i in seq_len(n_scenarios)) {
   
   sc <- scenario_grid[i, ]
-  chunk_file <- sprintf("../output/temp/03_chunk_%04d.rds", i)
+  chunk_file <- sprintf("../output/temp_03_03/03_chunk_%04d.rds", i)
   
   # Checkpoint: skip if already computed
   if (is_computed(chunk_file)) {
@@ -269,7 +272,7 @@ for (i in seq_len(n_scenarios)) {
 # ------------------------------------------------------------------------------
 cat("\nAll scenarios completed. Assembling final dataset...\n")
 final_data <- compile_checkpoints(
-  temp_dir          = "../output/temp",
+  temp_dir          = "../output/temp_03_03",
   pattern           = "^03_chunk_.*\\.rds$",
   final_output_path = "../output/03_scaling_results_master.rds",
   clear_temp        = FALSE
@@ -362,15 +365,16 @@ det_table <- res %>%
   filter(!is.na(detection_rate)) %>%
   group_by(architecture, k) %>%
   summarise(
-    mean_det = round(mean(detection_rate), 3),
+    det_greedy = round(mean(detection_rate), 3),
+    det_exact  = round(mean(detection_rate_exact, na.rm = TRUE), 3),
     .groups = "drop"
   ) %>%
   arrange(architecture, k)
 print(det_table, n = 30)
 
 # Warn on trivial results
-all_zero <- all(det_table$mean_det == 0)
-all_one  <- all(det_table$mean_det == 1)
+all_zero <- all(det_table$det_greedy == 0) && all(det_table$det_exact == 0)
+all_one  <- all(det_table$det_greedy == 1) && all(det_table$det_exact == 1)
 if (all_zero) cat("WARNING: All detection rates are 0 — algorithm may be blind.\n")
 if (all_one)  cat("WARNING: All detection rates are 1 — problem may be too easy.\n")
 
@@ -379,7 +383,8 @@ det_by_N <- res %>%
   filter(!is.na(detection_rate)) %>%
   group_by(N, k) %>%
   summarise(
-    mean_det = round(mean(detection_rate), 3),
+    det_greedy = round(mean(detection_rate), 3),
+    det_exact  = round(mean(detection_rate_exact, na.rm = TRUE), 3),
     .groups = "drop"
   ) %>%
   arrange(N, k)
@@ -387,8 +392,10 @@ cat("\nDetection by (N, k):\n")
 print(det_by_N, n = 25)
 
 cat("\n=== 5. REPORTING SANITY ===\n")
-cat("Detection rates outside [0,1]:",
+cat("Greedy detection rates outside [0,1]:",
     sum(res$detection_rate < 0 | res$detection_rate > 1, na.rm = TRUE), "\n")
+cat("Exact  detection rates outside [0,1]:",
+    sum(res$detection_rate_exact < 0 | res$detection_rate_exact > 1, na.rm = TRUE), "\n")
 cat("Negative CPU (greedy):", sum(res$cpu_greedy < 0, na.rm = TRUE), "\n")
 cat("Negative CPU (exact):",  sum(res$cpu_exact < 0, na.rm = TRUE), "\n")
 cat("Implausibly large CPU (>600s, greedy):",

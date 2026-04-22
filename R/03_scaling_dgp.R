@@ -34,6 +34,7 @@ generate_scaling_dgp <- function(N, architecture, beta_target = 1.0) {
   } else if (architecture == "complex") {
     # 20 continuous noise variables
     Z_matrix <- matrix(rnorm(N * 20), nrow = N, ncol = 20)
+    colnames(Z_matrix) <- paste0("Z", 1:20)
     # A sparse categorical variable (e.g., 5 states)
     state_fe <- sample(1:5, N, replace = TRUE)
     
@@ -41,7 +42,8 @@ generate_scaling_dgp <- function(N, architecture, beta_target = 1.0) {
     y <- 0.5 + beta_target * X + 1.5 * Z_matrix[,1] - 0.8 * Z_matrix[,2] + epsilon
     
     data <- data.frame(y = y, X = X, Z_matrix, state = as.factor(state_fe))
-    form <- as.formula(y ~ X + . - y)
+    z_names <- paste0("Z", 1:20)
+    form <- as.formula(paste("y ~ X +", paste(z_names, collapse = " + "), "+ state"))
     target_pos <- 2 # Intercept (1), X (2), followed by Zs and FEs
     
   } else if (architecture == "interaction") {

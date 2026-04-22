@@ -59,7 +59,7 @@ evt_iter_dm <- function(y, x, Z, set, block_count = 20) {
                                                      x_dist = x_empirical, r_dist = r_empirical)))
   
   # 4. Fit GEV to the null draws (no M-scaling needed)
-  fit_evd <- tryCatch(evd::fgev(null_draws), error = function(e) NULL)
+  fit_evd <- tryCatch(fit_gev_robust(null_draws), error = function(e) NULL)
   if (is.null(fit_evd) || fit_evd$estimate["scale"] <= 0) { return(fail_row) }
   
   xi    <- fit_evd$estimate["shape"]

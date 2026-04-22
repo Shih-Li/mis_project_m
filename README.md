@@ -49,7 +49,7 @@ testingmis/
 │
 ├── script/                         # THE "SLIM CONTROLLERS" (Executes the pipelines)
 │   ├── 02_run_sim_dist.R           # Defines the DGP grid and loops through distributions
-│   ├── 03_run_scaling_grid.R       # Defines the n, blocks, delta grid and runs the loop
+│   ├── 03_alg_comp.R       # Defines the n, blocks, delta grid and runs the loop
 │   ├── 81_table_results.R          # Reads .rds files -> Generates LaTeX/CSV tables
 │   └── 82_plot_results.R           # Reads .rds files -> Generates ggplot2 PDFs
 │

@@ -19,14 +19,12 @@ source("../R/utils_checkpoint.R")
 source("../R/exact_dfb_bmx.R")
 source("../R/evt_iter_dm.R")
 
-unlink("../output/temp", recursive = TRUE)
-unlink("../output/02_final_distributions.rds")
 
 # 2. Global Configuration
 sim_params <- list(
   n_iters = 100,      # Number of simulations per grid combination
   n_obs = 1000,     # Standard sample size for 02_script
-  set_size = 3,        # k: Size of the influential set to inject
+  set_size = 10,        # k: Size of the influential set to inject
   magnitude = 5,        # 5-sigma shift for the outliers
   block_count = 25,       # Blocks for EVD estimation
   seed = 20260415
@@ -77,7 +75,7 @@ for (i in seq_len(nrow(param_grid))) {
   p_current <- param_grid[i, ]
   
   # Define safe chunk path
-  chunk_file <- sprintf("../output/temp/02_chunk_%04d.rds", i)
+  chunk_file <- sprintf("../output/temp_02/02_chunk_%04d.rds", i)
   
   if (is_computed(chunk_file)) {
     cat(sprintf("[%04d/%04d] Skipping (Already Computed): X=%s, Error=%s, Outlier=%s\n", 
@@ -129,7 +127,7 @@ cat("\nAll scenarios completed. Assembling final dataset...\n")
 
 
 final_dataset <- compile_checkpoints(
-  temp_dir = "../output/temp", 
+  temp_dir = "../output/temp_02", 
   pattern = "^02_chunk_.*\\.rds$", 
   final_output_path = "../output/02_final_distributions.rds",
   clear_temp = FALSE  # Keep chunks until you are 100% sure the final file is perfect
