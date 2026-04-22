@@ -17,6 +17,8 @@ Thumbs.db
 *.synctex.gz
 *.fls
 *.fdb_latexmk
+*.xml
+*.bcf
 
 output/
 *.pdf
