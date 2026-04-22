@@ -1,12 +1,13 @@
 # ==============================================================================
 # File: /R/sim_engine.R
 # Purpose: Core simulation wrapper combining DGP, influence injection, MIS 
-#          detection, and EVD parameter estimation. Orchestrates one complete 
-#          Monte Carlo iteration: generates data under a specified DGP, 
-#          optionally injects adversarial influence, detects the Most 
-#          Influential Set via exact sensitivity search, and fits the 
-#          block-maxima Extreme Value Distribution using Dinkelbach's Method.
-# Dependencies: Requires /R/dgp_factory.R, /R/influence_injector.R, 
+#          detection, classical LOO diagnostics, and EVD parameter estimation. 
+#          Orchestrates one complete Monte Carlo iteration: generates data under 
+#          a specified DGP, optionally injects adversarial influence, detects the 
+#          Most Influential Set via exact sensitivity search, computes classical 
+#          diagnostics (Cook's D, Leverage, DFBETAS) as baselines, and fits the 
+#          block-maxima Extreme Value Distribution using Monte Carlo null draws.
+# Dependencies: Requires /R/diagnostics_classical.R, /R/dgp_factory.R, /R/influence_injector.R, 
 #               /R/evt_iter_dm.R, and /R/exact_dfb_bmx.R to be sourced.
 # ==============================================================================
 #'
@@ -90,6 +91,35 @@ run_mis_iteration <- function(iter = 1, n = 1000, p = 1,
     empirical_mis <- empirical_mis_pos
   }
   
+  # 2b. Classical LOO Diagnostics
+  
+  cooks_vals   <- cooks.distance(base_model)
+  lev_vals     <- hatvalues(base_model)
+  dfbetas_vals <- dfbetas(base_model)[, "x"]  # slope coefficient
+  
+  top_k_cooks   <- order(abs(cooks_vals),   decreasing = TRUE)[1:k]
+  top_k_lev     <- order(abs(lev_vals),     decreasing = TRUE)[1:k]
+  top_k_dfbetas <- order(abs(dfbetas_vals), decreasing = TRUE)[1:k]
+  
+  if (outlier_method != "none") {
+    detect_cooks   <- setequal(true_injected_indices, top_k_cooks)
+    detect_lev     <- setequal(true_injected_indices, top_k_lev)
+    detect_dfbetas <- setequal(true_injected_indices, top_k_dfbetas)
+    
+    overlap_mis     <- length(intersect(true_injected_indices, empirical_mis)) / k
+    overlap_cooks   <- length(intersect(true_injected_indices, top_k_cooks)) / k
+    overlap_lev     <- length(intersect(true_injected_indices, top_k_lev)) / k
+    overlap_dfbetas <- length(intersect(true_injected_indices, top_k_dfbetas)) / k
+  } else {
+    detect_cooks   <- NA
+    detect_lev     <- NA
+    detect_dfbetas <- NA
+    overlap_mis     <- NA
+    overlap_cooks   <- NA
+    overlap_lev     <- NA
+    overlap_dfbetas <- NA
+  }
+  
   # -------------------------------------------------------------------------
   # 3. Estimate Extreme Value Distribution (EVD) Parameters
   # -------------------------------------------------------------------------
@@ -144,7 +174,18 @@ run_mis_iteration <- function(iter = 1, n = 1000, p = 1,
     magnitude = magnitude,
     set_size = k,
     block_count = block_count,
+    # MIS detection
     detection_success = detection_success,
+    # Classical detection (exact set match)
+    detect_cooks = detect_cooks,
+    detect_lev = detect_lev,
+    detect_dfbetas = detect_dfbetas,
+    # Partial overlap (fraction of injected points found in top-k)
+    overlap_mis = overlap_mis,
+    overlap_cooks = overlap_cooks,
+    overlap_lev = overlap_lev,
+    overlap_dfbetas = overlap_dfbetas,
+    # Timing
     compute_time = compute_time,
     stringsAsFactors = FALSE
   )

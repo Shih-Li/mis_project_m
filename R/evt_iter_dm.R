@@ -51,9 +51,12 @@ evt_iter_dm <- function(y, x, Z, set, block_count = 20) {
   set_dfb <- testingMIS::dfbeta_numeric(Y_fwl, X_fwl, set)
   
   # 3. Generate MC null draws from the true null distribution
+  # Build empirical distribution functions from actual data
+  x_empirical <- function(n) sample(X_fwl, size = n, replace = TRUE)
+  r_empirical <- function(n) sample(R_fwl, size = n, replace = TRUE)
   null_draws <- abs(replicate(500,
                               testingMIS::rmaxdfbeta(n = length(X_fwl), n_set = length(set),
-                                                     x_dist = rnorm, r_dist = rnorm)))
+                                                     x_dist = x_empirical, r_dist = r_empirical)))
   
   # 4. Fit GEV to the null draws (no M-scaling needed)
   fit_evd <- tryCatch(evd::fgev(null_draws), error = function(e) NULL)

@@ -114,10 +114,10 @@ for (i in seq_len(nrow(param_grid))) {
       )
     }, error = function(e) {
       warning(sprintf("Iter %d failed: %s", iter_id, e$message))
-      return(NULL) # This will silently drop the failed iteration from the final data.frame
-    }, .options = furrr_options(seed = TRUE))
+      return(NULL)
+    })
     
-  })
+    }, .options = furrr_options(seed = TRUE))
   
   # Safely save the chunk
   safe_save_rds(scenario_results, chunk_file)
@@ -158,8 +158,13 @@ cat("\n-- Detection Success (%) --\n")
 results %>%
   filter(outlier_method != "none") %>%
   group_by(error_type, outlier_method) %>%
-  summarise(det_pct = round(mean(detection_success, na.rm = TRUE) * 100, 1), .groups = "drop") %>%
-  pivot_wider(names_from = outlier_method, values_from = det_pct) %>%
+  summarise(
+    MIS    = round(mean(detection_success, na.rm = TRUE) * 100, 1),
+    Cooks  = round(mean(detect_cooks, na.rm = TRUE) * 100, 1),
+    Lev    = round(mean(detect_lev, na.rm = TRUE) * 100, 1),
+    DFB    = round(mean(detect_dfbetas, na.rm = TRUE) * 100, 1),
+    .groups = "drop"
+  ) %>%
   print()
 
 cat("\n-- EVD Shape (ξ) Summaries (Converged Only) --\n")
@@ -188,17 +193,25 @@ results %>%
   scale_fill_gradient2(low = "#A32D2D", mid = "#FAC775", high = "#0F6E56", midpoint = 0.5, labels = scales::percent) +
   labs(title = "EVD Convergence Rate", x = "X Dist", y = "Error Dist") +
   theme_minimal() -> p1; print(p1)
-
-# Plot 2: Detection Heatmap
+# Plot 2: Detection Comparison — MIS vs Classical (bad_leverage only, most informative)
 results %>%
-  filter(outlier_method != "none") %>%
-  group_by(error_type, outlier_method) %>%
-  summarise(det = mean(detection_success, na.rm = TRUE), .groups = "drop") %>%
-  ggplot(aes(x = outlier_method, y = error_type, fill = det)) +
+  filter(outlier_method == "bad_leverage") %>%
+  group_by(error_type) %>%
+  summarise(
+    MIS = mean(detection_success, na.rm = TRUE),
+    `Cook's D` = mean(detect_cooks, na.rm = TRUE),
+    Leverage = mean(detect_lev, na.rm = TRUE),
+    DFBETAS = mean(detect_dfbetas, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(-error_type, names_to = "Method", values_to = "det") %>%
+  ggplot(aes(x = Method, y = error_type, fill = det)) +
   geom_tile(color = "white") +
   geom_text(aes(label = scales::percent(det, accuracy = 1)), size = 3) +
-  scale_fill_gradient2(low = "#A32D2D", mid = "#FAC775", high = "#0F6E56", midpoint = 0.5, labels = scales::percent) +
-  labs(title = "MIS Detection Success Rate", x = "Injection", y = "Error Dist") +
+  scale_fill_gradient2(low = "#A32D2D", mid = "#FAC775", high = "#0F6E56",
+                       midpoint = 0.5, labels = scales::percent) +
+  labs(title = "Detection: MIS vs Classical (Bad Leverage)",
+       x = "Method", y = "Error Dist") +
   theme_minimal() -> p2; print(p2)
 
 # Plot 3: Shape Parameter Distributions

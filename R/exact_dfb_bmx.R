@@ -1,8 +1,7 @@
 # ==============================================================================
 # File: /R/exact_dfb_bmx.R
 # Purpose: Exact implementation of the block maxima DFBETA search using 
-#          Dinkelbach's method for linear-fractional programming. Intended for 
-#          direct comparison against the greedy testingMIS heuristic.
+#          Dinkelbach's method for linear-fractional programming.
 # ==============================================================================
 #'
 #' Exact Set Influence Block Maxima
