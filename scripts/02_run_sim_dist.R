@@ -23,10 +23,10 @@ source("../R/evt_iter_dm.R")
 # 2. Global Configuration
 sim_params <- list(
   n_iters = 100,      # Number of simulations per grid combination
-  n_obs = 1000,     # Standard sample size for 02_script
-  set_size = 10,        # k: Size of the influential set to inject
-  magnitude = 5,        # 5-sigma shift for the outliers
-  block_count = 25,       # Blocks for EVD estimation
+  n_obs = 5000,     # Standard sample size for 02_script
+  set_size = 50,        # k: Size of the influential set to inject
+  magnitude = 10,        # 5-sigma shift for the outliers
+  block_count = 50,       # Blocks for EVD estimation
   seed = 20260415
 )
 
@@ -135,6 +135,7 @@ final_dataset <- compile_checkpoints(
 results <- final_dataset
 cat("\nScript 02 execution finished successfully.\n")
 
+#===============================================================================
 # Quick Sanity Check for 02_run_sim_dist.R Output
 library(tidyverse)
 

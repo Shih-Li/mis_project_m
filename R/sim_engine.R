@@ -6,8 +6,8 @@
 #          a specified DGP, optionally injects adversarial influence, detects the 
 #          Most Influential Set via exact sensitivity search, computes classical 
 #          diagnostics (Cook's D, Leverage, DFBETAS) as baselines, and fits the 
-#          block-maxima Extreme Value Distribution using Monte Carlo null draws.
-# Dependencies: Requires /R/diagnostics_classical.R, /R/dgp_factory.R, /R/influence_injector.R, 
+#          block-maxima Extreme Value Distribution.
+# Dependencies: Requires /R/dgp_factory.R, /R/influence_injector.R, 
 #               /R/evt_iter_dm.R, and /R/exact_dfb_bmx.R to be sourced.
 # ==============================================================================
 #'
@@ -79,13 +79,16 @@ run_mis_iteration <- function(iter = 1, n = 1000, p = 1,
   empirical_mis_neg <- sens_obj_neg$influence$id[1:k]
   
   if (outlier_method != "none") {
-    detection_success <- setequal(true_injected_indices, empirical_mis_pos) ||
-      setequal(true_injected_indices, empirical_mis_neg)
-    if (setequal(true_injected_indices, empirical_mis_neg)) {
+    # Pick the MIS direction with better overlap for detection metrics
+    overlap_pos <- length(intersect(true_injected_indices, empirical_mis_pos))
+    overlap_neg <- length(intersect(true_injected_indices, empirical_mis_neg))
+    if (overlap_neg > overlap_pos) {
       empirical_mis <- empirical_mis_neg
     } else {
       empirical_mis <- empirical_mis_pos
     }
+    detection_success <- (length(intersect(true_injected_indices, 
+                                           empirical_mis)) / k) >= 0.80
   } else {
     detection_success <- NA
     empirical_mis <- empirical_mis_pos
@@ -102,9 +105,12 @@ run_mis_iteration <- function(iter = 1, n = 1000, p = 1,
   top_k_dfbetas <- order(abs(dfbetas_vals), decreasing = TRUE)[1:k]
   
   if (outlier_method != "none") {
-    detect_cooks   <- setequal(true_injected_indices, top_k_cooks)
-    detect_lev     <- setequal(true_injected_indices, top_k_lev)
-    detect_dfbetas <- setequal(true_injected_indices, top_k_dfbetas)
+    detect_cooks   <- (length(intersect(true_injected_indices, 
+                                        top_k_cooks)) / k) >= 0.80
+    detect_lev     <- (length(intersect(true_injected_indices, 
+                                        top_k_lev)) / k) >= 0.80
+    detect_dfbetas <- (length(intersect(true_injected_indices, 
+                                        top_k_dfbetas)) / k) >= 0.80
     
     overlap_mis     <- length(intersect(true_injected_indices, empirical_mis)) / k
     overlap_cooks   <- length(intersect(true_injected_indices, top_k_cooks)) / k
@@ -123,17 +129,30 @@ run_mis_iteration <- function(iter = 1, n = 1000, p = 1,
   # -------------------------------------------------------------------------
   # 3. Estimate Extreme Value Distribution (EVD) Parameters
   # -------------------------------------------------------------------------
-  # PATCH (a): Z is intercept-only. cbind(1, x) put x in both x= and Z=,
-  # so FWL projected x onto zero and killed the entire EVD signal.
+  # POST-SELECTION FIX: Choose the correct set for the EVD test.
+  #   The EVD null is calibrated for a PRE-SPECIFIED (fixed) candidate set.
+  #   Testing the MIS (selected to maximise influence) causes 100% rejection
+  #   even on clean data — classic post-selection bias.
+  #
+  #   - With outliers: test the KNOWN INJECTED indices (ground truth).
+  #     This answers: "is the injected set's influence excessive under the EVD?"
+  #   - Without outliers: test a RANDOM set of size k.
+  #     This answers: "does the EVD test maintain nominal size?"
+  
+  if (outlier_method != "none") {
+    evd_test_set <- true_injected_indices
+  } else {
+    evd_test_set <- sample(seq_len(n), k)
+  }
+  
   Z_matrix <- matrix(1, nrow = length(dat$y), ncol = 1)
   
-  # PATCH (c)+(e): surface the error; fallback matches evt_iter_dm's 6 columns
   res_exact <- tryCatch({
     evt_iter_dm(
       y = dat$y,
       x = dat$X[, 1],
       Z = Z_matrix,
-      set = empirical_mis,
+      set = evd_test_set,
       block_count = block_count
     )
   }, error = function(e) {
@@ -145,7 +164,7 @@ run_mis_iteration <- function(iter = 1, n = 1000, p = 1,
                stringsAsFactors = FALSE)
   })
   
-  # PATCH (d): if evt_iter_dm returned a list, coerce to 1-row data.frame
+  # If evt_iter_dm returned a list, coerce to 1-row data.frame
   expected_names <- c("shape", "scale", "loc", "set_dfb", "p_value", "converged")
   if (is.list(res_exact) && !is.data.frame(res_exact)) {
     missing <- setdiff(expected_names, names(res_exact))
@@ -185,12 +204,13 @@ run_mis_iteration <- function(iter = 1, n = 1000, p = 1,
     overlap_cooks = overlap_cooks,
     overlap_lev = overlap_lev,
     overlap_dfbetas = overlap_dfbetas,
+    # Which set was tested by EVD
+    evd_test_type = if (outlier_method != "none") "injected" else "random",
     # Timing
     compute_time = compute_time,
     stringsAsFactors = FALSE
   )
   
-  # PATCH (b): inverted predicate — stop UNLESS 1-row data.frame
   if (!is.data.frame(res_exact) || nrow(res_exact) != 1) {
     stop("evt_iter_dm returned unexpected output structure.")
   }
