@@ -7,8 +7,7 @@
 #          Quantifies detection accuracy, EVD convergence, and runtime scaling.
 # Inputs:  ../R/03_scaling_dgp.R, ../R/exact_dfb_bmx.R, ../R/evt_iter.R,
 #          ../R/evt_iter_dm.R, ../R/utils_checkpoint.R
-# Outputs: ../output/temp_03_03/03_chunk_*.rds -> ../output/03_scaling_results_master.rds
-# Paper Section: Algorithmic Exactness and Computational Scalability
+# Outputs: ../output/temp_03/03_chunk_*.rds -> ../output/03_scaling_results_master.rds
 # ==============================================================================
 
 # 1. Load Dependencies & Source Engines
@@ -37,12 +36,31 @@ cat("Parallel processing initialized with 14 workers.\n\n")
 # 2. Global Configuration
 # ------------------------------------------------------------------------------
 sim_params <- list(
-  n_iters   = 1,
+  n_iters   = 100,
   magnitude = 5,
   seed      = 20260421
 )
 
 set.seed(sim_params$seed)
+
+# Minimum non-set observations per block.
+# When B is too large relative to (N - k), each block has too few observations
+# and exact Dinkelbach produces near-constant block maxima that cause GEV MLE
+# to fail (flat likelihood surface). Diagnostic 04 showed:
+#   - B=100, N=500, k>=5:  0% exact convergence  (5 obs/block)
+#   - B=100, N=500, k=1:  77% convergence        (5 obs/block)
+#   - B=20,  N=500, k=5:  86% convergence        (25 obs/block)
+#   - B=sqrt, N=5000:      stable until k=50
+# Floor of 30 obs/block recovers convergence without altering the EVT logic.
+# This does NOT modify evt_iter_dm.R (shared with Script 02).
+MIN_OBS_PER_BLOCK <- 30
+
+resolve_block_count <- function(B_type, N, k) {
+  B_raw <- if (B_type == "sqrt") floor(sqrt(N)) else as.numeric(B_type)
+  B_max <- floor((N - k) / MIN_OBS_PER_BLOCK)
+  B_max <- max(B_max, 3L)  # absolute floor: need >=3 blocks for GEV
+  min(B_raw, B_max)
+}
 
 # ------------------------------------------------------------------------------
 # 3. The Safe Injection Adapter (Preserves Interaction Geometry)
@@ -57,8 +75,14 @@ inject_safe_outliers <- function(dgp_res, k, magnitude = 4) {
   df$X[outlier_idx] <- df$X[outlier_idx] + shift_x
   
   if ("M" %in% names(df)) {
-    shift_m <- max(mad(df$M, constant = 1.4826), 1e-4) * magnitude
-    df$M[outlier_idx] <- df$M[outlier_idx] + shift_m
+    if (length(unique(df$M)) <= 2) {
+      # Binary M: force outlier rows into the active category (M=1)
+      # so they actually live in the interaction subspace
+      df$M[outlier_idx] <- 1L
+    } else {
+      shift_m <- max(mad(df$M, constant = 1.4826), 1e-4) * magnitude
+      df$M[outlier_idx] <- df$M[outlier_idx] + shift_m
+    }
   }
   if ("W" %in% names(df)) {
     shift_w <- max(mad(df$W, constant = 1.4826), 1e-4) * magnitude
@@ -90,13 +114,16 @@ inject_safe_outliers <- function(dgp_res, k, magnitude = 4) {
 # 4. Single-Iteration Worker (Called Inside future_map_dfr)
 # ------------------------------------------------------------------------------
 run_scaling_iteration <- function(iter_id, N, k, B, architecture,
-                                  magnitude, iter_seed) {
+                                  magnitude, iter_seed, rho = NA) {
   set.seed(iter_seed)
   
   tryCatch({
     
     # A. Generate Data
-    dgp_clean <- generate_scaling_dgp(N = N, architecture = architecture)
+    dgp_clean <- generate_scaling_dgp(
+      N = N, architecture = architecture,
+      rho = if (!is.null(rho) && !is.na(rho)) rho else 0.8
+    )
     
     # B. Inject Adversarial Outliers
     dgp_poisoned <- inject_safe_outliers(dgp_clean, k = k, magnitude = magnitude)
@@ -192,27 +219,62 @@ run_scaling_iteration <- function(iter_id, N, k, B, architecture,
 # ------------------------------------------------------------------------------
 # 5. Define the Scenario Grid (iter is the INNER parallel dimension)
 # ------------------------------------------------------------------------------
-scenario_grid <- expand.grid(
+# --- Base grid ---
+grid_base <- expand.grid(
   N            = c(500, 1000, 2000, 5000),
   k            = c(1, 3, 5, 10, 15, 20),
   B_type       = c("20", "50", "100", "sqrt"),
   architecture = c("simple", "complex", "interaction",
-                   "triple_interaction", "nonlinear_nuisance"),
+                   "triple_interaction", "nonlinear_nuisance",
+                   "sparse_binary_interaction",
+                   "polynomial_interaction"),
   stringsAsFactors = FALSE
 )
+
+# high_k_interaction with k up to 50 ---
+grid_high_k <- expand.grid(
+  N            = c(500, 1000, 2000, 5000),
+  k            = c(1, 3, 5, 10, 15, 20, 30, 50),
+  B_type       = c("20", "50", "100", "sqrt"),
+  architecture = "high_k_interaction",
+  stringsAsFactors = FALSE
+)
+
+# --- Rho sweep for collinear_interaction ---
+grid_collinear <- expand.grid(
+  N            = c(500, 1000, 2000, 5000),
+  k            = c(1, 3, 5, 10, 15, 20),
+  B_type       = c("20", "50", "100", "sqrt"),
+  architecture = "collinear_interaction",
+  rho          = c(0.5, 0.7, 0.85, 0.95),
+  stringsAsFactors = FALSE
+)
+
+# --- Combine and filter: drop rows where k/N > 0.05 ---
+grid_base$rho    <- NA_real_
+grid_high_k$rho  <- NA_real_
+scenario_grid <- rbind(grid_base, grid_high_k, grid_collinear)
+scenario_grid <- scenario_grid[scenario_grid$k / scenario_grid$N <= 0.05, ]
+scenario_grid <- scenario_grid[order(scenario_grid$architecture,
+                                     scenario_grid$N,
+                                     scenario_grid$k), ]
+rownames(scenario_grid) <- NULL
 
 n_scenarios <- nrow(scenario_grid)
 n_iters     <- sim_params$n_iters
 total_rows  <- n_scenarios * n_iters
 
-dir.create("../output/temp_03_03", recursive = TRUE, showWarnings = FALSE)
+dir.create("../output/temp_03", recursive = TRUE, showWarnings = FALSE)
 
 cat(sprintf(paste0(
-  "Starting 03 Scaling Suite.\n",
+  "Starting 03 Scaling Suite (Extended Boundary Tests).\n",
   "  N    = {500, 1000, 2000, 5000}\n",
-  "  k    = {1, 3, 5, 10, 20}\n",
+  "  k    = {1, 3, 5, 10, 15, 20} + {30, 50} for high_k_interaction\n",
   "  B    = {20, 50, 100, sqrt(N)}\n",
-  "  Arch = {simple, complex, interaction, triple_interaction, nonlinear_nuisance}\n",
+  "  Arch = {simple, complex, interaction, triple_interaction, nonlinear_nuisance,\n",
+  "          collinear_interaction (rho sweep), sparse_binary_interaction,\n",
+  "          polynomial_interaction, high_k_interaction}\n",
+  "  k/N filter: <= 0.05\n",
   "  Scenarios: %d | Iterations per scenario: %d | Total rows: %d\n\n"),
   n_scenarios, n_iters, total_rows))
 
@@ -222,7 +284,7 @@ cat(sprintf(paste0(
 for (i in seq_len(n_scenarios)) {
   
   sc <- scenario_grid[i, ]
-  chunk_file <- sprintf("../output/temp_03_03/03_chunk_%04d.rds", i)
+  chunk_file <- sprintf("../output/temp_03/03_chunk_%04d.rds", i)
   
   # Checkpoint: skip if already computed
   if (is_computed(chunk_file)) {
@@ -234,8 +296,13 @@ for (i in seq_len(n_scenarios)) {
   cat(sprintf("[%04d/%04d] Computing: N=%d  k=%d  B=%s  arch=%s ... ",
               i, n_scenarios, sc$N, sc$k, sc$B_type, sc$architecture))
   
-  # Resolve block count
-  B <- if (sc$B_type == "sqrt") floor(sqrt(sc$N)) else as.numeric(sc$B_type)
+  # Resolve block count with adaptive cap (Fix C from diagnostic 04)
+  B <- resolve_block_count(sc$B_type, sc$N, sc$k)
+  B_raw <- if (sc$B_type == "sqrt") floor(sqrt(sc$N)) else as.numeric(sc$B_type)
+  B_was_capped <- (B < B_raw)
+  if (B_was_capped) {
+    cat(sprintf("[B capped: %d->%d] ", B_raw, B))
+  }
   
   # Parallel inner loop over iterations
   scenario_results <- furrr::future_map_dfr(
@@ -250,7 +317,8 @@ for (i in seq_len(n_scenarios)) {
         B            = B,
         architecture = sc$architecture,
         magnitude    = sim_params$magnitude,
-        iter_seed    = iter_seed
+        iter_seed    = iter_seed,
+        rho          = sc$rho
       )
       
     }, .options = furrr_options(seed = TRUE)
@@ -261,7 +329,10 @@ for (i in seq_len(n_scenarios)) {
   scenario_results$k            <- sc$k
   scenario_results$B_type       <- sc$B_type
   scenario_results$B_actual     <- B
+  scenario_results$B_raw        <- B_raw
+  scenario_results$B_capped     <- B_was_capped
   scenario_results$architecture <- sc$architecture
+  scenario_results$rho          <- sc$rho
   
   safe_save_rds(scenario_results, chunk_file)
   cat("Done.\n")
@@ -272,7 +343,7 @@ for (i in seq_len(n_scenarios)) {
 # ------------------------------------------------------------------------------
 cat("\nAll scenarios completed. Assembling final dataset...\n")
 final_data <- compile_checkpoints(
-  temp_dir          = "../output/temp_03_03",
+  temp_dir          = "../output/temp_03",
   pattern           = "^03_chunk_.*\\.rds$",
   final_output_path = "../output/03_scaling_results_master.rds",
   clear_temp        = FALSE
@@ -294,6 +365,20 @@ cat(sprintf("Rows: %d / %d (Missing: %d)\n",
 cat("Missing CPU (greedy):", sum(is.na(res$cpu_greedy)), "\n")
 cat("Missing CPU (exact):",  sum(is.na(res$cpu_exact)), "\n")
 cat("Missing detection rates:", sum(is.na(res$detection_rate)), "\n")
+
+# B-capping summary (Fix C diagnostic)
+if ("B_capped" %in% names(res)) {
+  n_capped <- sum(res$B_capped, na.rm = TRUE)
+  cat(sprintf("\nB-cap applied: %d / %d rows (%.1f%%)\n",
+              n_capped, nrow(res), n_capped / nrow(res) * 100))
+  if (n_capped > 0) {
+    cat("B-capped scenarios (B_type -> B_actual):\n")
+    capped_summary <- unique(res[res$B_capped == TRUE,
+                                 c("N","k","B_type","B_raw","B_actual")])
+    capped_summary <- capped_summary[order(capped_summary$N, capped_summary$k), ]
+    print(capped_summary, row.names = FALSE)
+  }
+}
 
 # Grid coverage: every (N, k, B_type, architecture) should have n_iters rows
 coverage <- res %>%
@@ -339,6 +424,22 @@ conv_by_arch <- res %>%
     .groups = "drop"
   )
 print(conv_by_arch)
+
+# Rho sweep: convergence by rho (collinear_interaction only)
+conv_by_rho <- res %>%
+  filter(architecture == "collinear_interaction", !is.na(rho)) %>%
+  group_by(rho) %>%
+  summarise(
+    conv_greedy = round(mean(converged_greedy, na.rm = TRUE) * 100, 1),
+    conv_exact  = round(mean(converged_exact,  na.rm = TRUE) * 100, 1),
+    det_greedy  = round(mean(detection_rate,   na.rm = TRUE), 3),
+    det_exact   = round(mean(detection_rate_exact, na.rm = TRUE), 3),
+    .groups = "drop"
+  )
+if (nrow(conv_by_rho) > 0) {
+  cat("\nCollinear interaction — by rho:\n")
+  print(conv_by_rho)
+}
 
 conv_by_k <- res %>%
   group_by(k) %>%
@@ -403,10 +504,9 @@ cat("Implausibly large CPU (>600s, greedy):",
 cat("Implausibly large CPU (>600s, exact):",
     sum(res$cpu_exact > 600, na.rm = TRUE), "\n")
 
-# B_actual consistency
+# B_actual consistency (now accounts for adaptive capping)
 res <- res %>%
-  mutate(B_expected = ifelse(B_type == "sqrt", floor(sqrt(N)),
-                             as.numeric(B_type)))
+  mutate(B_expected = mapply(resolve_block_count, B_type, N, k))
 cat("B_actual mismatches:", sum(res$B_actual != res$B_expected, na.rm = TRUE), "\n")
 res$B_expected <- NULL
 

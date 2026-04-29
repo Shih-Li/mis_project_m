@@ -58,7 +58,7 @@ testingmis/
     ├── figures/                    # Final plots (e.g., fig_evd_robustness.pdf)
     ├── tables/                     # Final tables (e.g., tab_scaling_matrix.tex)
     ├── 02_final_distributions.rds  # The fully merged dataset from script 02
-    └── 03_final_scaling.rds        # The fully merged dataset from script 03
+    └── 03_scaling_results_master.rds        # The fully merged dataset from script 03
 
 THE 5 DEGREES OF FREEDOM / SHAPE VARIANTS
 ├── 1.5 = Infinite Variance (Extreme breakdown)

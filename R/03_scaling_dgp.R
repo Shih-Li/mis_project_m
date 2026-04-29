@@ -10,7 +10,10 @@
 # ==============================================================================
 #' @param N Integer. Sample size.
 #' @param architecture String. One of "simple", "complex", "interaction", 
-#'        "triple_interaction", "nonlinear_nuisance".
+#'        "triple_interaction", "nonlinear_nuisance", "collinear_interaction",
+#'        "sparse_binary_interaction", "polynomial_interaction", "high_k_interaction".
+#' @param rho Numeric in (0,1). Correlation between X and M for collinear_interaction. 
+#'            Default 0.8.
 #' @param beta_target Numeric. The true effect size of the parameter of interest.
 #'
 #' @return A list containing:
@@ -18,7 +21,7 @@
 #'   - target_pos: Integer indicating the column index of the target parameter in the design matrix
 #'   - formula: The formula object to be passed to lm() or the MIS function
 
-generate_scaling_dgp <- function(N, architecture, beta_target = 1.0) {
+generate_scaling_dgp <- function(N, architecture, beta_target = 1.0, rho = 0.8) {
   
   # Base components present in all models
   X <- rnorm(N, mean = 0, sd = 1)
@@ -65,6 +68,41 @@ generate_scaling_dgp <- function(N, architecture, beta_target = 1.0) {
     data <- data.frame(y = y, X = X, M = M, W = W)
     form <- as.formula(y ~ X * M * W)
     target_pos <- 8 
+  } else if (architecture == "collinear_interaction") {
+    # Option 1: X and M are correlated at strength rho
+    # M = rho*X + sqrt(1-rho^2)*noise, so marginals stay ~N(0,1)
+    M <- rho * X + sqrt(1 - rho^2) * rnorm(N)
+    y <- 0.5 + 0.3 * X + 0.4 * M + beta_target * (X * M) + epsilon
+    data <- data.frame(y = y, X = X, M = M)
+    form <- as.formula(y ~ X * M)
+    target_pos <- 4  # Intercept (1), X (2), M (3), X:M (4)
+    
+  } else if (architecture == "sparse_binary_interaction") {
+    # Option 2: M is a rare binary indicator
+    M <- rbinom(N, size = 1, prob = 0.1)
+    y <- 0.5 + 0.3 * X + 0.4 * M + beta_target * (X * M) + epsilon
+    data <- data.frame(y = y, X = X, M = M)
+    form <- as.formula(y ~ X * M)
+    target_pos <- 4  # Intercept (1), X (2), M (3), X:M (4)
+    
+  } else if (architecture == "polynomial_interaction") {
+    # Option 3: Quadratic X plus interaction
+    # y = b0 + b1*X + b2*X^2 + b3*M + b4*(X*M) + e
+    M <- rnorm(N, mean = 0, sd = 1)
+    X2 <- X^2
+    y <- 0.5 + 0.3 * X + 0.2 * X2 + 0.4 * M + beta_target * (X * M) + epsilon
+    data <- data.frame(y = y, X = X, X2 = X2, M = M)
+    form <- as.formula(y ~ X + X2 + M + X:M)
+    target_pos <- 5  # Intercept (1), X (2), X2 (3), M (4), X:M (5)
+    
+  } else if (architecture == "high_k_interaction") {
+    # Extended k test: same DGP as collinear_interaction (rho=0.7)
+    # but meant to be paired with k up to 50
+    M <- 0.7 * X + sqrt(1 - 0.7^2) * rnorm(N)
+    y <- 0.5 + 0.3 * X + 0.4 * M + beta_target * (X * M) + epsilon
+    data <- data.frame(y = y, X = X, M = M)
+    form <- as.formula(y ~ X * M)
+    target_pos <- 4  # Intercept (1), X (2), M (3), X:M (4)
     
   } else if (architecture == "nonlinear_nuisance") {
     Z <- rnorm(N, mean = 0, sd = 2)

@@ -48,35 +48,39 @@ evt_iter_dm <- function(y, x, Z, set, block_count = 20) {
   R_fwl <- residuals(lm(Y_fwl ~ X_fwl - 1))
   
   # 2. Compute the True DFBETA of the target set
-  set_dfb <- testingMIS::dfbeta_numeric(Y_fwl, X_fwl, set)
+  #    (Pass X_fwl as a 1-column matrix to match dfbeta_numeric's signature)
+  set_dfb <- testingMIS::dfbeta_numeric(Y_fwl, cbind(X_fwl), set, col_X = 1L)
   
-  # 3. Generate MC null draws from the true null distribution
-  # Build empirical distribution functions from actual data
-  x_empirical <- function(n) sample(X_fwl, size = n, replace = TRUE)
-  r_empirical <- function(n) sample(R_fwl, size = n, replace = TRUE)
-  null_draws <- abs(replicate(500,
-                              testingMIS::rmaxdfbeta(n = length(X_fwl), n_set = length(set),
-                                                     x_dist = x_empirical, r_dist = r_empirical)))
+  # 3. Compute block maxima using exact Dinkelbach's method on actual data
+  #    [BUG1 FIX] This replaces the old MC null-draw approach that:
+  #    (a) resampled from contaminated residuals (polluted null), and
+  #    (b) treated iid rmaxdfbeta draws as block maxima (wrong EVD structure).
+  #    Now we use exact_dfb_bmx which divides the non-set observations into
+  #    blocks and finds the exact maximum-influence subset within each block
+  #    via linear-fractional programming — matching the testingMIS methodology.
+  bmx <- tryCatch(
+    exact_dfb_bmx(X = X_fwl, R = R_fwl, set = set, block_count = block_count),
+    error = function(e) NULL
+  )
+  if (is.null(bmx) || length(bmx) < 3) return(fail_row)
   
-  # 4. Fit GEV to the null draws (no M-scaling needed)
-  fit_evd <- tryCatch(fit_gev_robust(null_draws), error = function(e) NULL)
+  # 4. Fit GEV to the block maxima
+  fit_evd <- tryCatch(fit_gev_robust(abs(bmx)), error = function(e) NULL)
   if (is.null(fit_evd) || fit_evd$estimate["scale"] <= 0) { return(fail_row) }
   
   xi    <- fit_evd$estimate["shape"]
   sigma <- fit_evd$estimate["scale"]
   mu    <- fit_evd$estimate["loc"]
   
-  # 5. (Removed — M-scaling not needed; null draws already from global search)
-  
-  # 6. Compute p-value directly
+  # 5. Compute p-value
   p_val <- 1 - evd::pgev(q = abs(set_dfb), loc = mu, scale = sigma, shape = xi)
   if (!is.finite(p_val)) p_val <- NA_real_
   
-  # 7. Return strict 1-row data frame
+  # 6. Return strict 1-row data frame
   data.frame(
     shape     = unname(xi), 
-    scale     = unname(sigma),    # was sigma_M — no longer exists
-    loc       = unname(mu),       # was mu_M — no longer exists
+    scale     = unname(sigma),
+    loc       = unname(mu),
     set_dfb   = unname(set_dfb), 
     p_value   = unname(p_val), 
     converged = TRUE,
