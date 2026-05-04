@@ -3,10 +3,12 @@
 # Purpose: Wrap the EVT estimation using the exact Dinkelbach's Method (DM) for 
 #          block maxima. This bypasses the greedy heuristic in testingMIS to 
 #          provide mathematically exact p-values for the Most Influential Set.
-#          Implements a multi-attempt GEV fitting strategy: default optimizer 
-#          first, then L-moments starting values, then Probability-Weighted 
-#          Moments (PWM) as a last resort, to recover ~15-20% of fits that 
-#          would otherwise fail.
+#          Implements a multi-attempt GEV fitting strategy (5 attempts):
+#            1. Default fgev (BFGS, internal init)
+#            2. L-moments starting values (Hosking 1990)
+#            3. Conservative Gumbel-like start (ξ ≈ 0)
+#            4. Shape-clamped Nelder-Mead (derivative-free, |ξ| ≤ 0.5)
+#            5. Median/IQR robust start + Nelder-Mead (50% breakdown point)
 # Dependencies: Requires /R/exact_dfb_bmx.R to be sourced.
 # ==============================================================================
 
@@ -91,20 +93,40 @@ evt_iter_dm <- function(y, x, Z, set, block_count = 20) {
 
 #' Robust GEV Fitting with Multiple Fallback Strategies
 #'
-#' Attempts evd::fgev up to three times with progressively more robust
-#' starting values. Recovers fits that fail under default initialisation
-#' due to heavy tails, near-degenerate data, or optimizer sensitivity.
+#' Attempts evd::fgev up to five times with progressively more robust
+#' starting values and optimizer switches. Recovers fits that fail under
+#' default initialisation due to heavy tails, near-degenerate data, or
+#' optimizer sensitivity.
+#'
+#' Strategy:
+#'   1. Default fgev (BFGS, internal starting values)
+#'   2. L-moments starting values (Hosking 1990) — robust to heavy tails
+#'   3. Conservative Gumbel-like start (ξ ≈ 0)
+#'   4. Shape-clamped Nelder-Mead — derivative-free optimizer with ξ
+#'      hard-clamped to [-0.5, 0.5] via penalised negative log-likelihood.
+#'      Recovers fits where BFGS diverges due to flat or ridged likelihood.
+#'   5. Median/IQR robust start with Nelder-Mead — breakdown-resistant
+#'      initialisation for heavily contaminated or near-constant block maxima.
 #'
 #' @param bmx Numeric vector of block maxima (must have length >= 3).
 #' @return An fgev fit object, or NULL if all attempts fail.
 #' @keywords internal
 fit_gev_robust <- function(bmx) {
   
-  # Attempt 1: Default fgev (uses its own MLE starting values)
-  fit <- tryCatch(evd::fgev(bmx), error = function(e) NULL)
-  if (!is.null(fit) && fit$estimate["scale"] > 0) return(fit)
+  # Shared validator: scale must be strictly positive
+  .valid <- function(fit) {
+    !is.null(fit) && fit$estimate["scale"] > 0
+  }
   
+  # ------------------------------------------------------------------
+  # Attempt 1: Default fgev (uses its own MLE starting values)
+  # ------------------------------------------------------------------
+  fit <- tryCatch(evd::fgev(bmx), error = function(e) NULL)
+  if (.valid(fit)) return(fit)
+  
+  # ------------------------------------------------------------------
   # Attempt 2: L-moments starting values (robust to heavy tails)
+  # ------------------------------------------------------------------
   lmom_start <- tryCatch({
     # Simple L-moment estimates for GEV (Hosking 1990)
     n <- length(bmx)
@@ -142,10 +164,12 @@ fit_gev_robust <- function(bmx) {
       evd::fgev(bmx, start = lmom_start),
       error = function(e) NULL
     )
-    if (!is.null(fit) && fit$estimate["scale"] > 0) return(fit)
+    if (.valid(fit)) return(fit)
   }
   
+  # ------------------------------------------------------------------
   # Attempt 3: Conservative Gumbel-like start (ξ ≈ 0)
+  # ------------------------------------------------------------------
   gumbel_start <- tryCatch({
     sigma_g <- sd(bmx) * sqrt(6) / pi
     mu_g    <- mean(bmx) - 0.5772 * sigma_g
@@ -157,7 +181,117 @@ fit_gev_robust <- function(bmx) {
       evd::fgev(bmx, start = gumbel_start),
       error = function(e) NULL
     )
-    if (!is.null(fit) && fit$estimate["scale"] > 0) return(fit)
+    if (.valid(fit)) return(fit)
+  }
+  
+  # ------------------------------------------------------------------
+  # Attempt 4: Shape-clamped Nelder-Mead (derivative-free)
+  #   BFGS fails when the likelihood surface is flat or ridged (common
+  #   with near-constant block maxima from collinear/sparse DGPs).
+  #   Nelder-Mead is more tolerant of these geometries. We clamp ξ to
+  #   [-0.5, 0.5] via a penalty term to avoid degenerate Fréchet/Weibull
+  #   tails that make the likelihood unbounded.
+  # ------------------------------------------------------------------
+  
+  # Penalised negative log-likelihood with shape clamp
+  # (defined here so both Attempt 4 and 5 can use it)
+  nll_gev_clamped <- function(par, data) {
+    mu    <- par[1]
+    sigma <- par[2]
+    xi    <- par[3]
+    
+    # Hard constraints: sigma > 0, |xi| <= 0.5
+    if (sigma <= 1e-10) return(1e12)
+    if (abs(xi) > 0.5)  return(1e12)
+    
+    n <- length(data)
+    
+    if (abs(xi) < 1e-8) {
+      # Gumbel case (ξ → 0)
+      z <- (data - mu) / sigma
+      nll <- n * log(sigma) + sum(z) + sum(exp(-z))
+    } else {
+      z <- 1 + xi * (data - mu) / sigma
+      # All z must be > 0 for the GEV density to be defined
+      if (any(z <= 0)) return(1e12)
+      nll <- n * log(sigma) + (1 + 1/xi) * sum(log(z)) + sum(z^(-1/xi))
+    }
+    
+    if (!is.finite(nll)) return(1e12)
+    return(nll)
+  }
+  
+  nm_fit <- tryCatch({
+    
+    # Use the best available starting values (Gumbel or L-moments)
+    if (!is.null(gumbel_start)) {
+      init <- c(gumbel_start$loc, gumbel_start$scale, gumbel_start$shape)
+    } else if (!is.null(lmom_start)) {
+      init <- c(lmom_start$loc, lmom_start$scale, lmom_start$shape)
+    } else {
+      init <- c(median(bmx), max(sd(bmx), 1e-4), 0.01)
+    }
+    
+    optres <- optim(
+      par = init,
+      fn  = nll_gev_clamped,
+      data = bmx,
+      method  = "Nelder-Mead",
+      control = list(maxit = 5000, reltol = 1e-8)
+    )
+    
+    if (optres$convergence != 0) stop("Nelder-Mead did not converge")
+    if (optres$par[2] <= 0)      stop("Negative scale from Nelder-Mead")
+    
+    # Wrap into an fgev-compatible list so downstream code works unchanged
+    list(
+      estimate = c(loc = optres$par[1], scale = optres$par[2], shape = optres$par[3]),
+      deviance = 2 * optres$value,
+      convergence = optres$convergence,
+      data = bmx
+    )
+  }, error = function(e) NULL)
+  
+  if (!is.null(nm_fit) && nm_fit$estimate["scale"] > 0) return(nm_fit)
+  
+  # ------------------------------------------------------------------
+  # Attempt 5: Median/IQR robust start with Nelder-Mead
+  #   When the block maxima are heavily contaminated or near-constant,
+  #   mean/sd-based initialisations place the optimizer in a dead zone.
+  #   Median and IQR are breakdown-resistant (50% breakdown point) and
+  #   give a reasonable starting region even for degenerate samples.
+  # ------------------------------------------------------------------
+  robust_nm_fit <- tryCatch({
+    med_bmx <- median(bmx)
+    iqr_bmx <- max(IQR(bmx), 1e-6)  # floor to prevent zero scale
+    
+    # IQR ≈ 1.573σ for Gumbel, so σ ≈ IQR / 1.573
+    sigma_r <- iqr_bmx / 1.573
+    mu_r    <- med_bmx - 0.3665 * sigma_r  # Gumbel median ≈ μ - σ·ln(ln2)
+    
+    init_r <- c(mu_r, sigma_r, 0.0)
+    
+    optres_r <- optim(
+      par = init_r,
+      fn  = nll_gev_clamped,
+      data = bmx,
+      method  = "Nelder-Mead",
+      control = list(maxit = 5000, reltol = 1e-8)
+    )
+    
+    if (optres_r$convergence != 0) stop("Robust NM did not converge")
+    if (optres_r$par[2] <= 0)      stop("Negative scale from robust NM")
+    
+    list(
+      estimate = c(loc = optres_r$par[1], scale = optres_r$par[2], shape = optres_r$par[3]),
+      deviance = 2 * optres_r$value,
+      convergence = optres_r$convergence,
+      data = bmx
+    )
+  }, error = function(e) NULL)
+  
+  if (!is.null(robust_nm_fit) && robust_nm_fit$estimate["scale"] > 0) {
+    return(robust_nm_fit)
   }
   
   # All attempts failed

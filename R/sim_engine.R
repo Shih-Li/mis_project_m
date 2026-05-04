@@ -63,20 +63,10 @@ run_mis_iteration <- function(iter = 1, n = 1000, p = 1,
   # -------------------------------------------------------------------------
   base_model <- lm(y ~ x, data = df_sim)
   
-  target_sign <- sign(coef(base_model)[2])
-  if (is.na(target_sign) || target_sign == 0) target_sign <- 1
-  
-  sens_obj_pos <- suppressWarnings({
-    influence::sens(base_model,
-                    lambda = influence::set_lambda("beta_i", pos = 2, sign = 1))
-  })
-  sens_obj_neg <- suppressWarnings({
-    influence::sens(base_model,
-                    lambda = influence::set_lambda("beta_i", pos = 2, sign = -1))
-  })
-  
-  empirical_mis_pos <- sens_obj_pos$influence$id[1:k]
-  empirical_mis_neg <- sens_obj_neg$influence$id[1:k]
+  # Fast influence detection — replaces 2 × sens() calls
+  # In sim_engine, we only have 1 predictor 'x', so pos is always 2 (Intercept is 1)
+  empirical_mis_pos <- fast_sens_topk(base_model, pos = 2, sign = 1, k = k)
+  empirical_mis_neg <- fast_sens_topk(base_model, pos = 2, sign = -1, k = k)
   
   if (outlier_method != "none") {
     # Pick the MIS direction with better overlap for detection metrics

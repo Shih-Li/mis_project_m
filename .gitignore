@@ -22,7 +22,6 @@ Thumbs.db
 
 output/
 *.pdf
-*.png
 *.docx
 
 data/*

@@ -54,9 +54,18 @@ apply_influence_shift <- function(data, method = "vertical_outlier", k = 1, magn
            
            X_new[outlier_idx, ] <- X[outlier_idx, , drop = FALSE] + (shift_mat * sign_mat)
            
-           # Realistic good leverage: exact plane + small noise
-           true_y <- as.vector(X_new[outlier_idx, , drop = FALSE] %*% data$true_beta)
-           y_new[outlier_idx] <- true_y + rnorm(k, mean = 0, sd = scale_y * 0.1)
+           # --- THE FIX: Align to the EMPIRICAL plane, not the true plane ---
+           # 1. Fit the empirical OLS plane on the clean data
+           empirical_mod <- stats::lm(y ~ X)
+           emp_beta <- stats::coef(empirical_mod)[-1] # slope(s)
+           emp_intercept <- stats::coef(empirical_mod)[1] # intercept
+           if(is.na(emp_intercept)) emp_intercept <- 0
+           
+           # 2. Calculate their Y positions on this empirical line
+           empirical_y <- emp_intercept + as.vector(X_new[outlier_idx, , drop = FALSE] %*% emp_beta)
+           
+           # 3. Assign empirical Y plus tiny symmetric noise (1% of Y scale) 
+           y_new[outlier_idx] <- empirical_y + rnorm(k, mean = 0, sd = scale_y * 0.01)
          },
          
          "bad_leverage" = {

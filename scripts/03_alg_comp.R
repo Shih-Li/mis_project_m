@@ -37,7 +37,7 @@ cat("Parallel processing initialized with 14 workers.\n\n")
 # ------------------------------------------------------------------------------
 sim_params <- list(
   n_iters   = 100,
-  magnitude = 5,
+  magnitude = 10,
   seed      = 20260421
 )
 

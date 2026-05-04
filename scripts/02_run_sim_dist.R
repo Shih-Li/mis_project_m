@@ -18,7 +18,7 @@ source("../R/sim_engine.R")
 source("../R/utils_checkpoint.R")
 source("../R/exact_dfb_bmx.R")
 source("../R/evt_iter_dm.R")
-
+source("../R/fast_sens_topk.R")
 
 # 2. Global Configuration
 sim_params <- list(
@@ -32,14 +32,18 @@ sim_params <- list(
 
 set.seed(sim_params$seed)
 
-# Set up Parallel Processing
-# Using 14 workers (threads) to leave 2 threads for OS stability on a 16-thread CPU
-#install.packages("future")
-#install.packages("furrr")
+
 library(future)
 library(furrr)
-plan(multisession, workers = 14)
-cat("Parallel processing initialized with 14 workers.\n\n")
+slurm_cpus <- Sys.getenv("SLURM_CPUS_PER_TASK")
+if (slurm_cpus != "") {
+  num_workers <- as.numeric(slurm_cpus)
+  cat(sprintf("Detected SLURM environment, using %d workers.\n", num_workers))
+} else {
+  num_workers <- max(1, parallel::detectCores() - 2)
+  cat(sprintf("Local environment, using %d workers.\n", num_workers))
+}
+plan(multisession, workers = num_workers)
 
 # 3. Define the Reality Grid (The Parameter Space)
 # We expand all combinations of X distributions, Error distributions, and Outlier types
@@ -93,7 +97,6 @@ for (i in seq_len(nrow(param_grid))) {
     
     # FIX: Removed the double assignment
     iteration_seed <- sim_params$seed + (i - 1) * sim_params$n_iters + iter_id
-    set.seed(iteration_seed)
     
     # FIX: Added curly braces {} and the crucial comma before error = ...
     tryCatch({
