@@ -4,20 +4,6 @@
 #          detection, classical LOO diagnostics, coverage comparison, and EVD 
 #          parameter estimation. Orchestrates one complete Monte Carlo iteration.
 #
-# Revision notes (v2):
-#   - Added `alpha` parameter for significance threshold
-#   - Added `contam_prop` output column (k / n)
-#   - Added coverage columns: cover_evd, cover_cooks, cover_lev, cover_dfbetas
-#     These answer: "does the method FLAG the set as influential at level alpha?"
-#     For outlier scenarios → power. For "none" scenarios → empirical size.
-#   - Coverage for classical tools uses the SAME set evaluated by EVD
-#     (injected set or random set), ensuring apples-to-apples comparison.
-#   - CRITICAL FIX: block_count is now adaptive — capped at floor((n-k)/k)
-#     to prevent k > block_size collapse in exact_dfb_bmx. The Dinkelbach
-#     solver within each block selects k observations, so each block must
-#     contain at least k observations: block_size = (n-k)/M >= k → M <= (n-k)/k.
-#     GEV fitting requires at least 3 block maxima, so M >= 3.
-#
 # Dependencies: Requires /R/dgp_factory.R, /R/influence_injector.R, 
 #               /R/evt_iter_dm.R, /R/exact_dfb_bmx.R, /R/dinkelbach_topk.R
 # ==============================================================================
