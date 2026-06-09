@@ -5,7 +5,7 @@
 #          mathematically exact p-values for the Most Influential Set.
 #          Implements a multi-attempt GEV fitting strategy (5 attempts):
 #            1. Default fgev (BFGS, internal init)
-#            2. L-moments starting values (Hosking 1990)
+#            2. L-moments starting values
 #            3. Conservative Gumbel-like start (ξ ≈ 0)
 #            4. Shape-clamped Nelder-Mead (derivative-free, |ξ| ≤ 0.5)
 #            5. Median/IQR robust start + Nelder-Mead (50% breakdown point)

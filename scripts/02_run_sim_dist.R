@@ -96,7 +96,7 @@ param_grid <- expand.grid(
   outlier_method = c("none", "vertical_outlier", "good_leverage", "bad_leverage"),
   
   # Trimmed: 3 shape values instead of 5
-  dist_param = c(1.5, 3.0, 10.0),
+  dist_param = c(1.5, 3.0, 5.0, 10.0),
   # Trimmed: 2 mixture values instead of 3
   mix_prop   = c(0.05, 0.30),
   

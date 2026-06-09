@@ -6,7 +6,7 @@
 #          block-count strategies, and five model architectures.
 #          Quantifies detection accuracy, EVD convergence, and runtime scaling.
 # Inputs:  ../R/03_scaling_dgp.R, ../R/exact_dfb_bmx.R, ../R/evt_iter.R,
-#          ../R/evt_iter_dm.R, ../R/utils_checkpoint.R
+#          ../R/evt_iter_dm.R, ../R/utils_checkpoint.R, ../R/dinkelbach_topk.R
 # Outputs: ../output/temp_03/03_chunk_*.rds -> ../output/03_scaling_results_master.rds
 # ==============================================================================
 
@@ -26,11 +26,10 @@ source("../R/helpers_local.R")
 source("../R/03_scaling_dgp.R")
 source("../R/utils_checkpoint.R")
 source("../R/fast_sens_topk.R")
+source("../R/dinkelbach_topk.R") # Added for Exact Pipeline detection
 source("../R/exact_dfb_bmx.R")
 source("../R/evt_iter_dm.R")
 source("../R/evt_iter.R")
-
-
 
 # Set up parallel processing (leave 2 threads for OS stability)
 plan(multisession, workers = 14)
@@ -107,10 +106,14 @@ inject_safe_outliers <- function(dgp_res, k, magnitude = 4) {
   clean_mod  <- lm(dgp_res$formula, data = df[-outlier_idx, ])
   expected_y <- predict(clean_mod, newdata = df[outlier_idx, ])
   scale_y    <- max(mad(df$y, constant = 1.4826), 1e-4)
-  df$y[outlier_idx] <- expected_y - (sign(expected_y) * scale_y * magnitude * 2)
+  
+  # Rev 4: Symmetric injection direction
+  y_shift_dir <- sample(c(1, -1), size = 1)
+  df$y[outlier_idx] <- expected_y + (y_shift_dir * scale_y * magnitude * 2)
   
   dgp_res$data <- df
   dgp_res$true_outliers <- outlier_idx
+  dgp_res$injection_y_direction <- y_shift_dir
   return(dgp_res)
 }
 
@@ -136,78 +139,83 @@ run_scaling_iteration <- function(iter_id, N, k, B, architecture,
     mod  <- lm(dgp_poisoned$formula, data = dgp_poisoned$data)
     tpos <- dgp_poisoned$target_pos
     
-    # D. Detect the influential set via influence::sens()
-    detected_set <- fast_sens_topk(mod, 
-      pos = tpos, sign = sign(coef(mod)[tpos]), k = k)
-    
-    # E. Extract FWL components: x = target column, Z = everything else
+    # D. Extract FWL components: x = target column, Z = everything else
     #    Z must NEVER contain x (handoff rule #1)
     X_full   <- model.matrix(dgp_poisoned$formula, dgp_poisoned$data)
     x_target <- X_full[, tpos]
     Z_fwl    <- X_full[, -tpos, drop = FALSE]
     y_vec    <- dgp_poisoned$data$y
     
-    # F. Run Greedy EVT
+    # --------------------------------------------------------------------------
+    # E. GREEDY PIPELINE
+    # --------------------------------------------------------------------------
+    # Detection: greedy, dual-sign oracle
+    detected_greedy_pos <- fast_sens_topk(mod, pos = tpos, sign =  1, k = k)
+    detected_greedy_neg <- fast_sens_topk(mod, pos = tpos, sign = -1, k = k)
+    overlap_g_pos <- length(intersect(detected_greedy_pos, dgp_poisoned$true_outliers))
+    overlap_g_neg <- length(intersect(detected_greedy_neg, dgp_poisoned$true_outliers))
+    detected_greedy <- if (overlap_g_neg > overlap_g_pos) detected_greedy_neg else detected_greedy_pos
+    
+    # EVT: greedy block maxima
     t_greedy_start <- Sys.time()
     res_greedy <- evt_iter(
       y = y_vec, x = x_target, Z = Z_fwl,
-      set = detected_set, block_count = B
+      set = detected_greedy, block_count = B
     )
     t_greedy <- as.numeric(difftime(Sys.time(), t_greedy_start, units = "secs"))
     
-    # G. Dual-sign detection (Oracle: pick the direction that finds more outliers)
-    detected_pos <- fast_sens_topk(mod, pos = tpos, sign = 1, k = k)
-    detected_neg <- fast_sens_topk(mod, pos = tpos, sign = -1, k = k)
+    # --------------------------------------------------------------------------
+    # F. EXACT PIPELINE
+    # --------------------------------------------------------------------------
+    # Detection: Dinkelbach, dual-sign oracle
+    detected_exact_pos <- dinkelbach_topk_lm(mod, pos = tpos, sign =  1, k = k)
+    detected_exact_neg <- dinkelbach_topk_lm(mod, pos = tpos, sign = -1, k = k)
+    overlap_e_pos <- length(intersect(detected_exact_pos, dgp_poisoned$true_outliers))
+    overlap_e_neg <- length(intersect(detected_exact_neg, dgp_poisoned$true_outliers))
+    detected_exact <- if (overlap_e_neg > overlap_e_pos) detected_exact_neg else detected_exact_pos
     
-    overlap_pos <- length(intersect(detected_pos, dgp_poisoned$true_outliers))
-    overlap_neg <- length(intersect(detected_neg, dgp_poisoned$true_outliers))
-    
-    if (overlap_neg > overlap_pos) {
-      detected_set_exact <- detected_neg
-    } else {
-      detected_set_exact <- detected_pos
-    }
-    
-    # H. Run Exact Dinkelbach EVT on the best-direction set
+    # EVT: exact Dinkelbach block maxima
     t_exact_start <- Sys.time()
     res_exact <- evt_iter_dm(
       y = y_vec, x = x_target, Z = Z_fwl,
-      set = detected_set_exact, block_count = B
+      set = detected_exact, block_count = B
     )
     t_exact <- as.numeric(difftime(Sys.time(), t_exact_start, units = "secs"))
     
-    # I. Detection metrics (greedy = single-sign, exact = oracle dual-sign)
-    detection_rate       <- length(intersect(detected_set, dgp_poisoned$true_outliers)) / k
-    detection_rate_exact <- length(intersect(detected_set_exact, dgp_poisoned$true_outliers)) / k
+    # --------------------------------------------------------------------------
+    # G. Detection metrics
+    # --------------------------------------------------------------------------
+    detection_rate_greedy <- length(intersect(detected_greedy, dgp_poisoned$true_outliers)) / k
+    detection_rate_exact  <- length(intersect(detected_exact, dgp_poisoned$true_outliers)) / k
     
     data.frame(
-      iter               = iter_id,
-      detection_rate       = detection_rate,
-      detection_rate_exact = detection_rate_exact,
-      p_greedy         = res_greedy$p_value,
-      converged_greedy = res_greedy$converged,
-      p_exact          = res_exact$p_value,
-      converged_exact  = res_exact$converged,
-      cpu_greedy   = t_greedy,
-      cpu_exact    = t_exact,
-      error_msg    = NA_character_,
-      stringsAsFactors = FALSE
+      iter                  = iter_id,
+      detection_rate_greedy = detection_rate_greedy,
+      detection_rate_exact  = detection_rate_exact,
+      p_greedy              = res_greedy$p_value,
+      converged_greedy      = res_greedy$converged,
+      p_exact               = res_exact$p_value,
+      converged_exact       = res_exact$converged,
+      cpu_greedy            = t_greedy,
+      cpu_exact             = t_exact,
+      error_msg             = NA_character_,
+      stringsAsFactors      = FALSE
     )
     
   }, error = function(e) {
     warning(sprintf("Iter %d failed: %s", iter_id, e$message))
     data.frame(
-      iter               = iter_id,
-      detection_rate       = NA_real_,
-      detection_rate_exact = NA_real_,
-      p_greedy         = NA_real_,
-      converged_greedy = FALSE,
-      p_exact          = NA_real_,
-      converged_exact  = FALSE,
-      cpu_greedy   = NA_real_,
-      cpu_exact    = NA_real_,
-      error_msg    = e$message,
-      stringsAsFactors = FALSE
+      iter                  = iter_id,
+      detection_rate_greedy = NA_real_,
+      detection_rate_exact  = NA_real_,
+      p_greedy              = NA_real_,
+      converged_greedy      = FALSE,
+      p_exact               = NA_real_,
+      converged_exact       = FALSE,
+      cpu_greedy            = NA_real_,
+      cpu_exact             = NA_real_,
+      error_msg             = e$message,
+      stringsAsFactors      = FALSE
     )
   })
 }
@@ -360,7 +368,7 @@ cat(sprintf("Rows: %d / %d (Missing: %d)\n",
             nrow(res), total_rows, total_rows - nrow(res)))
 cat("Missing CPU (greedy):", sum(is.na(res$cpu_greedy)), "\n")
 cat("Missing CPU (exact):",  sum(is.na(res$cpu_exact)), "\n")
-cat("Missing detection rates:", sum(is.na(res$detection_rate)), "\n")
+cat("Missing detection rates:", sum(is.na(res$detection_rate_greedy)), "\n")
 
 # B-capping summary (Fix C diagnostic)
 if ("B_capped" %in% names(res)) {
@@ -373,6 +381,20 @@ if ("B_capped" %in% names(res)) {
                                  c("N","k","B_type","B_raw","B_actual")])
     capped_summary <- capped_summary[order(capped_summary$N, capped_summary$k), ]
     print(capped_summary, row.names = FALSE)
+  }
+}
+
+# Rev 5: Flag effectively duplicate B conditions
+dupes <- res %>%
+  group_by(N, k, architecture, B_actual) %>%
+  filter(n_distinct(B_type) > 1) %>%
+  summarise(B_types = paste(unique(B_type), collapse=", "), .groups="drop")
+
+if (nrow(dupes) > 0) {
+  cat("\nWARNING: Duplicate effective block counts (B_actual) across different B_types:\n")
+  print(head(dupes, 10))
+  if (nrow(dupes) > 10) {
+    cat(sprintf("... and %d more.\n", nrow(dupes) - 10))
   }
 }
 
@@ -428,8 +450,8 @@ conv_by_rho <- res %>%
   summarise(
     conv_greedy = round(mean(converged_greedy, na.rm = TRUE) * 100, 1),
     conv_exact  = round(mean(converged_exact,  na.rm = TRUE) * 100, 1),
-    det_greedy  = round(mean(detection_rate,   na.rm = TRUE), 3),
-    det_exact   = round(mean(detection_rate_exact, na.rm = TRUE), 3),
+    det_greedy_mean = round(mean(detection_rate_greedy, na.rm = TRUE), 3),
+    det_exact_mean  = round(mean(detection_rate_exact, na.rm = TRUE), 3),
     .groups = "drop"
   )
 if (nrow(conv_by_rho) > 0) {
@@ -458,30 +480,35 @@ cat("\nConvergence by N:\n")
 print(conv_by_N)
 
 cat("\n=== 4. DETECTION PREVIEW ===\n")
+# Rev 3: Report continuous overlap as primary, binary (>=90%) as secondary
 det_table <- res %>%
-  filter(!is.na(detection_rate)) %>%
+  filter(!is.na(detection_rate_greedy)) %>%
   group_by(architecture, k) %>%
   summarise(
-    det_greedy = round(mean(detection_rate), 3),
-    det_exact  = round(mean(detection_rate_exact, na.rm = TRUE), 3),
+    det_greedy_mean = round(mean(detection_rate_greedy), 3),
+    det_greedy_90   = round(mean(detection_rate_greedy >= 0.90), 3),
+    det_exact_mean  = round(mean(detection_rate_exact, na.rm = TRUE), 3),
+    det_exact_90    = round(mean(detection_rate_exact >= 0.90, na.rm = TRUE), 3),
     .groups = "drop"
   ) %>%
   arrange(architecture, k)
 print(det_table, n = 30)
 
 # Warn on trivial results
-all_zero <- all(det_table$det_greedy == 0) && all(det_table$det_exact == 0)
-all_one  <- all(det_table$det_greedy == 1) && all(det_table$det_exact == 1)
+all_zero <- all(det_table$det_greedy_mean == 0) && all(det_table$det_exact_mean == 0)
+all_one  <- all(det_table$det_greedy_mean == 1) && all(det_table$det_exact_mean == 1)
 if (all_zero) cat("WARNING: All detection rates are 0 — algorithm may be blind.\n")
 if (all_one)  cat("WARNING: All detection rates are 1 — problem may be too easy.\n")
 
 # Detection by N to see if larger samples help
 det_by_N <- res %>%
-  filter(!is.na(detection_rate)) %>%
+  filter(!is.na(detection_rate_greedy)) %>%
   group_by(N, k) %>%
   summarise(
-    det_greedy = round(mean(detection_rate), 3),
-    det_exact  = round(mean(detection_rate_exact, na.rm = TRUE), 3),
+    det_greedy_mean = round(mean(detection_rate_greedy), 3),
+    det_greedy_90   = round(mean(detection_rate_greedy >= 0.90), 3),
+    det_exact_mean  = round(mean(detection_rate_exact, na.rm = TRUE), 3),
+    det_exact_90    = round(mean(detection_rate_exact >= 0.90, na.rm = TRUE), 3),
     .groups = "drop"
   ) %>%
   arrange(N, k)
@@ -490,7 +517,7 @@ print(det_by_N, n = 25)
 
 cat("\n=== 5. REPORTING SANITY ===\n")
 cat("Greedy detection rates outside [0,1]:",
-    sum(res$detection_rate < 0 | res$detection_rate > 1, na.rm = TRUE), "\n")
+    sum(res$detection_rate_greedy < 0 | res$detection_rate_greedy > 1, na.rm = TRUE), "\n")
 cat("Exact  detection rates outside [0,1]:",
     sum(res$detection_rate_exact < 0 | res$detection_rate_exact > 1, na.rm = TRUE), "\n")
 cat("Negative CPU (greedy):", sum(res$cpu_greedy < 0, na.rm = TRUE), "\n")
