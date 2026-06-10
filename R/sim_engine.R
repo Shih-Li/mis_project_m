@@ -150,11 +150,11 @@ run_mis_iteration <- function(iter = 1, n = 1000, p = 1,
   
   if (outlier_method != "none") {
     detect_cooks   <- (length(intersect(true_injected_indices, 
-                                        top_k_cooks)) / k) >= 0.80
+                                        top_k_cooks)) / k) >= 0.90
     detect_lev     <- (length(intersect(true_injected_indices, 
-                                        top_k_lev)) / k) >= 0.80
+                                        top_k_lev)) / k) >= 0.90
     detect_dfbetas <- (length(intersect(true_injected_indices, 
-                                        top_k_dfbetas)) / k) >= 0.80
+                                        top_k_dfbetas)) / k) >= 0.90
     
     overlap_mis     <- length(intersect(true_injected_indices, empirical_mis)) / k
     overlap_cooks   <- length(intersect(true_injected_indices, top_k_cooks)) / k

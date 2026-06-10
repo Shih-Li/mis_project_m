@@ -217,6 +217,20 @@ final_dataset <- compile_checkpoints(
   clear_temp = FALSE
 )
 results <- final_dataset
+
+results <- results %>%
+  mutate(
+    contam_label = case_when(
+      contam_prop < 0.0075 ~ "0.5%",
+      contam_prop < 0.015  ~ "1%",
+      contam_prop < 0.035  ~ "2.5%",
+      contam_prop < 0.075  ~ "5%",
+      TRUE                 ~ "10%"
+    ),
+    contam_label = factor(contam_label,
+                          levels = c("0.5%", "1%", "2.5%", "5%", "10%"))
+  )
+
 cat("\nScript 02 execution finished successfully.\n")
 
 # ==============================================================================
@@ -390,7 +404,7 @@ print(p1)
 # Empirical rejection rate under the null — should be ~alpha
 results %>%
   filter(outlier_method == "none") %>%
-  group_by(n_obs, contam_prop) %>%
+  group_by(n_obs, contam_label) %>%
   summarise(
     MIS      = mean(cover_evd, na.rm = TRUE),
     `Cook's D` = mean(cover_cooks, na.rm = TRUE),
@@ -401,7 +415,7 @@ results %>%
   pivot_longer(c(MIS, `Cook's D`, Leverage, DFBETAS),
                names_to = "Method", values_to = "rej_rate") %>%
   ggplot(aes(x = factor(n_obs), y = rej_rate, 
-             color = factor(contam_prop), group = factor(contam_prop))) +
+             color = contam_label, group = contam_label)) +
   geom_point(size = 2) +
   geom_line() +
   geom_hline(yintercept = 0.05, linetype = "dashed", color = "grey50") +
@@ -418,7 +432,7 @@ print(p2)
 # ---------- Plot 3: Power Heatmap — 4-panel (bad_leverage) ----------
 results %>%
   filter(outlier_method == "bad_leverage") %>%
-  group_by(n_obs, contam_prop) %>%
+  group_by(n_obs, contam_label) %>%
   summarise(
     MIS      = mean(cover_evd, na.rm = TRUE),
     `Cook's D` = mean(cover_cooks, na.rm = TRUE),
@@ -428,7 +442,7 @@ results %>%
   ) %>%
   pivot_longer(c(MIS, `Cook's D`, Leverage, DFBETAS),
                names_to = "Method", values_to = "power") %>%
-  ggplot(aes(x = factor(contam_prop), y = factor(n_obs), fill = power)) +
+  ggplot(aes(x = contam_label, y = factor(n_obs), fill = power)) +
   geom_tile(color = "white") +
   geom_text(aes(label = scales::percent(power, accuracy = 1)), size = 3) +
   scale_fill_gradient2(low = "#A32D2D", mid = "#FAC775", high = "#0F6E56",
@@ -443,7 +457,7 @@ print(p3)
 # ---------- Plot 4: Power Curves by Contamination Proportion ----------
 results %>%
   filter(outlier_method != "none") %>%
-  group_by(n_obs, contam_prop, outlier_method) %>%
+  group_by(n_obs, contam_label, outlier_method) %>%
   summarise(
     MIS      = mean(cover_evd, na.rm = TRUE),
     `Cook's D` = mean(cover_cooks, na.rm = TRUE),
@@ -453,13 +467,12 @@ results %>%
   ) %>%
   pivot_longer(c(MIS, `Cook's D`, Leverage, DFBETAS),
                names_to = "Method", values_to = "power") %>%
-  ggplot(aes(x = contam_prop, y = power, color = Method, 
+  ggplot(aes(x = contam_label, y = power, color = Method, 
              linetype = factor(n_obs), group = interaction(Method, n_obs))) +
   geom_point(size = 1.5) +
   geom_line() +
   facet_wrap(~outlier_method) +
   scale_y_continuous(labels = scales::percent, limits = c(0, 1)) +
-  scale_x_continuous(labels = scales::percent) +
   labs(title = "Power vs Contamination Proportion",
        x = "Contamination Proportion (k/n)", y = "Power (Coverage Rate)",
        color = "Method", linetype = "n") +
@@ -470,7 +483,7 @@ print(p4)
 # ---------- Plot 5: Detection Heatmap — MIS vs Classical (bad_leverage) ----------
 results %>%
   filter(outlier_method == "bad_leverage") %>%
-  group_by(n_obs, contam_prop) %>%
+  group_by(n_obs, contam_label) %>%
   summarise(
     MIS      = mean(detection_success, na.rm = TRUE),
     `Cook's D` = mean(detect_cooks, na.rm = TRUE),
@@ -480,13 +493,13 @@ results %>%
   ) %>%
   pivot_longer(c(MIS, `Cook's D`, Leverage, DFBETAS),
                names_to = "Method", values_to = "det") %>%
-  ggplot(aes(x = factor(contam_prop), y = factor(n_obs), fill = det)) +
+  ggplot(aes(x = contam_label, y = factor(n_obs), fill = det)) +
   geom_tile(color = "white") +
   geom_text(aes(label = scales::percent(det, accuracy = 1)), size = 3) +
   scale_fill_gradient2(low = "#A32D2D", mid = "#FAC775", high = "#0F6E56",
                        midpoint = 0.5, labels = scales::percent) +
   facet_wrap(~Method) +
-  labs(title = "Detection Success: Bad Leverage (Top-K Overlap >= 80%)",
+  labs(title = "Detection Success: Bad Leverage (Top-K Overlap >= 90%)",
        x = "Contamination Proportion", y = "Sample Size (n)") +
   theme_minimal(base_size = 10) -> p5
 print(p5)
@@ -508,12 +521,12 @@ print(p6)
 
 # ---------- Plot 7: Effective block_count across the grid ----------
 results %>%
-  group_by(n_obs, contam_prop) %>%
+  group_by(n_obs, contam_label) %>%
   summarise(
     med_blocks = median(block_count),
     .groups = "drop"
   ) %>%
-  ggplot(aes(x = factor(contam_prop), y = factor(n_obs), fill = med_blocks)) +
+  ggplot(aes(x = contam_label, y = factor(n_obs), fill = med_blocks)) +
   geom_tile(color = "white") +
   geom_text(aes(label = round(med_blocks)), size = 4) +
   scale_fill_gradient(low = "#FAC775", high = "#0F6E56") +
