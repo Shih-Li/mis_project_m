@@ -237,3 +237,153 @@ fit_gev_robust <- function(bmx) {
   
   return(NULL)
 }
+
+#' Exact EVT Inference with Configurable GEV Fitting Strategy
+#'
+#' Extends \code{evt_iter_dm} with a \code{gev_method} parameter to enable
+#' fair comparison between the unconstrained robust cascade and Paper 1's
+#' constrained tail estimation. Block maxima are always computed via the
+#' exact Dinkelbach method (\code{exact_dfb_bmx}); only the GEV fitting
+#' strategy differs.
+#'
+#' @param y Numeric vector; response variable.
+#' @param x Numeric vector; primary predictor variable.
+#' @param Z Numeric matrix; covariates to be marginalized out.
+#' @param set Integer vector; indices of the influential set being tested.
+#' @param block_count Integer; number of blocks for block maxima approach
+#'        (default = 20).
+#' @param gev_method Character; GEV fitting strategy.
+#'        \code{"robust"} (default): unconstrained 5-attempt cascade via
+#'        \code{fit_gev_robust} — identical to \code{evt_iter_dm}.
+#'        \code{"constrained"}: Paper 1 Section 3.3 approach — estimates
+#'        marginal tail indices from block maxima of X and R separately,
+#'        constrains DFBETA GEV shape to max(xi_x, xi_r) if Frechet.
+#'
+#' @return A 1-row data.frame with columns: shape, scale, loc, set_dfb,
+#'         p_value, converged. Same structure as \code{evt_iter_dm}.
+#' @importFrom evd fgev pgev
+#' @export
+evt_iter_dm_v2 <- function(y, x, Z, set, block_count = 20,
+                           gev_method = "robust") {
+  
+  # Failure template
+  fail_row <- data.frame(
+    shape   = NA_real_,
+    scale   = NA_real_,
+    loc     = NA_real_,
+    set_dfb = NA_real_,
+    p_value = NA_real_,
+    converged = FALSE,
+    stringsAsFactors = FALSE
+  )
+  
+  if (!gev_method %in% c("robust", "constrained")) {
+    stop(sprintf("Unknown gev_method: '%s'. Use 'robust' or 'constrained'.",
+                 gev_method))
+  }
+  
+  # ------------------------------------------------------------------
+  # 1. FWL Orthogonalization
+  # ------------------------------------------------------------------
+  fwl_vars <- fwl(y = y, X = x, Z = Z)
+  Y_fwl <- fwl_vars[, 1]
+  X_fwl <- fwl_vars[, 2]
+  R_fwl <- residuals(lm(Y_fwl ~ X_fwl - 1))
+  
+  # ------------------------------------------------------------------
+  # 2. True DFBETA of the target set
+  # ------------------------------------------------------------------
+  set_dfb <- dfbeta_numeric(Y_fwl, cbind(X_fwl), set, col_X = 1L)
+  
+  # ------------------------------------------------------------------
+  # 3. Exact block maxima via Dinkelbach
+  # ------------------------------------------------------------------
+  bmx <- tryCatch(
+    exact_dfb_bmx(X = X_fwl, R = R_fwl, set = set,
+                  block_count = block_count),
+    error = function(e) NULL
+  )
+  if (is.null(bmx) || length(bmx) < 3) return(fail_row)
+  
+  # ------------------------------------------------------------------
+  # 4. GEV fitting — method-dependent
+  # ------------------------------------------------------------------
+  if (gev_method == "robust") {
+    # ---- Unconstrained: identical to evt_iter_dm ----
+    fit_evd <- tryCatch(fit_gev_robust(abs(bmx)), error = function(e) NULL)
+    if (is.null(fit_evd) || fit_evd$estimate["scale"] <= 0) return(fail_row)
+    
+    xi    <- fit_evd$estimate["shape"]
+    sigma <- fit_evd$estimate["scale"]
+    mu    <- fit_evd$estimate["loc"]
+    
+  } else {
+    # ---- Constrained: Paper 1 §3.3 tail estimation ----
+    
+    # 4a. Marginal block maxima of X_fwl and R_fwl (excluding set)
+    X_inf <- X_fwl[-set]
+    R_inf <- R_fwl[-set]
+    block_size <- length(X_inf) %/% block_count
+    
+    if (block_size < 2L) return(fail_row)
+    
+    bm_X <- apply(make_blocks(X_inf, block_size), 2, max)
+    bm_R <- apply(make_blocks(R_inf, block_size), 2, max)
+    
+    # 4b. Fit marginal GEVs
+    x_evd <- tryCatch(evd::fgev(bm_X), error = function(e) NULL)
+    r_evd <- tryCatch(evd::fgev(bm_R), error = function(e) NULL)
+    
+    # 4c. Check Frechet: lower 95% CI bound > 0
+    is_x_frechet <- if (!is.null(x_evd)) {
+      (x_evd$estimate["shape"] - 1.96 * x_evd$std.err["shape"]) > 0
+    } else {
+      FALSE
+    }
+    
+    is_r_frechet <- if (!is.null(r_evd)) {
+      (r_evd$estimate["shape"] - 1.96 * r_evd$std.err["shape"]) > 0
+    } else {
+      FALSE
+    }
+    
+    # 4d. Tail coefficient: max of significant marginal shapes
+    tail_coef <- max(
+      is_x_frechet * x_evd$estimate["shape"],
+      is_r_frechet * r_evd$estimate["shape"]
+    )
+    
+    # 4e. Fit DFBETA GEV with constrained shape
+    fit_evd <- tryCatch(
+      evd::fgev(abs(bmx), shape = tail_coef),
+      error = function(e) NULL
+    )
+    if (is.null(fit_evd) || fit_evd$estimate["scale"] <= 0) return(fail_row)
+    
+    fit_evd$estimate["shape"] <- tail_coef
+    
+    xi    <- tail_coef
+    sigma <- fit_evd$estimate["scale"]
+    mu    <- fit_evd$estimate["loc"]
+  }
+  
+  # ------------------------------------------------------------------
+  # 5. P-value
+  # ------------------------------------------------------------------
+  p_val <- 1 - evd::pgev(q = abs(set_dfb), loc = mu, scale = sigma,
+                         shape = xi)
+  if (!is.finite(p_val)) p_val <- NA_real_
+  
+  # ------------------------------------------------------------------
+  # 6. Return
+  # ------------------------------------------------------------------
+  data.frame(
+    shape     = unname(xi),
+    scale     = unname(sigma),
+    loc       = unname(mu),
+    set_dfb   = unname(set_dfb),
+    p_value   = unname(p_val),
+    converged = is.finite(p_val),
+    stringsAsFactors = FALSE
+  )
+}

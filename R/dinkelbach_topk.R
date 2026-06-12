@@ -235,3 +235,121 @@ dinkelbach_topk_lm <- function(mod, pos = 2L, sign = 1L, k = 1L) {
 
   return(result$indices)
 }
+
+#' Exact MIS Detection with Iterative Refinement (Dinkelbach + Refit)
+#'
+#' Wraps \code{dinkelbach_topk_lm} with the same iterative refinement
+#' strategy used by \code{fast_sens_topk}: remove the current top-k,
+#' refit on the complement, re-project via FWL using the clean model,
+#' then re-run the Dinkelbach solver on all N observations. This isolates
+#' the algorithm choice (Dinkelbach vs Sherman-Morrison) from the
+#' refinement choice, enabling a clean 2x2 factorial comparison.
+#'
+#' @param mod   A fitted lm object.
+#' @param pos   Integer; column position of the target coefficient in the
+#'              design matrix (default = 2).
+#' @param sign  Integer; +1 or -1 direction for influence maximisation.
+#' @param k     Integer; number of most influential observations to return.
+#' @param max_refine Integer; maximum refinement iterations (default = 5).
+#'        Set to 0 to get single-shot behaviour identical to
+#'        \code{dinkelbach_topk_lm}.
+#'
+#' @return Integer vector of length k — the row indices of the k most
+#'         influential observations. Same return type as
+#'         \code{dinkelbach_topk_lm} and \code{fast_sens_topk}.
+#' @export
+dinkelbach_topk_refined <- function(mod, pos = 2L, sign = 1L, k = 1L,
+                                    max_refine = 5L) {
+  
+  # ------------------------------------------------------------------
+  # Step 0: Initial single-shot Dinkelbach (no refinement)
+  # ------------------------------------------------------------------
+  top_idx <- dinkelbach_topk_lm(mod, pos = pos, sign = sign, k = k)
+  
+  # Early exit: no refinement needed for k=1 or if disabled
+  if (k <= 1L || max_refine == 0L) return(top_idx)
+  
+  X <- stats::model.matrix(mod)
+  y <- stats::model.response(stats::model.frame(mod))
+  N <- nrow(X)
+  p <- ncol(X)
+  
+  Z_cols <- setdiff(seq_len(p), pos)
+  
+  # ------------------------------------------------------------------
+  # Steps 1+: Iterative refinement
+  #
+  # Same loop structure as fast_sens_topk, but the inner ranking step
+  # uses Dinkelbach (exact linear-fractional solver on the full-length
+  # clean FWL vectors) instead of Sherman-Morrison LOO scores.
+  #
+  # At each iteration:
+  #   a. Remove current top-k from the data.
+  #   b. Refit the nuisance (Z) regression on the clean complement.
+  #   c. Apply the clean Z projection to ALL N observations to get
+  #      x_fwl and y_fwl under the clean model.
+  #   d. Compute beta_j from the clean FWL (complement only).
+  #   e. Compute residuals for ALL N observations.
+  #   f. Run dinkelbach_topk on the full-length vectors.
+  #
+  # This unmasking works because: after removing the current outlier
+  # candidates, the clean FWL projection is no longer distorted by
+  # their collective influence, so previously masked outliers become
+  # visible to the Dinkelbach solver.
+  # ------------------------------------------------------------------
+  for (iter in seq_len(max_refine)) {
+    prev_idx <- top_idx
+    
+    keep   <- setdiff(seq_len(N), top_idx)
+    X_keep <- X[keep, , drop = FALSE]
+    y_keep <- y[keep]
+    
+    # Rank check on the reduced design matrix
+    qr_keep <- qr(X_keep)
+    if (qr_keep$rank < p) break
+    
+    # ---- FWL on clean subset, applied to all N ----
+    if (length(Z_cols) == 0L) {
+      # No nuisance regressors — trivial case (p == 1)
+      x_fwl <- X[, pos]
+      beta_j <- sum(x_fwl[keep] * y_keep) / sum(x_fwl[keep]^2)
+      r_fwl  <- y - x_fwl * beta_j
+    } else {
+      Z_all   <- X[, Z_cols, drop = FALSE]
+      Z_clean <- X_keep[, Z_cols, drop = FALSE]
+      
+      # Fit Z regression on clean subset only
+      qr_Z_clean <- qr(Z_clean)
+      
+      # Projection coefficients from clean Z
+      gamma_x <- qr.coef(qr_Z_clean, X_keep[, pos])
+      gamma_y <- qr.coef(qr_Z_clean, y_keep)
+      
+      # Apply clean projection to ALL N observations
+      x_fwl <- X[, pos] - Z_all %*% gamma_x
+      y_fwl <- y - Z_all %*% gamma_y
+      
+      # Beta_j from clean FWL values (complement only)
+      beta_j <- sum(x_fwl[keep] * y_fwl[keep]) / sum(x_fwl[keep]^2)
+      r_fwl  <- y_fwl - x_fwl * beta_j
+    }
+    
+    # ---- Dinkelbach on full-length clean FWL vectors ----
+    sum_x2_full <- sum(x_fwl^2)
+    
+    result <- dinkelbach_topk(
+      x      = x_fwl,
+      r      = r_fwl,
+      k      = k,
+      sgn    = as.integer(sign),
+      sum_x2 = sum_x2_full
+    )
+    
+    top_idx <- result$indices
+    
+    # Convergence: selected set hasn't changed
+    if (setequal(top_idx, prev_idx)) break
+  }
+  
+  return(top_idx)
+}

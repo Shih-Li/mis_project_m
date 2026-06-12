@@ -11,7 +11,8 @@
 #' @param N Integer. Sample size.
 #' @param architecture String. One of "simple", "complex", "interaction", 
 #'        "triple_interaction", "nonlinear_nuisance", "collinear_interaction",
-#'        "sparse_binary_interaction", "polynomial_interaction", "high_k_interaction".
+#'        "sparse_binary_interaction", "polynomial_interaction", "high_k_interaction",
+#'        "plm_confounded", "plm_nonlinear".
 #' @param rho Numeric in (0,1). Correlation between X and M for collinear_interaction. 
 #'            Default 0.8.
 #' @param beta_target Numeric. The true effect size of the parameter of interest.
@@ -112,6 +113,43 @@ generate_scaling_dgp <- function(N, architecture, beta_target = 1.0, rho = 0.8) 
     # BUT the estimated model is linear (Misspecification test)
     form <- as.formula(y ~ X + Z)
     target_pos <- 2 
+    
+  } else if (architecture == "plm_confounded") {
+    Z1 <- runif(N); Z2 <- runif(N); Z3 <- runif(N)
+    Z4 <- runif(N); Z5 <- runif(N)
+    
+    # h0(Z) linear: X = h0(Z) + v
+    v <- X  # reuse base X as the innovation term
+    h0 <- 0.5 * Z1 + 0.3 * Z2
+    X <- h0 + v
+    
+    # g0(Z) linear
+    g0 <- Z1 + 1.5 * Z2 + 0.5 * Z3
+    
+    y <- beta_target * X + g0 + epsilon
+    data <- data.frame(y = y, X = X, Z1 = Z1, Z2 = Z2,
+                       Z3 = Z3, Z4 = Z4, Z5 = Z5)
+    form <- as.formula(y ~ X + Z1 + Z2 + Z3 + Z4 + Z5)
+    target_pos <- 2
+    
+  } else if (architecture == "plm_nonlinear") {
+    Z1 <- runif(N); Z2 <- runif(N); Z3 <- runif(N)
+    Z4 <- runif(N); Z5 <- runif(N)
+    
+    # h0(Z) nonlinear (Paper A5: 0.5*sin(2*pi*Z1) - 0.2*Z2^2)
+    v <- X
+    h0 <- 0.5 * sin(2 * pi * Z1) - 0.2 * Z2^2
+    X <- h0 + v
+    
+    # g0(Z) nonlinear (Paper A5: 2*sin(2*pi*Z1) + 1.5*Z2^2 + Z3*Z4)
+    g0 <- 2 * sin(2 * pi * Z1) + 1.5 * Z2^2 + Z3 * Z4
+    
+    y <- beta_target * X + g0 + epsilon
+    data <- data.frame(y = y, X = X, Z1 = Z1, Z2 = Z2,
+                       Z3 = Z3, Z4 = Z4, Z5 = Z5)
+    # Estimated model is LINEAR in Z (misspecification)
+    form <- as.formula(y ~ X + Z1 + Z2 + Z3 + Z4 + Z5)
+    target_pos <- 2
     
   } else {
     stop("Unknown architecture")

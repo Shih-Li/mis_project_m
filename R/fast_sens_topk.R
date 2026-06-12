@@ -126,3 +126,111 @@ fast_sens_topk <- function(mod, pos, sign, k, max_refine = 5) {
 
   return(top_idx)
 }
+
+#' Diagnostic Version of Fast Influence Detection with Refinement Trace
+#'
+#' Identical computation to \code{fast_sens_topk}, but records the selected
+#' set at each refinement step. Feeds into \code{nestedness_trace} for
+#' analysing set stability across refinement rounds and architectures.
+#'
+#' @param mod  An lm object.
+#' @param pos  Integer; position of the target coefficient in the design matrix.
+#' @param sign Integer; +1 or -1 direction for ranking.
+#' @param k    Integer; number of top influential observations to return.
+#' @param max_refine Integer; maximum refinement iterations (default = 5).
+#'
+#' @return A list with components:
+#'   \item{indices}{Integer vector of length k — identical to
+#'                  \code{fast_sens_topk(mod, pos, sign, k, max_refine)}.}
+#'   \item{n_refine}{Integer — number of refinement iterations performed.}
+#'   \item{set_history}{List of integer vectors — the selected set at each
+#'                      step. First element is the one-shot result (step 0),
+#'                      subsequent elements are after each refinement round.}
+#'   \item{converged}{Logical — whether the set stabilised before
+#'                    \code{max_refine}.}
+#' @export
+fast_sens_topk_diag <- function(mod, pos, sign, k, max_refine = 5) {
+  X <- model.matrix(mod)
+  y <- model.response(model.frame(mod))
+  N <- nrow(X)
+  p <- ncol(X)
+  
+  # ------------------------------------------------------------------
+  # Step 0: One-shot leave-one-out ranking
+  # ------------------------------------------------------------------
+  qr_x <- mod$qr
+  if (is.null(qr_x)) qr_x <- qr(X)
+  R_qr <- qr.R(qr_x)
+  
+  beta <- coef(mod)
+  res  <- residuals(mod)
+  hat  <- rowSums(qr.Q(qr_x)^2)
+  
+  XX_inv <- chol2inv(R_qr)
+  leverage_col <- as.numeric(XX_inv[pos, , drop = FALSE] %*% t(X))
+  
+  beta_i_pos <- beta[pos] - leverage_col * res / pmax(1 - hat, 1e-12)
+  scores <- beta_i_pos * sign
+  
+  top_idx <- order(scores, decreasing = TRUE, method = "radix")[1:k]
+  
+  # Tracking state
+  set_history <- list(top_idx)
+  did_converge <- FALSE
+  n_refine_done <- 0L
+  
+  # Early exit: no refinement needed for k=1 or if disabled
+  if (k <= 1 || max_refine == 0) {
+    return(list(
+      indices     = top_idx,
+      n_refine    = 0L,
+      set_history = set_history,
+      converged   = TRUE
+    ))
+  }
+  
+  # ------------------------------------------------------------------
+  # Steps 1+: Iterative refinement
+  # ------------------------------------------------------------------
+  for (iter in seq_len(max_refine)) {
+    prev_idx <- top_idx
+    n_refine_done <- iter
+    
+    keep   <- setdiff(seq_len(N), top_idx)
+    X_keep <- X[keep, , drop = FALSE]
+    y_keep <- y[keep]
+    
+    qr_keep <- qr(X_keep)
+    if (qr_keep$rank < p) break
+    
+    beta_clean <- qr.coef(qr_keep, y_keep)
+    XX_inv_clean <- chol2inv(qr.R(qr_keep))
+    
+    lev_col_clean <- as.numeric(XX_inv_clean[pos, , drop = FALSE] %*% t(X))
+    res_clean     <- y - X %*% beta_clean
+    h_clean       <- rowSums((X %*% XX_inv_clean) * X)
+    
+    denom <- rep(NA_real_, N)
+    denom[keep]    <- pmax(1 - h_clean[keep], 1e-12)
+    denom[top_idx] <- 1 + h_clean[top_idx]
+    
+    delta_pos <- lev_col_clean * res_clean / denom
+    scores_refined <- delta_pos * sign
+    
+    top_idx <- order(scores_refined, decreasing = TRUE, method = "radix")[1:k]
+    
+    set_history[[length(set_history) + 1L]] <- top_idx
+    
+    if (setequal(top_idx, prev_idx)) {
+      did_converge <- TRUE
+      break
+    }
+  }
+  
+  list(
+    indices     = top_idx,
+    n_refine    = n_refine_done,
+    set_history = set_history,
+    converged   = did_converge
+  )
+}
