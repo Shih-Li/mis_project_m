@@ -5,7 +5,8 @@ Thumbs.db
 .RData
 .Ruserdata
 .Rproj.user/
-.vscode/           
+.vscode/
+.Rproj           
 
 # LaTeX 
 *.aux
