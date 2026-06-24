@@ -36,12 +36,18 @@
 #
 # Figure design rules:
 #   - No title or subtitle inside plots; captions are handled in LaTeX.
-#   - Full empirical distributions are shown with violin densities.
-#   - Arithmetic means are marked explicitly; no boxplots or median lines.
+#   - Full empirical coefficient-error distributions are shown using
+#   iteration-level points on a signed pseudo-logarithmic scale.
+#   - Arithmetic means are the primary summaries.
+#   - Medians are shown only as secondary markers of skewness and
+#   are not used as headline performance measures.
 #   - Labels, legends, facets, and margins are sized for formal papers.
 #   - No red-green palette is used.
-#   - Diverging heatmaps use orange-white-blue:
-#       orange = MIS-SAP worse, blue = MIS-SAP better.
+#   - Large-error heatmaps use blue-white-orange:
+#          blue = lower exceedance probability;
+#          orange = higher exceedance probability.
+#   - Main Figure 2 focuses on MIS-SAP.
+#   - The all-estimator large-error heatmap is supplementary.
 #
 # Table design rules:
 #   - Tables are complete \begin{table}[H] environments.
@@ -136,10 +142,6 @@ PNG_DPI <- 320
 
 # True coefficient used by the current Script 04 simulation.
 TRUE_BETA <- 1
-
-# Main coefficient figure displays the central 99% of finite estimates.
-# A full-range coefficient-distribution figure is also saved in the supplement.
-COEF_MAIN_QUANTILES <- c(0.005, 0.995)
 
 # Main selected-k figure displays the central 99.5% of finite selected-k values.
 # A full-range data file remains available.
@@ -1365,11 +1367,13 @@ utils::write.csv(
 
 
 # ==============================================================================
-# 6. Main Figure 1: coefficient-estimate distributions
+# 6. Main Figure 1: coefficient-error distributions and heavy tails
 # ==============================================================================
 
-coef_plot_data <- coefficient_long %>%
-  filter(is.finite(coefficient)) %>%
+# Keep every finite coefficient error.
+# No trimming, Winsorization, or quantile-based removal is applied.
+coef_finite <- coefficient_long %>%
+  filter(is.finite(signed_error)) %>%
   add_outlier_display() %>%
   mutate(
     estimator_label = factor(
@@ -1379,246 +1383,707 @@ coef_plot_data <- coefficient_long %>%
   )
 
 
-coef_distribution_summary <- coefficient_long %>%
+coef_distribution_summary <- coef_finite %>%
   group_by(
     outlier_method,
-    estimator_id, estimator_label, estimator_order
+    outlier_label_plot,
+    estimator_id,
+    estimator_label,
+    estimator_order
   ) %>%
   summarise(
-    n_valid = sum(is.finite(coefficient)),
-    mean_coefficient = safe_mean(coefficient),
-    sd_coefficient = safe_sd(coefficient),
+    n_finite = n(),
+    
+    # Primary arithmetic-mean summary
+    mean_error = safe_mean(signed_error),
+    
+    # Shown only to reveal skewness and mean-median separation
+    median_error = stats::median(
+      signed_error,
+      na.rm = TRUE
+    ),
+    
+    q05 = safe_quantile(signed_error, 0.05),
+    q25 = safe_quantile(signed_error, 0.25),
+    q75 = safe_quantile(signed_error, 0.75),
+    q95 = safe_quantile(signed_error, 0.95),
+    
     .groups = "drop"
-  ) %>%
-  add_outlier_display() %>%
-  mutate(
-    estimator_label = factor(
-      estimator_label,
-      levels = estimator_meta$estimator_label
-    )
   )
-
-
-coef_limits <- c(
-  safe_quantile(
-    coef_plot_data$coefficient,
-    COEF_MAIN_QUANTILES[[1L]]
-  ),
-  safe_quantile(
-    coef_plot_data$coefficient,
-    COEF_MAIN_QUANTILES[[2L]]
-  )
-)
-
-coef_limits[[1L]] <- min(coef_limits[[1L]], TRUE_BETA, na.rm = TRUE)
-coef_limits[[2L]] <- max(coef_limits[[2L]], TRUE_BETA, na.rm = TRUE)
-
-coef_padding <- 0.04 * diff(coef_limits)
-
-if (!is.finite(coef_padding) || coef_padding <= 0) {
-  coef_padding <- 0.1
-}
-
-coef_limits <- coef_limits + c(-coef_padding, coef_padding)
-
-n_coef_outside_main <- sum(
-  coef_plot_data$coefficient < coef_limits[[1L]] |
-    coef_plot_data$coefficient > coef_limits[[2L]],
-  na.rm = TRUE
-)
 
 
 fig1_coef <- ggplot(
-  coef_plot_data,
-  aes(x = coefficient, y = estimator_label)
+  coef_finite,
+  aes(
+    x = signed_error,
+    y = estimator_label
+  )
 ) +
-  geom_violin(
-    fill = COL_VIOLIN,
-    colour = COL_GREY_DARK,
-    linewidth = 0.25,
-    scale = "width",
-    trim = TRUE,
-    na.rm = TRUE
+  
+  # Zero means that the estimated coefficient equals TRUE_BETA
+  geom_vline(
+    xintercept = 0,
+    linetype = "dashed",
+    linewidth = 0.55,
+    colour = COL_ORANGE
   ) +
+  
+  # Central 90% interval
   geom_segment(
     data = coef_distribution_summary,
     aes(
-      x = mean_coefficient - sd_coefficient,
-      xend = mean_coefficient + sd_coefficient,
+      x = q05,
+      xend = q95,
       y = estimator_label,
       yend = estimator_label
     ),
     inherit.aes = FALSE,
-    colour = COL_BLUE,
-    linewidth = 0.65,
-    na.rm = TRUE
+    linewidth = 0.55,
+    colour = COL_GREY
   ) +
+  
+  # Interquartile interval
+  geom_segment(
+    data = coef_distribution_summary,
+    aes(
+      x = q25,
+      xend = q75,
+      y = estimator_label,
+      yend = estimator_label
+    ),
+    inherit.aes = FALSE,
+    linewidth = 2.2,
+    colour = COL_BLUE_LIGHT
+  ) +
+  
+  # Individual finite Monte Carlo estimates
+  geom_point(
+    position = position_jitter(
+      width = 0,
+      height = 0.11,
+      seed = 84
+    ),
+    alpha = 0.10,
+    size = 0.55,
+    colour = COL_BLUE
+  ) +
+  
+  # Arithmetic mean: primary summary
   geom_point(
     data = coef_distribution_summary,
     aes(
-      x = mean_coefficient,
+      x = mean_error,
       y = estimator_label
     ),
     inherit.aes = FALSE,
     shape = 21,
-    size = 2.2,
-    stroke = 0.45,
-    fill = COL_BLUE,
-    colour = COL_BLACK,
-    na.rm = TRUE
+    size = 2.4,
+    stroke = 0.5,
+    fill = COL_BLUE_DARK,
+    colour = COL_BLACK
   ) +
-  geom_vline(
-    xintercept = TRUE_BETA,
-    colour = COL_ORANGE,
-    linetype = "dashed",
-    linewidth = 0.75
+  
+  # Median: secondary marker used only to display skewness
+  geom_point(
+    data = coef_distribution_summary,
+    aes(
+      x = median_error,
+      y = estimator_label
+    ),
+    inherit.aes = FALSE,
+    shape = 23,
+    size = 2.3,
+    stroke = 0.6,
+    fill = "white",
+    colour = COL_BLACK
   ) +
+  
   facet_wrap(
     ~ outlier_label_plot,
     ncol = 2,
     scales = "fixed"
   ) +
-  coord_cartesian(
-    xlim = coef_limits,
-    clip = "on"
+  
+  # Preserves negative values and zero while compressing extreme tails
+  scale_x_continuous(
+    trans = scales::pseudo_log_trans(
+      base = 10,
+      sigma = 1
+    ),
+    breaks = c(
+      -1e8, -1e6, -1e4, -1e2,
+      0,
+      1e2, 1e4, 1e6, 1e8
+    ),
+    labels = c(
+      expression(-10^8),
+      expression(-10^6),
+      expression(-10^4),
+      expression(-10^2),
+      "0",
+      expression(10^2),
+      expression(10^4),
+      expression(10^6),
+      expression(10^8)
+    )
   ) +
+  
   labs(
-    x = expression(hat(beta)),
-    y = NULL
+    x = expression(
+      hat(beta) - beta[0] ~ "(signed pseudo-log scale)"
+    ),
+    y = NULL,
+    caption = paste(
+      "Faint points: Monte Carlo estimates;",
+      "filled circles: means;",
+      "open diamonds: medians;",
+      "thick and thin intervals: 25th–75th and 5th–95th percentiles."
+    )
   ) +
-  theme_distribution() +
+  
+  theme_distribution(base_size = 9.5) +
+  
   theme(
-    legend.position = "none"
+    legend.position = "none",
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank(),
+    
+    axis.text.x = element_text(
+      size = 8,
+      margin = margin(t = 4)
+    ),
+    
+    axis.title.x = element_text(
+      margin = margin(t = 10)
+    ),
+    
+    plot.caption = element_text(
+      hjust = 0,
+      size = 7.5,
+      margin = margin(t = 10)
+    ),
+    
+    plot.margin = margin(
+      t = 8,
+      r = 16,
+      b = 22,
+      l = 8
+    )
   )
 
 
 save_plot(
   fig1_coef,
-  file.path(fig_main_dir, "04_fig1_coefficient_distributions.pdf"),
-  width = 10.4,
-  height = 7.6
+  file.path(
+    fig_main_dir,
+    "04_fig1_coefficient_error_distributions.pdf"
+  ),
+  width = 12.0,
+  height = 8.0
 )
+
 
 utils::write.csv(
   coef_distribution_summary,
-  file.path(data_dir, "04_fig1_coefficient_distribution_summary.csv"),
+  file.path(
+    data_dir,
+    "04_fig1_coe_distribution_summary.csv"
+  ),
   row.names = FALSE
 )
 
+# ==============================================================================
+# 7. Main Figure 2: DGP conditions associated with large MIS-SAP errors
+# ==============================================================================
 
-# Full-range version for supplementary material.
-figA0_coef_full <- fig1_coef +
-  coord_cartesian(clip = "on")
+# ------------------------------------------------------------------------------
+# Figure 2 statistical settings
+# ------------------------------------------------------------------------------
 
-save_plot(
-  figA0_coef_full,
+# Since TRUE_BETA = 1, an absolute coefficient error greater than 0.5
+# represents an error of at least half the true coefficient magnitude.
+TAIL_ERROR_THRESHOLD <- 0.5
+
+# Used to identify problematic DGP cells for the supplementary
+# all-estimator heatmap.
+PROBLEM_RATE_CUTOFF <- 0.05
+
+
+# ------------------------------------------------------------------------------
+# Figure 2 adjustable graphical settings
+# ------------------------------------------------------------------------------
+
+FIG2_MAIN_NCOL <- 2L
+
+FIG2_MAIN_TILE_WIDTH  <- 0.96
+FIG2_MAIN_TILE_HEIGHT <- 0.92
+FIG2_MAIN_TILE_TEXT_SIZE <- 3.0
+
+FIG2_MAIN_X_TEXT_SIZE <- 8.2
+FIG2_MAIN_Y_TEXT_SIZE <- 8.8
+FIG2_MAIN_STRIP_TEXT_SIZE <- 10.5
+
+FIG2_MAIN_LEGEND_WIDTH_CM  <- 9.5
+FIG2_MAIN_LEGEND_HEIGHT_CM <- 0.45
+
+FIG2_MAIN_WIDTH_IN  <- 11.2
+FIG2_MAIN_HEIGHT_IN <- 7.4
+
+
+# ------------------------------------------------------------------------------
+# Remove obsolete Figure 2 outputs
+# ------------------------------------------------------------------------------
+
+obsolete_fig2_files <- c(
   file.path(
-    fig_supp_dir,
-    "04_figA0_coefficient_distributions_full_range.pdf"
+    fig_main_dir,
+    "04_fig2_bias_coverage_tradeoff.pdf"
   ),
-  width = 10.4,
-  height = 7.6
+  file.path(
+    data_dir,
+    "04_fig2_bias_coverage_tradeoff_data.csv"
+  ),
+  file.path(
+    fig_main_dir,
+    "04_fig2_large_error_dgp_heatmap.pdf"
+  ),
+  file.path(
+    data_dir,
+    "04_fig2_large_error_dgp_heatmap_data.csv"
+  )
 )
 
+obsolete_fig2_files <- obsolete_fig2_files[
+  file.exists(obsolete_fig2_files)
+]
 
-# ==============================================================================
-# 7. Main Figure 2: mean absolute bias versus coverage
-# ==============================================================================
+if (length(obsolete_fig2_files) > 0L) {
+  unlink(obsolete_fig2_files)
+  
+  cat(
+    "Removed obsolete Figure 2 file(s):\n",
+    paste0(
+      "  - ",
+      obsolete_fig2_files,
+      collapse = "\n"
+    ),
+    "\n",
+    sep = ""
+  )
+}
 
-performance_plot_data <- estimation_broad %>%
+
+# ------------------------------------------------------------------------------
+# Summarise large-error frequency for every estimator and exact DGP cell
+# ------------------------------------------------------------------------------
+
+tail_cell_summary <- coefficient_long %>%
+  mutate(
+    finite_error = is.finite(signed_error),
+    
+    large_error = ifelse(
+      finite_error,
+      abs(signed_error) > TAIL_ERROR_THRESHOLD,
+      NA
+    ),
+    
+    positive_large_error = ifelse(
+      finite_error,
+      signed_error > TAIL_ERROR_THRESHOLD,
+      NA
+    ),
+    
+    negative_large_error = ifelse(
+      finite_error,
+      signed_error < -TAIL_ERROR_THRESHOLD,
+      NA
+    )
+  ) %>%
+  group_by(
+    x_type,
+    error_type,
+    outlier_method,
+    estimator_id,
+    estimator_label,
+    estimator_order
+  ) %>%
+  summarise(
+    n_total = n(),
+    n_finite = sum(finite_error),
+    
+    exceedance_rate = safe_mean(
+      as.numeric(large_error)
+    ),
+    
+    mcse_exceedance = safe_prop_mcse(
+      as.numeric(large_error)
+    ),
+    
+    positive_exceedance_rate = safe_mean(
+      as.numeric(positive_large_error)
+    ),
+    
+    negative_exceedance_rate = safe_mean(
+      as.numeric(negative_large_error)
+    ),
+    
+    nonfinite_rate = mean(!finite_error),
+    
+    .groups = "drop"
+  )
+
+
+# ------------------------------------------------------------------------------
+# Identify problematic DGP cells for the supplementary all-estimator figure
+# ------------------------------------------------------------------------------
+
+problem_dgp_cells <- tail_cell_summary %>%
+  group_by(
+    x_type,
+    error_type,
+    outlier_method
+  ) %>%
+  summarise(
+    maximum_exceedance_rate = if (
+      any(is.finite(exceedance_rate))
+    ) {
+      max(
+        exceedance_rate,
+        na.rm = TRUE
+      )
+    } else {
+      NA_real_
+    },
+    
+    .groups = "drop"
+  ) %>%
   filter(
-    is.finite(mean_abs_bias),
-    is.finite(coverage_rate)
+    is.finite(maximum_exceedance_rate),
+    maximum_exceedance_rate >= PROBLEM_RATE_CUTOFF
+  )
+
+
+# ------------------------------------------------------------------------------
+# Shared cell-label function
+# ------------------------------------------------------------------------------
+
+add_tail_annotations <- function(data) {
+  data %>%
+    mutate(
+      dominant_tail = case_when(
+        !is.finite(exceedance_rate) ~ "",
+        
+        exceedance_rate <= 0 ~ "",
+        
+        positive_exceedance_rate -
+          negative_exceedance_rate >= 0.01 ~ "+",
+        
+        negative_exceedance_rate -
+          positive_exceedance_rate >= 0.01 ~ "\u2212",
+        
+        TRUE ~ "\u00B1"
+      ),
+      
+      tile_label = case_when(
+        !is.finite(exceedance_rate) ~ "NA",
+        
+        dominant_tail == "" ~ scales::percent(
+          exceedance_rate,
+          accuracy = 1
+        ),
+        
+        TRUE ~ paste0(
+          scales::percent(
+            exceedance_rate,
+            accuracy = 1
+          ),
+          "\n",
+          dominant_tail
+        )
+      ),
+      
+      label_colour = ifelse(
+        is.finite(exceedance_rate) &
+          exceedance_rate >= 0.25,
+        "white",
+        COL_BLACK
+      )
+    )
+}
+
+
+# ------------------------------------------------------------------------------
+# Shared blue-white-orange fill scale
+# ------------------------------------------------------------------------------
+
+tail_fill_scale <- function(legend_title) {
+  scale_fill_gradientn(
+    colours = c(
+      COL_BLUE_LIGHT,
+      COL_NEUTRAL,
+      COL_ORANGE,
+      COL_ORANGE_DARK
+    ),
+    
+    values = scales::rescale(
+      c(
+        0,
+        PROBLEM_RATE_CUTOFF,
+        0.25,
+        1
+      )
+    ),
+    
+    limits = c(0, 1),
+    oob = scales::squish,
+    na.value = COL_GREY_LIGHT,
+    
+    # Avoid placing 0%, 5%, and 10% too close together.
+    breaks = c(
+      0,
+      0.10,
+      0.25,
+      0.50,
+      1
+    ),
+    
+    labels = scales::label_percent(
+      accuracy = 1
+    ),
+    
+    name = legend_title
+  )
+}
+
+
+# ------------------------------------------------------------------------------
+# MIS-SAP data for the main-paper heatmap
+# ------------------------------------------------------------------------------
+
+tail_mis_sap_data <- tail_cell_summary %>%
+  filter(
+    estimator_id == "mis_sap"
   ) %>%
   add_outlier_display() %>%
   mutate(
-    estimator_id = factor(
-      estimator_id,
-      levels = estimator_meta$estimator_id
+    predictor_label = factor(
+      unname(
+        x_labels_table[
+          as.character(x_type)
+        ]
+      ),
+      levels = rev(
+        unname(
+          x_labels_table[x_order]
+        )
+      )
+    ),
+    
+    error_label = factor(
+      unname(
+        error_labels_table[
+          as.character(error_type)
+        ]
+      ),
+      levels = unname(
+        error_labels_table[error_order]
+      )
+    )
+  ) %>%
+  add_tail_annotations() %>%
+  arrange(
+    outlier_method,
+    x_type,
+    error_type
+  )
+
+
+# ------------------------------------------------------------------------------
+# Main Figure 2: MIS-SAP only
+# ------------------------------------------------------------------------------
+
+fig2_mis_sap_tail <- ggplot(
+  tail_mis_sap_data,
+  aes(
+    x = error_label,
+    y = predictor_label,
+    fill = exceedance_rate
+  )
+) +
+  geom_tile(
+    colour = "white",
+    linewidth = 0.55,
+    width = FIG2_MAIN_TILE_WIDTH,
+    height = FIG2_MAIN_TILE_HEIGHT
+  ) +
+  
+  geom_text(
+    aes(
+      label = tile_label,
+      colour = label_colour
+    ),
+    size = FIG2_MAIN_TILE_TEXT_SIZE,
+    lineheight = 0.88,
+    show.legend = FALSE
+  ) +
+  
+  facet_wrap(
+    ~outlier_label_plot,
+    ncol = FIG2_MAIN_NCOL,
+    drop = TRUE
+  ) +
+  
+  tail_fill_scale(
+    paste0(
+      "MIS-SAP probability that absolute\n",
+      "coefficient error exceeds ",
+      TAIL_ERROR_THRESHOLD
+    )
+  ) +
+  
+  scale_colour_identity() +
+  
+  scale_x_discrete(
+    drop = FALSE,
+    expand = expansion(
+      mult = c(0.01, 0.01)
+    )
+  ) +
+  
+  scale_y_discrete(
+    drop = FALSE,
+    expand = expansion(
+      mult = c(0.02, 0.02)
+    )
+  ) +
+  
+  labs(
+    x = "Error distribution",
+    y = "Predictor distribution"
+  ) +
+  
+  guides(
+    fill = guide_colourbar(
+      title.position = "top",
+      title.hjust = 0.5,
+      label.position = "bottom",
+      barwidth = grid::unit(
+        FIG2_MAIN_LEGEND_WIDTH_CM,
+        "cm"
+      ),
+      barheight = grid::unit(
+        FIG2_MAIN_LEGEND_HEIGHT_CM,
+        "cm"
+      ),
+      ticks = TRUE
+    )
+  ) +
+  
+  theme_heatmap(base_size = 10) +
+  
+  theme(
+    legend.position = "bottom",
+    legend.justification = "center",
+    
+    axis.text.x = element_text(
+      angle = 35,
+      hjust = 1,
+      vjust = 1,
+      size = FIG2_MAIN_X_TEXT_SIZE,
+      colour = COL_BLACK
+    ),
+    
+    axis.text.y = element_text(
+      size = FIG2_MAIN_Y_TEXT_SIZE,
+      colour = COL_BLACK
+    ),
+    
+    axis.title.x = element_text(
+      colour = COL_BLACK,
+      margin = margin(t = 10)
+    ),
+    
+    axis.title.y = element_text(
+      colour = COL_BLACK,
+      margin = margin(r = 10)
+    ),
+    
+    strip.text = element_text(
+      size = FIG2_MAIN_STRIP_TEXT_SIZE,
+      face = "bold",
+      colour = COL_BLACK,
+      margin = margin(
+        t = 5,
+        b = 5
+      )
+    ),
+    
+    legend.title = element_text(
+      size = 9.5,
+      colour = COL_BLACK,
+      hjust = 0.5
+    ),
+    
+    legend.text = element_text(
+      size = 8.5,
+      colour = COL_BLACK
+    ),
+    
+    panel.spacing = grid::unit(
+      1.2,
+      "lines"
+    ),
+    
+    plot.margin = margin(
+      t = 8,
+      r = 14,
+      b = 14,
+      l = 10
     )
   )
 
 
-fig2_tradeoff <- ggplot(
-  performance_plot_data,
-  aes(
-    x = mean_abs_bias,
-    y = coverage_rate,
-    colour = estimator_id,
-    shape = estimator_id
-  )
-) +
-  geom_hline(
-    yintercept = 0.95,
-    colour = COL_GREY_DARK,
-    linetype = "dashed",
-    linewidth = 0.6
-  ) +
-  geom_point(
-    size = 2.8,
-    stroke = 0.7
-  ) +
-  geom_text(
-    aes(label = estimator_short),
-    nudge_y = 0.025,
-    size = 2.55,
-    show.legend = FALSE,
-    check_overlap = FALSE
-  ) +
-  facet_wrap(
-    ~ outlier_label_plot,
-    ncol = 2
-  ) +
-  scale_x_continuous(
-    trans = scales::pseudo_log_trans(
-      base = 10,
-      sigma = 0.001
-    ),
-    labels = scales::label_number(accuracy = 0.001)
-  ) +
-  scale_y_continuous(
-    limits = c(0, 1.06),
-    breaks = seq(0, 1, by = 0.2),
-    labels = scales::label_percent(accuracy = 1)
-  ) +
-  scale_colour_manual(
-    values = method_colors,
-    breaks = estimator_meta$estimator_id,
-    labels = estimator_meta$estimator_label,
-    drop = FALSE
-  ) +
-  scale_shape_manual(
-    values = method_shapes,
-    breaks = estimator_meta$estimator_id,
-    labels = estimator_meta$estimator_label,
-    drop = FALSE
-  ) +
-  labs(
-    x = "Mean absolute bias",
-    y = "Empirical 95% CI coverage",
-    colour = "Estimator",
-    shape = "Estimator"
-  ) +
-  theme_paper() +
-  theme(
-    legend.position = "none",
-    plot.margin = margin(10, 14, 10, 10)
-  )
-
-
 save_plot(
-  fig2_tradeoff,
-  file.path(fig_main_dir, "04_fig2_bias_coverage_tradeoff.pdf"),
-  width = 10.4,
-  height = 7.4
+  fig2_mis_sap_tail,
+  file.path(
+    fig_main_dir,
+    "04_fig2_mis_sap_large_error_dgp_heatmap.pdf"
+  ),
+  width = FIG2_MAIN_WIDTH_IN,
+  height = FIG2_MAIN_HEIGHT_IN
 )
 
+
+# ------------------------------------------------------------------------------
+# Save Figure 2 data
+# ------------------------------------------------------------------------------
+
 utils::write.csv(
-  performance_plot_data,
-  file.path(data_dir, "04_fig2_bias_coverage_tradeoff_data.csv"),
+  tail_mis_sap_data,
+  file.path(
+    data_dir,
+    "04_fig2_mis_sap_large_error_dgp_heatmap_data.csv"
+  ),
   row.names = FALSE
 )
 
+utils::write.csv(
+  tail_cell_summary,
+  file.path(
+    data_dir,
+    "04_fig2_large_error_summary_all_cells.csv"
+  ),
+  row.names = FALSE
+)
+
+utils::write.csv(
+  problem_dgp_cells,
+  file.path(
+    data_dir,
+    "04_fig2_problem_dgp_cells.csv"
+  ),
+  row.names = FALSE
+)
 
 # ==============================================================================
 # 8. Main Figure 3: selected-k distributions
@@ -1686,7 +2151,8 @@ if (!is.finite(k_upper) || k_upper <= 0) {
 k_upper <- k_upper * 1.05
 
 n_k_outside_main <- sum(
-  selection_plot_data$selected_k > k_upper,
+  selection_plot_data$selected_k < 0 |
+    selection_plot_data$selected_k > k_upper,
   na.rm = TRUE
 )
 
@@ -2186,7 +2652,34 @@ figA1_bias <- ggplot(
       base = 10,
       sigma = 0.001
     ),
-    labels = scales::label_number(accuracy = 0.001)
+    
+    # Short, interpretable labels for the very wide bias range
+    breaks = c(
+      0,
+      1,
+      1e2,
+      1e4,
+      1e6,
+      1e8
+    ),
+    
+    labels = c(
+      "0",
+      "1",
+      "100",
+      "10K",
+      "1M",
+      "100M"
+    ),
+    
+    expand = expansion(
+      mult = c(0.01, 0.03)
+    ),
+    
+    # Final protection against accidental overlap
+    guide = guide_axis(
+      check.overlap = TRUE
+    )
   ) +
   labs(
     x = "Absolute coefficient bias",
@@ -2194,7 +2687,35 @@ figA1_bias <- ggplot(
   ) +
   theme_distribution() +
   theme(
-    legend.position = "none"
+    legend.position = "none",
+    
+    axis.text.x = element_text(
+      size = 8,
+      colour = COL_BLACK,
+      margin = margin(t = 5)
+    ),
+    
+    axis.title.x = element_text(
+      colour = COL_BLACK,
+      margin = margin(t = 10)
+    ),
+    
+    axis.text.y = element_text(
+      colour = COL_BLACK
+    ),
+    
+    # More separation between the two facet columns
+    panel.spacing.x = grid::unit(
+      1.6,
+      "lines"
+    ),
+    
+    plot.margin = margin(
+      t = 8,
+      r = 18,
+      b = 16,
+      l = 8
+    )
   )
 
 
@@ -2204,7 +2725,7 @@ save_plot(
     fig_supp_dir,
     "04_figA1_absolute_bias_distributions.pdf"
   ),
-  width = 10.4,
+  width = 11.5,
   height = 7.6
 )
 
@@ -2221,6 +2742,8 @@ utils::write.csv(
 
 selected_methods_for_sensitivity <- c(
   "full",
+  "cd",
+  "lev",
   "dfb",
   "mis_alpha",
   "mis_peel",
@@ -2253,6 +2776,57 @@ bias_by_error <- estimation_cell %>%
     )
   )
 
+compact_pseudolog_breaks <- function(limits) {
+  finite_limits <- limits[is.finite(limits)]
+  
+  if (length(finite_limits) == 0L) {
+    return(0)
+  }
+  
+  upper <- max(finite_limits)
+  
+  if (!is.finite(upper) || upper <= 0) {
+    return(0)
+  }
+  
+  exponent_max <- ceiling(log10(upper))
+  exponent_min <- floor(
+    log10(max(upper / 1000, 1e-12))
+  )
+  
+  exponents <- seq(
+    exponent_min,
+    exponent_max
+  )
+  
+  if (length(exponents) > 4L) {
+    exponents <- exponents[
+      unique(round(seq(
+        1,
+        length(exponents),
+        length.out = 4
+      )))
+    ]
+  }
+  
+  sort(unique(c(
+    0,
+    10^exponents
+  )))
+}
+
+
+compact_scientific_labels <- function(x) {
+  ifelse(
+    x == 0,
+    "0",
+    formatC(
+      x,
+      format = "e",
+      digits = 0
+    )
+  )
+}
 
 figA2_bias_error <- ggplot(
   bias_by_error,
@@ -2279,12 +2853,23 @@ figA2_bias_error <- ggplot(
     ncol = 2,
     scales = "free_y"
   ) +
+  scale_x_discrete(
+    drop = FALSE,
+    guide = guide_axis(
+      n.dodge = 2,
+      check.overlap = FALSE
+    )
+  ) +
   scale_y_continuous(
     trans = scales::pseudo_log_trans(
       base = 10,
       sigma = 0.001
     ),
-    labels = scales::label_number(accuracy = 0.001)
+    breaks = compact_pseudolog_breaks,
+    labels = compact_scientific_labels,
+    expand = expansion(
+      mult = c(0.02, 0.08)
+    )
   ) +
   scale_colour_manual(
     values = method_colors,
@@ -2312,11 +2897,48 @@ figA2_bias_error <- ggplot(
     linetype = "Estimator"
   ) +
   theme_paper() +
+  theme_paper() +
   theme(
     axis.text.x = element_text(
-      angle = 35,
-      hjust = 1,
-      vjust = 1
+      angle = 0,
+      hjust = 0.5,
+      vjust = 1,
+      size = 8,
+      lineheight = 0.9,
+      colour = COL_BLACK,
+      margin = margin(t = 5)
+    ),
+    
+    axis.text.y = element_text(
+      size = 8,
+      colour = COL_BLACK
+    ),
+    
+    axis.title.x = element_text(
+      colour = COL_BLACK,
+      margin = margin(t = 12)
+    ),
+    
+    axis.title.y = element_text(
+      colour = COL_BLACK,
+      margin = margin(r = 10)
+    ),
+    
+    panel.spacing.x = grid::unit(
+      1.5,
+      "lines"
+    ),
+    
+    panel.spacing.y = grid::unit(
+      1.5,
+      "lines"
+    ),
+    
+    plot.margin = margin(
+      t = 8,
+      r = 16,
+      b = 16,
+      l = 10
     )
   ) +
   guides(
@@ -2332,8 +2954,8 @@ save_plot(
     fig_supp_dir,
     "04_figA2_mean_bias_by_error_distribution.pdf"
   ),
-  width = 11.0,
-  height = 7.5
+  width = 12.5,
+  height = 8.2
 )
 
 utils::write.csv(
@@ -2970,6 +3592,282 @@ utils::write.csv(
   row.names = FALSE
 )
 
+# ==============================================================================
+# 18b. Supplementary Figure A9:
+#      all-estimator large-error DGP heatmap
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Adjustable supplementary-figure settings
+# ------------------------------------------------------------------------------
+
+FIGA9_NCOL <- 1L
+
+FIGA9_TILE_WIDTH  <- 0.98
+FIGA9_TILE_HEIGHT <- 0.92
+FIGA9_TILE_TEXT_SIZE <- 2.45
+
+FIGA9_X_TEXT_SIZE <- 7.2
+FIGA9_Y_TEXT_SIZE <- 8.4
+FIGA9_STRIP_TEXT_SIZE <- 10.5
+
+FIGA9_LEGEND_WIDTH_CM  <- 11.0
+FIGA9_LEGEND_HEIGHT_CM <- 0.48
+
+FIGA9_WIDTH_IN  <- 16.0
+FIGA9_HEIGHT_IN <- 13.5
+
+
+# ------------------------------------------------------------------------------
+# Ordered combined DGP labels
+# ------------------------------------------------------------------------------
+
+dgp_label_levels <- tidyr::expand_grid(
+  x_type = x_order,
+  error_type = error_order
+) %>%
+  mutate(
+    dgp_label = paste0(
+      "Predictor: ",
+      unname(
+        x_labels_table[
+          as.character(x_type)
+        ]
+      ),
+      "\n",
+      "Error: ",
+      unname(
+        error_labels_table[
+          as.character(error_type)
+        ]
+      )
+    )
+  ) %>%
+  pull(dgp_label)
+
+
+# ------------------------------------------------------------------------------
+# All-estimator supplementary data
+# ------------------------------------------------------------------------------
+
+tail_all_estimator_data <- tail_cell_summary %>%
+  semi_join(
+    problem_dgp_cells,
+    by = c(
+      "x_type",
+      "error_type",
+      "outlier_method"
+    )
+  ) %>%
+  add_outlier_display() %>%
+  mutate(
+    dgp_label = paste0(
+      "Predictor: ",
+      unname(
+        x_labels_table[
+          as.character(x_type)
+        ]
+      ),
+      "\n",
+      "Error: ",
+      unname(
+        error_labels_table[
+          as.character(error_type)
+        ]
+      )
+    ),
+    
+    dgp_label = factor(
+      dgp_label,
+      levels = dgp_label_levels
+    ),
+    
+    # Reverse levels so OLS appears at the top.
+    estimator_label = factor(
+      estimator_label,
+      levels = rev(
+        estimator_meta$estimator_label
+      )
+    )
+  ) %>%
+  add_tail_annotations() %>%
+  arrange(
+    outlier_method,
+    estimator_order,
+    x_type,
+    error_type
+  )
+
+
+# ------------------------------------------------------------------------------
+# Supplementary Figure A9
+# ------------------------------------------------------------------------------
+
+figA9_all_estimators_tail <- ggplot(
+  tail_all_estimator_data,
+  aes(
+    x = dgp_label,
+    y = estimator_label,
+    fill = exceedance_rate
+  )
+) +
+  geom_tile(
+    colour = "white",
+    linewidth = 0.45,
+    width = FIGA9_TILE_WIDTH,
+    height = FIGA9_TILE_HEIGHT
+  ) +
+  
+  geom_text(
+    aes(
+      label = tile_label,
+      colour = label_colour
+    ),
+    size = FIGA9_TILE_TEXT_SIZE,
+    lineheight = 0.86,
+    show.legend = FALSE
+  ) +
+  
+  facet_wrap(
+    ~outlier_label_plot,
+    ncol = FIGA9_NCOL,
+    scales = "free_x",
+    drop = TRUE
+  ) +
+  
+  tail_fill_scale(
+    paste0(
+      "Probability that absolute\n",
+      "coefficient error exceeds ",
+      TAIL_ERROR_THRESHOLD
+    )
+  ) +
+  
+  scale_colour_identity() +
+  
+  scale_x_discrete(
+    drop = TRUE,
+    expand = expansion(
+      mult = c(0.002, 0.002)
+    )
+  ) +
+  
+  scale_y_discrete(
+    drop = FALSE,
+    expand = expansion(
+      mult = c(0.01, 0.01)
+    )
+  ) +
+  
+  labs(
+    x = paste(
+      "Data-generating process:",
+      "predictor and error distributions"
+    ),
+    y = "Estimator"
+  ) +
+  
+  guides(
+    fill = guide_colourbar(
+      title.position = "top",
+      title.hjust = 0.5,
+      label.position = "bottom",
+      barwidth = grid::unit(
+        FIGA9_LEGEND_WIDTH_CM,
+        "cm"
+      ),
+      barheight = grid::unit(
+        FIGA9_LEGEND_HEIGHT_CM,
+        "cm"
+      ),
+      ticks = TRUE
+    )
+  ) +
+  
+  theme_heatmap(base_size = 10) +
+  
+  theme(
+    legend.position = "bottom",
+    legend.justification = "center",
+    
+    axis.text.x = element_text(
+      angle = 40,
+      hjust = 1,
+      vjust = 1,
+      size = FIGA9_X_TEXT_SIZE,
+      lineheight = 0.9,
+      colour = COL_BLACK
+    ),
+    
+    axis.text.y = element_text(
+      size = FIGA9_Y_TEXT_SIZE,
+      colour = COL_BLACK
+    ),
+    
+    axis.title.x = element_text(
+      colour = COL_BLACK,
+      margin = margin(t = 12)
+    ),
+    
+    axis.title.y = element_text(
+      colour = COL_BLACK,
+      margin = margin(r = 10)
+    ),
+    
+    strip.text = element_text(
+      size = FIGA9_STRIP_TEXT_SIZE,
+      face = "bold",
+      colour = COL_BLACK,
+      margin = margin(
+        t = 6,
+        b = 6
+      )
+    ),
+    
+    legend.title = element_text(
+      size = 9.5,
+      colour = COL_BLACK,
+      hjust = 0.5
+    ),
+    
+    legend.text = element_text(
+      size = 8.5,
+      colour = COL_BLACK
+    ),
+    
+    panel.spacing.y = grid::unit(
+      1.4,
+      "lines"
+    ),
+    
+    plot.margin = margin(
+      t = 10,
+      r = 16,
+      b = 18,
+      l = 12
+    )
+  )
+
+
+save_plot(
+  figA9_all_estimators_tail,
+  file.path(
+    fig_supp_dir,
+    "04_figA9_large_error_dgp_heatmap_all_estimators.pdf"
+  ),
+  width = FIGA9_WIDTH_IN,
+  height = FIGA9_HEIGHT_IN
+)
+
+
+utils::write.csv(
+  tail_all_estimator_data,
+  file.path(
+    data_dir,
+    "04_figA9_large_error_dgp_heatmap_all_estimators_data.csv"
+  ),
+  row.names = FALSE
+)
 
 # ==============================================================================
 # 19. Supplementary tables
@@ -3215,7 +4113,14 @@ publication_summaries <- list(
   method_health = method_health,
   sap_stop_data = sap_stop_data,
   figure1_summary = coef_distribution_summary,
-  figure2_data = performance_plot_data,
+  
+  figure2_data = tail_mis_sap_data,
+  figure2_mis_sap_data = tail_mis_sap_data,
+  figure2_full_tail_summary = tail_cell_summary,
+  figure2_problem_dgp_cells = problem_dgp_cells,
+  
+  figureA9_all_estimator_tail_data = tail_all_estimator_data,
+  
   figure3_summary = selection_distribution_summary,
   figure4_summary = overlap_distribution_summary
 )
@@ -3230,6 +4135,15 @@ saveRDS(
 # 21. Diagnostics, clipping audit, and manifest
 # ==============================================================================
 
+n_coef_finite_displayed <- sum(
+  is.finite(coefficient_long$signed_error)
+)
+
+n_coef_nonfinite_excluded <- sum(
+  !is.finite(coefficient_long$signed_error)
+)
+
+
 input_audit <- data.frame(
   item = c(
     "Rows in primary RDS",
@@ -3238,22 +4152,24 @@ input_audit <- data.frame(
     "Unique contamination mechanisms",
     "Unique Monte Carlo iteration IDs",
     "Maximum recorded-versus-recomputed bias difference",
-    "Coefficient observations outside main-figure x limits",
+    "Finite coefficient errors displayed in Figure 1",
+    "Non-finite coefficient errors excluded from Figure 1",
     "Selected-k observations outside main-figure x limits",
     "Optional summary RDS present",
     "Optional bias-summary RDS present"
   ),
   value = c(
-    nrow(sim),
-    length(unique(sim$x_type)),
-    length(unique(sim$error_type)),
-    length(unique(sim$outlier_method)),
-    length(unique(sim$iter)),
-    max_bias_difference,
-    n_coef_outside_main,
-    n_k_outside_main,
-    file.exists(input_summary_optional),
-    file.exists(input_bias_optional)
+    as.character(nrow(sim)),
+    as.character(length(unique(sim$x_type))),
+    as.character(length(unique(sim$error_type))),
+    as.character(length(unique(sim$outlier_method))),
+    as.character(length(unique(sim$iter))),
+    as.character(max_bias_difference),
+    as.character(n_coef_finite_displayed),
+    as.character(n_coef_nonfinite_excluded),
+    as.character(n_k_outside_main),
+    ifelse(file.exists(input_summary_optional), "yes", "no"),
+    ifelse(file.exists(input_bias_optional), "yes", "no")
   ),
   stringsAsFactors = FALSE
 )
@@ -3267,31 +4183,33 @@ utils::write.csv(
 
 clipping_audit <- data.frame(
   figure = c(
-    "04_fig1_coefficient_distributions",
+    "04_fig1_coefficient_error_distributions",
     "04_fig3_selected_k_distributions"
   ),
   lower_limit = c(
-    coef_limits[[1L]],
+    NA_real_,
     0
   ),
   upper_limit = c(
-    coef_limits[[2L]],
+    NA_real_,
     k_upper
   ),
   observations_outside_display = c(
-    n_coef_outside_main,
+    0L,
     n_k_outside_main
   ),
   note = c(
     paste0(
-      "Main figure uses central ",
-      100 * diff(COEF_MAIN_QUANTILES),
-      "% display range; full-range supplementary figure is also saved."
+      "No finite coefficient errors are clipped. ",
+      "All finite values are displayed using a signed pseudo-logarithmic axis. ",
+      n_coef_nonfinite_excluded,
+      " non-finite coefficient errors are excluded and reported separately."
     ),
     paste0(
-      "Main figure upper limit uses the ",
+      "The Figure 3 display limit is based on the ",
       100 * K_MAIN_UPPER_QUANTILE,
-      "th percentile and includes the true-k reference."
+      "th percentile, enlarged when necessary to include the true-k reference, ",
+      "with an additional 5% plotting margin."
     )
   ),
   stringsAsFactors = FALSE
@@ -3303,56 +4221,29 @@ utils::write.csv(
   row.names = FALSE
 )
 
-
-writeLines(
-  capture.output(sessionInfo()),
-  file.path(diag_dir, "04_session_info.txt")
+cat(
+  "Main coefficient figure uses a signed pseudo-logarithmic axis ",
+  "with no clipping of finite coefficient errors.\n",
+  sep = ""
 )
 
-
-manifest_paths <- list.files(
-  output_root,
-  recursive = TRUE,
-  full.names = TRUE,
-  include.dirs = FALSE
-)
-
-manifest <- data.frame(
-  relative_path = substring(
-    manifest_paths,
-    nchar(output_root) + 2L
-  ),
-  size_bytes = file.info(manifest_paths)$size,
-  modified_time = as.character(file.info(manifest_paths)$mtime),
-  stringsAsFactors = FALSE
-) %>%
-  arrange(relative_path)
-
-utils::write.csv(
-  manifest,
-  file.path(diag_dir, "04_output_manifest.csv"),
-  row.names = FALSE
-)
-
-
-cat("\nScript 84 completed successfully.\n")
-cat("Primary input:\n  ", input_main, "\n", sep = "")
-cat("Output root:\n  ", output_root, "\n", sep = "")
 cat(sprintf(
-  "Main coefficient figure display limits: [%.4f, %.4f]\n",
-  coef_limits[[1L]],
-  coef_limits[[2L]]
+  "Finite coefficient errors displayed in Figure 1: %d\n",
+  n_coef_finite_displayed
 ))
+
 cat(sprintf(
-  "Coefficient observations outside main display: %d\n",
-  n_coef_outside_main
+  "Non-finite coefficient errors excluded from Figure 1: %d\n",
+  n_coef_nonfinite_excluded
 ))
+
 cat(sprintf(
   "Selected-k observations outside main display: %d\n",
   n_k_outside_main
 ))
+
 cat(
-  "All headline summaries use arithmetic means; ",
-  "no median-based headline output was generated.\n",
+  "Arithmetic means remain the primary summaries; ",
+  "medians in Figure 1 are secondary markers of distributional skewness.\n",
   sep = ""
 )

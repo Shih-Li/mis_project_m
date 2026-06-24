@@ -717,7 +717,7 @@ p_fig2 <- ggplot(
   ) +
   labs(
     x = NULL,
-    y = "Top-k overlap with injected set"
+    y = "MIS top-k recovery with injected set"
   ) +
   theme_paper(base_size = 10.5) +
   theme(
@@ -741,7 +741,7 @@ save_plot(
 diag_long <- diag_02b %>%
   transmute(
     error_label,
-    `Top-k overlap` = overlap_mis,
+    `MIS top-k recovery` = overlap_mis,
     `log2 absolute DFBETA ratio` = log2_dfb_ratio,
     `log2 leverage ratio` = log2_leverage_ratio,
     `log2 residual ratio` = log2_residual_ratio
@@ -755,13 +755,13 @@ diag_long <- diag_02b %>%
     metric = factor(
       metric,
       levels = c(
-        "Top-k overlap",
+        "MIS top-k recovery",
         "log2 absolute DFBETA ratio",
         "log2 leverage ratio",
         "log2 residual ratio"
       ),
       labels = c(
-        "Top-k overlap",
+        "MIS top-k recovery",
         "log2 |DFBETA detected / injected|",
         "log2 leverage detected / injected",
         "log2 residual detected / injected"
@@ -782,7 +782,7 @@ diag_summary <- diag_long %>%
 reference_lines <- data.frame(
   metric = factor(
     c(
-      "Top-k overlap",
+      "MIS top-k recovery",
       "log2 |DFBETA detected / injected|",
       "log2 leverage detected / injected",
       "log2 residual detected / injected"
@@ -886,7 +886,7 @@ p_figA1 <- ggplot(
     limits = c(0, 1),
     oob = scales::squish,
     labels = scales::label_percent(accuracy = 1),
-    name = "Top-k overlap"
+    name = "MIS top-k recovery"
   ) +
   scale_colour_identity() +
   labs(
@@ -1001,7 +1001,13 @@ p_figA3 <- ggplot(
     limits = c(0, 1),
     oob = scales::squish,
     labels = scales::label_percent(accuracy = 1),
-    name = "Top-k overlap"
+    name = "Injected observations recovered\namong MIS top-k selections",
+    guide = guide_colourbar(
+      title.position = "top",
+      title.hjust = 0.5,
+      barwidth = grid::unit(5, "cm"),
+      barheight = grid::unit(0.35, "cm")
+    )
   ) +
   labs(
     x = "log2 leverage: MIS-selected / injected",
