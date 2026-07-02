@@ -1,8 +1,11 @@
 \documentclass[12pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage{times}            
-\usepackage{setspace}
-\usepackage{float}        
+\usepackage{setspace}    
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}  
+\usepackage{siunitx}  
 \onehalfspacing
 \usepackage{subfiles}
 \usepackage[backend=biber, style=apa]{biblatex}
@@ -15,6 +18,13 @@
 \maketitle
 
 \subfile{tex_sections/section1_introduction.tex}
+
+\subfile{tex_sections/section4_simulation.tex}
+
+
+\clearpage
+\appendix
+\subfile{tex_sections/appendixA.tex}
 
 \newpage
 \printbibliography

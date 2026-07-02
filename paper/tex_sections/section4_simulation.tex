@@ -1,0 +1,53 @@
+\documentclass[../main.tex]{subfiles}
+\begin{document}
+	
+\section{Simulation Results}
+\label{sec:simulation}
+
+\subsection{Detection Performance}
+\label{subsec:detection-performance}
+
+The detection pattern was consistent with the coefficient-specific objective of MIS rather than with generic outlier identification. Under bad leverage, MIS recovered an average of (92.9\%) of the injected observations, compared with (76.0\%) for the best-performing classical diagnostic, corresponding to an advantage of (16.9) percentage points (Table~\ref{tab:02-detection-power-summary}). This advantage remained positive throughout the sample-size and contamination grid, ranging from approximately (8.0) to (14.9) percentage points in Figure~\ref{fig:02-mis-advantage}. In contrast, MIS recovered (26.6\%) of vertical outliers and (36.9\%) of good-leverage observations, respectively (21.2) and (33.2) percentage points below the best classical diagnostic. These lower recovery rates are expected because vertical displacement and leverage aligned with the empirical regression relation need not materially influence the coefficient of interest. The heatmap shows that this selectivity was systematic: the MIS advantage ranged from (-36.0) to (-12.8) percentage points for vertical outliers and from (-45.2) to (-21.9) percentage points for good leverage. Thus, the higher overlap achieved by classical diagnostics in these settings reflects their sensitivity to generic residual or leverage extremeness, whereas MIS concentrates on observations that materially alter the target coefficient. Taken together, the results show that MIS responds most strongly to bad-leverage contamination, for which the injected observations jointly distort the coefficient of interest.
+
+\input{../../output/02_distributional/tables/main/02_tab1_detection_power_summary.tex}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{../../output/02_distributional/figures/main/02_fig1_mis_advantage_heatmap.pdf}
+	\caption{Difference in top-(k) recovery between MIS and the best classical diagnostic across sample sizes, contamination proportions, and contamination mechanisms. Positive values indicate an advantage for MIS.}
+	\label{fig:02-mis-advantage}
+\end{figure}
+
+The near-uniform EVT convergence rate of (99.7\%) across contaminated scenarios indicates that the observed selection pattern was not driven by numerical fitting failures. Instead, it is consistent with substantive differences between coefficient-targeted MIS selection and the broader notions of outlyingness measured by classical diagnostics. Complete distribution-specific comparisons and the diagnostic analysis of the good-leverage mechanism are reported in Appendix~\ref{app}.
+
+
+
+
+
+
+
+
+
+\subsection{Estimation Performance}% 04
+\label{subsec:estimation-performance}
+
+
+
+
+
+
+
+
+
+
+\subsection{EVT-Based Inference}% 03
+\label{subsec:evt-inference}
+
+
+
+
+
+
+
+
+\end{document}
