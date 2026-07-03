@@ -31,6 +31,27 @@ The near-uniform EVT convergence rate of (99.7\%) across contaminated scenarios 
 \subsection{Estimation Performance}% 04
 \label{subsec:estimation-performance}
 
+For point estimation, LTS was the most accurate and stable estimator within the considered simulation designs. Its mean absolute bias ranged from \(0.004\) to \(0.009\) across the four contamination mechanisms, with RMSE between \(0.008\) and \(0.020\). The MM-estimator was the next most stable procedure, with mean absolute bias between \(0.009\) and \(0.020\), although its RMSE was higher, ranging from \(0.137\) to \(0.342\) (Tables~\ref{tab:robust-mean-absolute-bias} and~\ref{tab:robust-rmse}). Figure~\ref{fig:04-coefficient-errors} shows that the coefficient errors of LTS and the MM-estimator remained concentrated near zero under each contamination mechanism. In contrast, OLS, the diagnostic-deletion estimators, and the MIS-based estimators exhibited substantially longer tails. For several MIS procedures, the medians remained close to zero while the arithmetic means were displaced by a small number of extremely large estimates, indicating that their pooled errors were driven primarily by tail failures rather than by persistent central bias.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{../../output/04_robust/figures/main/04_fig1_coefficient_error_distributions.pdf}
+	\caption{Empirical distributions of signed coefficient error across estimators and contamination mechanisms. Faint points represent individual Monte Carlo estimates, filled circles report arithmetic means, open diamonds report medians, and the thick and thin intervals show the 25th--75th and 5th--95th percentiles, respectively. The signed pseudo-logarithmic scale preserves the direction of the error while displaying extreme estimates.}
+	\label{fig:04-coefficient-errors}
+\end{figure}
+
+The large errors of MIS-SAP were concentrated in a small number of identifiable data-generating conditions rather than being uniform across the simulation grid. Outside the GPD designs and the combination of contaminated predictors with bad-leverage contamination, the probability that \(\lvert\widehat{\beta}-\beta_0\rvert>0.5\) was generally zero and did not exceed \(10\%\). In contrast, this probability reached \(100\%\) under GPD errors for every predictor distribution and contamination mechanism. Under bad leverage with contaminated predictors, it ranged from \(50\%\) to \(59\%\) across the non-GPD error distributions (Figure~\ref{fig:04-mis-sap-large-errors}). Consequently, the large pooled bias and RMSE values for MIS-SAP are dominated by these extreme-tail and contaminated-predictor configurations and should not be interpreted as representative of its performance in most design cells.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{../../output/04_robust/figures/main/04_fig2_mis_sap_large_error_dgp_heatmap.pdf}
+	\caption{Probability that the absolute MIS-SAP coefficient error exceeds \(0.5\) across predictor distributions, error distributions, and contamination mechanisms. Darker tiles indicate a higher probability of a large estimation error.}
+	\label{fig:04-mis-sap-large-errors}
+\end{figure}
+
+The main failures occurred under GPD errors and under bad-leverage contamination combined with contaminated predictors. These settings represent applications with extremely heavy-tailed outcomes, such as rare but very large financial losses, insurance claims, or demand shocks, and data containing a mixture of subpopulations or mismeasured covariates together with observations that lie far from the prevailing regression relation. MIS-SAP is therefore least reliable when extreme outcome tails and structurally influential predictor contamination occur simultaneously.
+
+Although the recorded MIS-SAP error rate was \(0.0\%\) across all contamination mechanisms, this result indicates only that the procedure completed without a recorded computational error; it does not imply accurate coefficient estimation. Estimation reliability nevertheless deteriorated in the most demanding designs. Under bad leverage and non-GPD errors, the mean absolute bias ranged from \(0.183\) to \(0.341\), while empirical coverage fell to between \(58.3\%\) and \(62.3\%\). Under GPD errors, the mean absolute bias became extremely large across all contamination mechanisms. The deterioration therefore reflects statistical sensitivity to extreme tails and structurally influential contamination rather than a failure of the numerical implementation. Complete MIS-SAP selection, stopping, and computational diagnostics are reported in Appendix~\ref{app:simulation}.
 
 
 

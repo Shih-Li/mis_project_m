@@ -81,7 +81,147 @@ Finally, adaptive block selection preserved computational feasibility as the inf
 
 \input{../../output/02_distributional/tables/supplement/02_tabA5_block_count_summary.tex}
 
+\subsection{Supplementary Estimation Results}
+\label{app:estimation-results}
 
+\subsubsection{Complete Estimator Comparisons}
+\label{app:estimation-comparisons}
+
+The complete estimator comparisons reinforce the concentration and tail patterns reported in Section~\ref{subsec:estimation-performance}. LTS produced the smallest mean absolute bias under every contamination mechanism, ranging from \(0.004\) to \(0.009\), with RMSE between \(0.008\) and \(0.020\). The MM-estimator was the next most stable procedure, with mean absolute bias between \(0.009\) and \(0.020\), although its RMSE ranged from \(0.137\) to \(0.342\). By contrast, the arithmetic means for OLS, the diagnostic-deletion estimators, and the MIS-based estimators were strongly affected by a small number of extremely large coefficient estimates (Tables~\ref{tab:robust-mean-coefficients}--\ref{tab:robust-rmse}). Figure~\ref{fig:04A-absolute-bias} confirms that these large pooled values primarily reflect heavy upper tails rather than uniformly poor estimation across all Monte Carlo draws.
+
+\input{../../output/04_robust/tables/main/04_tab1_mean_coefficients.tex}
+
+\input{../../output/04_robust/tables/main/04_tab2a_mean_absolute_bias.tex}
+
+\input{../../output/04_robust/tables/main/04_tab2b_rmse.tex}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{../../output/04_robust/figures/supplement/04_figA1_absolute_bias_distributions.pdf}
+	\caption{Empirical distributions of absolute coefficient bias by estimator and contamination mechanism. The pseudo-logarithmic scale displays both the concentration near zero and the extreme upper tails.}
+	\label{fig:04A-absolute-bias}
+\end{figure}
+
+The coverage results show that accurate point estimation and nominal interval coverage did not always coincide. Under bad leverage, OLS coverage fell to \(12.2\%\), while MIS-SAP achieved \(64.8\%\) and the MM-estimator and LTS achieved \(94.7\%\) and \(92.9\%\), respectively (Table~\ref{tab:robust-coverage}). Under good leverage, however, coverage declined to \(72.5\%\) for the MM-estimator and \(69.3\%\) for LTS despite their comparatively small point-estimation errors. Coverage must therefore be interpreted together with bias and RMSE rather than as an independent ranking of estimator quality.
+
+\input{../../output/04_robust/tables/main/04_tab2c_coverage.tex}
+
+
+\subsubsection{Variation across Data-Generating Processes}
+\label{app:estimation-dgp}
+
+The error distribution was the principal source of the extreme pooled estimation errors. Mean absolute bias remained comparatively small for most estimators under the normal, mixed-normal, beta-logistic, skewed-\(t\), contaminated, GOLM, and Pareto errors, but increased by several orders of magnitude under GPD errors (Figure~\ref{fig:04A-bias-error}). The extreme GPD cells consequently dominate the arithmetic summaries reported in Tables~\ref{tab:robust-mean-absolute-bias} and~\ref{tab:robust-rmse}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{../../output/04_robust/figures/supplement/04_figA2_mean_bias_by_error_distribution.pdf}
+	\caption{Mean absolute coefficient bias by estimator, error distribution, and contamination mechanism.}
+	\label{fig:04A-bias-error}
+\end{figure}
+
+Predictor contamination became especially consequential when it was combined with bad leverage. Figure~\ref{fig:04A-bias-x} shows that the contaminated-predictor designs generated the largest non-GPD biases under bad leverage, whereas predictor-distribution differences were more limited under no contamination, vertical outliers, and good leverage. Thus, the deterioration depended on the interaction between the predictor distribution and the contamination mechanism rather than on predictor contamination alone.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{../../output/04_robust/figures/supplement/04_figA3_mean_bias_by_x_distribution.pdf}
+	\caption{Mean absolute coefficient bias by estimator, predictor distribution, and contamination mechanism.}
+	\label{fig:04A-bias-x}
+\end{figure}
+
+The complete large-error grid provides the same interpretation at the estimator--DGP level. Large-error probabilities were concentrated in the GPD designs for several non-robust and deletion-based estimators, while additional deterioration appeared in contaminated-predictor designs under bad leverage (Figure~\ref{fig:04A-large-error-all}). The grid also shows that a favourable result in most regular cells can coexist with a very large pooled RMSE when a small number of DGP cells produce extreme coefficient estimates.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{../../output/04_robust/figures/supplement/04_figA9_large_error_dgp_heatmap_all_estimators.pdf}
+	\caption{Probability that the absolute coefficient error exceeds \(0.5\) by estimator, predictor distribution, error distribution, and contamination mechanism.}
+	\label{fig:04A-large-error-all}
+\end{figure}
+
+
+\subsubsection{Selected Set Size and Detection Overlap}
+\label{app:estimation-selection}
+
+The selection procedures differed substantially in the number of observations removed. The classical diagnostics commonly selected large fractions of the sample: the mean selected set ranged from approximately \(113\) to \(149\) observations for Cook's distance, from \(245\) to \(331\) for leverage, and from \(66\) to \(163\) for DFBETAS. In contrast, the data-adaptive MIS procedures generally selected relatively small sets outside bad-leverage contamination (Figure~\ref{fig:04A-selected-k} and Table~\ref{tab:robust-selected-k}). Under bad leverage, the mean selected set increased to \(33.82\) for adaptive-\(k\) MIS, \(40.36\) for iterative peeling, and \(58.53\) for MIS-SAP, indicating that these procedures responded more strongly when the contamination altered the target coefficient.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{../../output/04_robust/figures/main/04_fig3_selected_k_distributions.pdf}
+	\caption{Distributions of the number of observations selected or removed by each detection procedure across contamination mechanisms.}
+	\label{fig:04A-selected-k}
+\end{figure}
+
+\input{../../output/04_robust/tables/main/04_tab3a_mean_selected_k.tex}
+
+Detection overlap was similarly mechanism dependent. Under bad leverage, the injected-set recovery rates were \(65.7\%\) for adaptive-\(k\) MIS, \(75.0\%\) for iterative peeling, \(58.2\%\) for MIS-SAP, and \(87.8\%\) for oracle-\(k\) MIS (Figure~\ref{fig:04A-overlap} and Table~\ref{tab:robust-detection-overlap}). MIS overlap was much lower under vertical outliers and good leverage, consistent with its focus on observations that jointly alter the target coefficient rather than on generic residual or leverage extremeness. These selection results explain how the estimators formed their retained samples, but they do not by themselves determine the accuracy of the resulting coefficient estimates.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{../../output/04_robust/figures/main/04_fig4_detection_overlap_distributions.pdf}
+	\caption{Distributions of the fraction of injected observations recovered by each detection procedure.}
+	\label{fig:04A-overlap}
+\end{figure}
+
+\input{../../output/04_robust/tables/main/04_tab3b_mean_detection_overlap.tex}
+
+
+\subsubsection{MIS-SAP Selection and Stopping Diagnostics}
+\label{app:mis-sap-diagnostics}
+
+The MIS-SAP stopping behaviour differed sharply between bad leverage and the other contamination mechanisms. Its reported detection rate was \(87.9\%\) under bad leverage, compared with \(4.6\%\) under no contamination, \(4.5\%\) under vertical outliers, and \(3.0\%\) under good leverage (Table~\ref{tab:robust-sap-diagnostics}). These proportions coincide with the shares of runs terminating at the maximum iteration limit in Table~\ref{tab:robust-sap-stop-reasons}. Thus, under bad leverage the global test frequently remained active through the iteration limit, whereas most runs in the other scenarios stopped because the set-level statistic was not significant.
+
+\input{../../output/04_robust/tables/main/04_tab4_sap_diagnostics.tex}
+
+The \(p\)-value distributions support this interpretation. The mean final global \(p\)-value was \(0.076\) under bad leverage, compared with \(0.501\) under no contamination, \(0.515\) under vertical outliers, and \(0.698\) under good leverage. Figure~\ref{fig:04A-sap-pvalues} additionally shows the distinction between the minimum and final global \(p\)-values, indicating that some runs contained an influential intermediate candidate set even when the final stopping decision was not significant.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{../../output/04_robust/figures/supplement/04_figA5_sap_pvalue_distributions.pdf}
+	\caption{Distributions of the minimum and final MIS-SAP global \(p\)-values by contamination mechanism.}
+	\label{fig:04A-sap-pvalues}
+\end{figure}
+
+The stopping-reason distribution makes the contrast explicit. Under bad leverage, \(87.9\%\) of runs reached \texttt{max\_iter}, whereas between \(95.4\%\) and \(97.0\%\) of runs under no contamination, vertical outliers, and good leverage stopped with \texttt{not\_significant} (Figure~\ref{fig:04A-sap-stops} and Table~\ref{tab:robust-sap-stop-reasons}). The large maximum-iteration share under bad leverage should therefore be interpreted as persistent evidence of coefficient influence rather than as a recorded computational error.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.85\textwidth]{../../output/04_robust/figures/supplement/04_figA7_sap_stop_reasons.pdf}
+	\caption{Distribution of MIS-SAP stopping reasons by contamination mechanism.}
+	\label{fig:04A-sap-stops}
+\end{figure}
+
+\input{../../output/04_robust/tables/supplement/04_tabA4_sap_stop_reasons.tex}
+
+The distribution-specific results identify the conditions behind the aggregate MIS-SAP findings. Under bad leverage and non-GPD errors, detection was between \(99.3\%\) and \(100.0\%\), the mean selected set was approximately \(66\)--\(69\), and mean absolute bias ranged from \(0.183\) to \(0.341\). Nevertheless, coverage remained between \(58.3\%\) and \(62.3\%\), showing that frequent detection did not fully restore inferential reliability. Under bad leverage with GPD errors, detection fell to \(4.0\%\), the mean selected set fell to \(0.05\), and mean absolute bias increased to approximately \(5.63\times10^{10}\). GPD errors also produced extremely large bias under vertical-outlier and good-leverage designs, despite an error rate of \(0.0\%\) throughout (Table~\ref{tab:robust-sap-error-distribution}). These results distinguish statistical deterioration from failure to return a finite computational result.
+
+\input{../../output/04_robust/tables/supplement/04_tabA3_sap_by_error_distribution.tex}
+
+MIS-SAP often reduced mean absolute bias relative to OLS in the most difficult cells, particularly under bad leverage, but the size of this relative improvement must be interpreted alongside the absolute error level. Positive values in Figure~\ref{fig:04A-sap-bias-advantage} indicate lower mean absolute bias for MIS-SAP than for OLS. Some of the largest positive differences occur in GPD cells because both procedures produced extremely large errors and MIS-SAP was less inaccurate in relative terms. An advantage over OLS in these cells therefore does not imply that MIS-SAP achieved reliable absolute estimation.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{../../output/04_robust/figures/supplement/04_figA8_sap_bias_advantage_heatmap.pdf}
+	\caption{Difference between the mean absolute bias of OLS and MIS-SAP across predictor distributions, error distributions, and contamination mechanisms. Positive values indicate lower mean absolute bias for MIS-SAP.}
+	\label{fig:04A-sap-bias-advantage}
+\end{figure}
+
+
+\subsubsection{Computational Performance and Numerical Availability}
+\label{app:estimation-computation}
+
+The numerical-availability checks show that the extreme coefficient errors were not caused by missing or non-finite outputs from the MIS procedures. All coefficient, coverage, and runtime values were finite for OLS, the diagnostic-deletion estimators, the four MIS procedures, and LTS. The MM-estimator returned finite coefficient and coverage values in \(99.6\%\) of the \(9{,}600\) recorded rows (Table~\ref{tab:robust-method-health}). Thus, the large errors in the demanding DGPs reflect the statistical behaviour of finite estimates rather than widespread numerical non-convergence.
+
+\input{../../output/04_robust/tables/supplement/04_tabA2_method_health.tex}
+
+The runtime comparisons reveal a substantial computational cost for iterative peeling under bad leverage. Its mean runtime increased from \(5.562\) seconds without contamination to \(56.919\) seconds under bad leverage. In contrast, adaptive-\(k\) MIS and oracle-\(k\) MIS required approximately \(1.37\)--\(1.53\) seconds, while MIS-SAP required approximately \(1.85\)--\(1.95\) seconds across the four mechanisms (Figure~\ref{fig:04A-runtime} and Table~\ref{tab:robust-runtime}). LTS was considerably faster at approximately \(0.11\) seconds per draw, although all MIS procedures were substantially more computationally demanding than OLS and the classical diagnostics.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{../../output/04_robust/figures/supplement/04_figA4_runtime_distributions.pdf}
+	\caption{Distributions of complete runtime per Monte Carlo draw by estimator.}
+	\label{fig:04A-runtime}
+\end{figure}
+
+\input{../../output/04_robust/tables/supplement/04_tabA1_mean_runtime.tex}
 
 
 
