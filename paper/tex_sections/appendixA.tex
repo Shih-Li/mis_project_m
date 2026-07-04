@@ -224,6 +224,132 @@ The runtime comparisons reveal a substantial computational cost for iterative pe
 \input{../../output/04_robust/tables/supplement/04_tabA1_mean_runtime.tex}
 
 
+\subsection{Supplementary EVT-Based Inference and Algorithmic Diagnostics}
+\label{app:evt-results}
+
+\subsubsection{Headline EVT Calibration and Runtime}
+\label{app:evt-calibration-runtime}
+
+The EVT-based inference procedure was stable but conservative under the null. At the nominal \(5\%\) level, empirical rejection was below the nominal benchmark for both GEV fitting methods, and the rejection curves remained below the diagonal across the considered significance levels (Figure~\ref{fig:03-null-calibration} and Table~\ref{tab:03-null-calibration}). This indicates that the EVT approximation did not inflate size in these simulations, although the conservative calibration suggests that finite-sample inference should be interpreted with some caution.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.86\textwidth]{../../output/03_algorithmic/figures/main/03_fig3_null_calibration.pdf}
+	\caption{Null calibration of the EVT-based inference procedure. Empirical rejection rates are plotted against nominal significance levels for the constrained and robust GEV fits.}
+	\label{fig:03-null-calibration}
+\end{figure}
+
+\input{../../output/03_algorithmic/tables/main/03_tab3_null_calibration.tex}
+
+The computational cost of EVT fitting was small relative to the broader simulation design. Median EVT runtimes remained on the order of hundredths of a second across sample sizes, with only modest differences between the constrained and robust GEV configurations (Figure~\ref{fig:03-evt-runtime} and Table~\ref{tab:03-evt-configuration-summary}). The EVT diagnostics therefore suggest that the main limitation is calibration rather than computational feasibility.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.78\textwidth]{../../output/03_algorithmic/figures/main/03_fig2b_evt_runtime.pdf}
+	\caption{Median runtime of the EVT fitting step across sample sizes and GEV configurations. The vertical axis is shown on a logarithmic scale.}
+	\label{fig:03-evt-runtime}
+\end{figure}
+
+\input{../../output/03_algorithmic/tables/main/03_tab2_evt_configuration_summary.tex}
+
+
+\subsubsection{Algorithmic Detection Diagnostics}
+\label{app:algorithmic-detection-diagnostics}
+
+The refined detection procedures recovered influential sets more consistently than their unrefined counterparts. Mean detection overlap stayed close to one for refined methods in the linear and difficult designs, while the unrefined greedy and exact methods deteriorated as the target set size increased (Figure~\ref{fig:03-detection-overlap} and Table~\ref{tab:03-algorithm-summary}). This pattern shows that refinement is important for preserving high overlap when the influential set is larger or the design is more structured.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.92\textwidth]{../../output/03_algorithmic/figures/main/03_fig1_detection_overlap.pdf}
+	\caption{Mean detection overlap across influential-set sizes and design families for the greedy, exact, and refined detection methods.}
+	\label{fig:03-detection-overlap}
+\end{figure}
+
+\input{../../output/03_algorithmic/tables/main/03_tab1_algorithm_summary.tex}
+
+Detection remained computationally feasible across the considered sample sizes. Median detection runtimes increased with \(N\), but the absolute times remained small on the plotted logarithmic scale (Figure~\ref{fig:03-detection-runtime}). The architecture-level breakdown confirms that the refined procedures were generally robust across most designs, with the main deterioration occurring in the more difficult interaction and partially linear settings (Figures~\ref{fig:03A-detection-by-architecture}--\ref{fig:03A-exact-refined-advantage} and Table~\ref{tab:03A-architecture-comparison}).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.78\textwidth]{../../output/03_algorithmic/figures/main/03_fig2a_detection_runtime.pdf}
+	\caption{Median detection runtime across sample sizes for the greedy, exact, and refined detection methods. The vertical axis is shown on a logarithmic scale.}
+	\label{fig:03-detection-runtime}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{../../output/03_algorithmic/figures/supplement/03_figA1_detection_by_architecture.pdf}
+	\caption{Architecture-level detection overlap across influential-set sizes for the greedy, exact, and refined detection methods.}
+	\label{fig:03A-detection-by-architecture}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.92\textwidth]{../../output/03_algorithmic/figures/supplement/03_figA2_exact_refined_advantage_heatmap.pdf}
+	\caption{Difference in detection overlap between the exact-refined and greedy-refined procedures across architectures and influential-set sizes.}
+	\label{fig:03A-exact-refined-advantage}
+\end{figure}
+
+\input{../../output/03_algorithmic/tables/supplement/03_tabA1_architecture_comparison.tex}
+
+
+\subsubsection{Architecture-Level Calibration and Convergence}
+\label{app:evt-architecture-calibration}
+
+The architecture-level calibration results show that the conservative null behavior was not driven by a single design family. At the nominal \(5\%\) level, rejection rates were generally below nominal across architectures and set sizes for both GEV fitting methods (Figure~\ref{fig:03A-calibration-deviation} and Table~\ref{tab:03A-calibration-by-architecture}). The pooled QQ plots give the same interpretation: null \(p\)-values were not systematically anti-conservative, with most deviations reflecting conservative rather than inflated rejection behavior (Figure~\ref{fig:03A-null-pvalue-qq}).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.92\textwidth]{../../output/03_algorithmic/figures/supplement/03_figA3_calibration_deviation_heatmap.pdf}
+	\caption{Deviation of empirical rejection from nominal \(5\%\) size by architecture, set size, and GEV fitting method.}
+	\label{fig:03A-calibration-deviation}
+\end{figure}
+
+\input{../../output/03_algorithmic/tables/supplement/03_tabA2_calibration_by_architecture.tex}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.86\textwidth]{../../output/03_algorithmic/figures/supplement/03_figA5_null_pvalue_qq.pdf}
+	\caption{QQ plots of null \(p\)-values against the uniform reference distribution by design family and GEV fitting method.}
+	\label{fig:03A-null-pvalue-qq}
+\end{figure}
+
+The convergence diagnostics indicate that the robust GEV configuration was the most stable fitting option, while constrained GEV convergence varied more across architectures and sample sizes (Figure~\ref{fig:03A-evt-convergence} and Table~\ref{tab:03A-evt-by-architecture}). These results support using the robust fit as the more numerically reliable EVT implementation, while retaining the constrained fit as a comparison for calibration.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\textwidth]{../../output/03_algorithmic/figures/supplement/03_figA7_evt_convergence_heatmap.pdf}
+	\caption{EVT convergence rates by architecture, sample size, and GEV fitting configuration.}
+	\label{fig:03A-evt-convergence}
+\end{figure}
+
+\input{../../output/03_algorithmic/tables/supplement/03_tabA4_evt_by_architecture.tex}
+
+
+\subsubsection{Nestedness, Collinearity, and Block-Count Diagnostics}
+\label{app:nestedness-collinearity-blocks}
+
+The selected influential sets were mostly stable as the target set size increased, but exact refinement introduced occasional non-nested transitions in more complex designs. The nestedness traces show high Jaccard similarity between consecutive selected sets in the simple linear and interaction designs, with larger instability in the collinear interaction and partially linear nonlinear designs (Figure~\ref{fig:03A-nestedness-traces} and Table~\ref{tab:03A-nestedness-summary}). This suggests that the selected set path is generally smooth, although some designs require caution when interpreting adjacent values of \(k\).
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.86\textwidth]{../../output/03_algorithmic/figures/supplement/03_figA4_nestedness_traces.pdf}
+	\caption{Jaccard similarity between consecutive selected influential sets as the target set size increases. Open circles mark violations of nestedness.}
+	\label{fig:03A-nestedness-traces}
+\end{figure}
+
+\input{../../output/03_algorithmic/tables/supplement/03_tabA5_nestedness_summary.tex}
+
+Collinearity had only limited effects on the relative performance of the exact-refined and greedy-refined procedures except in the smallest sample-size and largest-set configurations (Figure~\ref{fig:03A-collinearity-sensitivity}). Adaptive block-count capping also helped maintain computational feasibility as the requested number of blocks increased, while preserving adequate block counts for the EVT calculations (Table~\ref{tab:03A-block-capping}). Together, these diagnostics indicate that the supplementary EVT and algorithmic results are not primarily driven by numerical instability.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.92\textwidth]{../../output/03_algorithmic/figures/supplement/03_figA6_collinearity_sensitivity.pdf}
+	\caption{Sensitivity of the exact-refined advantage over the greedy-refined procedure to predictor correlation, sample size, and influential-set size.}
+	\label{fig:03A-collinearity-sensitivity}
+\end{figure}
+
+\input{../../output/03_algorithmic/tables/supplement/03_tabA3_block_capping.tex}
 
 
 
