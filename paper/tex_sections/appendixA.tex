@@ -10,7 +10,7 @@
 \subsubsection{Recovery across Design Configurations}
 \label{app:detection-recovery}
 
-The complete recovery grid reinforces the mechanism-dependent selectivity reported in Section~\ref{subsec:detection-performance}. For bad-leverage contamination, MIS recovered between \(85\%\) and \(98\%\) of the injected observations across the sample-size and contamination grid and generally exceeded Cook's distance, leverage, and DFBETAS (Figure~\ref{fig:02A-all-method-overlap}). The corresponding advantage over the strongest classical diagnostic was positive in every bad-leverage configuration, ranging from \(8.0\) to \(14.9\) percentage points (Table~\ref{tab:02A-mis-advantage-grid}). By contrast, Cook's distance and DFBETAS more frequently recovered vertical outliers, while leverage naturally recovered good-leverage observations. These differences reflect the broader notions of residual and leverage extremeness used by the classical diagnostics, whereas MIS prioritises observations that alter the coefficient of interest.
+The complete recovery grid reinforces the selectivity across mechanisms reported in Section~\ref{subsec:detection-performance}. For bad-leverage contamination, MIS recovered between \(85\%\) and \(98\%\) of the injected observations across the sample-size and contamination grid and generally exceeded Cook's distance, leverage, and DFBETAS (Figure~\ref{fig:02A-all-method-overlap}). The corresponding advantage over the strongest classical diagnostic was positive in every bad-leverage configuration, ranging from \(8.0\) to \(14.9\) percentage points (Table~\ref{tab:02A-mis-advantage-grid}). By contrast, Cook's distance and DFBETAS more frequently recovered vertical outliers, while leverage naturally recovered good-leverage observations. These differences reflect the broader notions of residual and leverage extremeness used by the classical diagnostics, whereas MIS prioritises observations that alter the coefficient of interest.
 
 \begin{figure}[H]
 	\centering
@@ -21,7 +21,7 @@ The complete recovery grid reinforces the mechanism-dependent selectivity report
 
 \input{../../output/02_distributional/tables/supplement/02_tabA1_mis_advantage_grid.tex}
 
-The distribution-specific results show that the bad-leverage advantage was not driven by a single error distribution. MIS recovery under bad leverage exceeded \(97\%\) for the normal, beta-logistic, mixed-normal, skewed-\(t\), and Pareto errors, while remaining above the best classical diagnostic in every considered distribution (Figure~\ref{fig:02A-distributional-robustness} and Table~\ref{tab:02A-detection-by-error}). The advantage was largest under GOLM and contaminated errors, at \(21.1\) and \(17.3\) percentage points, respectively. Performance weakened under GPD errors, where MIS recovered \(78.5\%\) of the injected observations and exceeded the best classical diagnostic by only \(3.2\) percentage points. Thus, the coefficient-targeted benefit of MIS remained broadly robust, although extremely heavy-tailed GPD errors reduced the separation between the competing procedures.
+The distribution-specific results show that the bad-leverage advantage appeared across error distributions. MIS recovery under bad leverage exceeded \(97\%\) for the normal, beta-logistic, mixed-normal, skewed-\(t\), and Pareto errors, while remaining above the best classical diagnostic in every considered distribution (Figure~\ref{fig:02A-distributional-robustness} and Table~\ref{tab:02A-detection-by-error}). The advantage was largest under GOLM and contaminated errors, at \(21.1\) and \(17.3\) percentage points, respectively. Performance weakened under GPD errors, where MIS recovered \(78.5\%\) of the injected observations and exceeded the best classical diagnostic by only \(3.2\) percentage points. Thus, the benefit for detecting influence on the target coefficient of MIS remained broadly robust, although extremely heavy-tailed GPD errors reduced the separation between the competing procedures.
 
 \begin{figure}[H]
 	\centering
@@ -35,7 +35,7 @@ The distribution-specific results show that the bad-leverage advantage was not d
 \subsubsection{Good-Leverage Mechanism Diagnostics}
 \label{app:good-leverage-diagnostics}
 
-The good-leverage diagnostics clarify why low overlap with the injected set should not be interpreted as a failure of MIS. Except under GPD errors, the MIS-selected observations had substantially lower leverage than the injected good-leverage observations but much larger residual magnitudes and absolute DFBETA values (Figure~\ref{fig:02A-good-leverage-mechanism} and Table~\ref{tab:02-good-leverage-mechanism}). For example, under normal errors the median leverage ratio was \(0.07\), whereas the median absolute DFBETA and residual ratios were \(19.19\) and \(131.91\), respectively. MIS therefore replaced observations that were extreme in predictor space but approximately aligned with the fitted relation with observations that exerted greater influence on the target coefficient.
+The good-leverage diagnostics clarify why low overlap with the injected set reflects the objective of MIS and supports the interpretation that MIS targets coefficient influence. Except under GPD errors, the MIS-selected observations had substantially lower leverage than the injected good-leverage observations but much larger residual magnitudes and absolute DFBETA values (Figure~\ref{fig:02A-good-leverage-mechanism} and Table~\ref{tab:02-good-leverage-mechanism}). For example, under normal errors the median leverage ratio was \(0.07\), whereas the median absolute DFBETA and residual ratios were \(19.19\) and \(131.91\), respectively. MIS therefore replaced observations that were extreme in predictor space but approximately aligned with the fitted relation with observations that exerted greater influence on the target coefficient.
 
 \begin{figure}[H]
 	\centering
@@ -46,7 +46,7 @@ The good-leverage diagnostics clarify why low overlap with the injected set shou
 
 \input{../../output/02_distributional/tables/main/02_tab3_good_leverage_mechanism.tex}
 
-The iteration-level leverage--residual relationship provides the same interpretation across the complete distributional designs (Figure~\ref{fig:02A-leverage-residual-scatter}). Most observations lie to the left of the leverage-equality line and above the residual-equality line, showing that MIS generally selected sets with lower leverage but substantially larger residual magnitudes than the injected good-leverage sets. Recovery increased when the injected observations themselves became more similar to the coefficient-influential sets identified by MIS, most visibly under GPD errors. This pattern confirms that MIS responds to joint coefficient influence rather than leverage alone.
+The relationship between leverage and residual magnitude at the iteration level provides the same interpretation across the complete distributional designs (Figure~\ref{fig:02A-leverage-residual-scatter}). Most observations lie to the left of the line where leverage ratios equal one and above the residual-equality line, showing that MIS generally selected sets with lower leverage but substantially larger residual magnitudes than the injected good-leverage sets. Recovery increased when the injected observations themselves became more similar to the coefficient-influential sets identified by MIS, most visibly under GPD errors. This pattern confirms that MIS responds to joint coefficient influence rather than responding only to leverage.
 
 \begin{figure}[H]
 	\centering
@@ -62,7 +62,7 @@ The EVT component remained well calibrated under no contamination. Its empirical
 
 \input{../../output/02_distributional/tables/main/02_tab2_empirical_size_summary.tex}
 
-Convergence was uniformly high across the design grid and therefore does not explain the differences in detection performance. Rates remained between \(99.1\%\) and \(100.0\%\) across sample sizes, contamination proportions, and contamination mechanisms (Figure~\ref{fig:02A-evt-convergence} and Table~\ref{tab:02A-evt-convergence-grid}). The modest reduction at the largest sample size and contamination proportion was common across contaminated and uncontaminated designs and remained quantitatively small.
+Convergence was uniformly high across the design grid and therefore leaves the differences in detection performance to be explained by the selection criterion itself. Rates remained between \(99.1\%\) and \(100.0\%\) across sample sizes, contamination proportions, and contamination mechanisms (Figure~\ref{fig:02A-evt-convergence} and Table~\ref{tab:02A-evt-convergence-grid}). The modest reduction at the largest sample size and contamination proportion was common across contaminated and uncontaminated designs and remained quantitatively small.
 
 \begin{figure}[H]
 	\centering
@@ -102,7 +102,7 @@ The complete estimator comparisons reinforce the concentration and tail patterns
 	\label{fig:04A-absolute-bias}
 \end{figure}
 
-The coverage results show that accurate point estimation and nominal interval coverage did not always coincide. Under bad leverage, OLS coverage fell to \(12.2\%\), while MIS-SAP achieved \(64.8\%\) and the MM-estimator and LTS achieved \(94.7\%\) and \(92.9\%\), respectively (Table~\ref{tab:robust-coverage}). Under good leverage, however, coverage declined to \(72.5\%\) for the MM-estimator and \(69.3\%\) for LTS despite their comparatively small point-estimation errors. Coverage must therefore be interpreted together with bias and RMSE rather than as an independent ranking of estimator quality.
+The coverage results show that accurate point estimation and nominal interval coverage did not always coincide. Under bad leverage, OLS coverage fell to \(12.2\%\), while MIS-SAP achieved \(64.8\%\) and the MM-estimator and LTS achieved \(94.7\%\) and \(92.9\%\), respectively (Table~\ref{tab:robust-coverage}). Under good leverage, however, coverage declined to \(72.5\%\) for the MM-estimator and \(69.3\%\) for LTS despite their comparatively small point-estimation errors. Coverage should therefore be interpreted together with bias and RMSE when ranking estimator quality.
 
 \input{../../output/04_robust/tables/main/04_tab2c_coverage.tex}
 
@@ -119,7 +119,7 @@ The error distribution was the principal source of the extreme pooled estimation
 	\label{fig:04A-bias-error}
 \end{figure}
 
-Predictor contamination became especially consequential when it was combined with bad leverage. Figure~\ref{fig:04A-bias-x} shows that the contaminated-predictor designs generated the largest non-GPD biases under bad leverage, whereas predictor-distribution differences were more limited under no contamination, vertical outliers, and good leverage. Thus, the deterioration depended on the interaction between the predictor distribution and the contamination mechanism rather than on predictor contamination alone.
+Predictor contamination became especially consequential when it was combined with bad leverage. Figure~\ref{fig:04A-bias-x} shows that the contaminated-predictor designs generated the largest non-GPD biases under bad leverage, whereas predictor-distribution differences were more limited under no contamination, vertical outliers, and good leverage. Thus, the deterioration depended on the interaction between the predictor distribution and the contamination mechanism not only on predictor contamination.
 
 \begin{figure}[H]
 	\centering
@@ -128,7 +128,7 @@ Predictor contamination became especially consequential when it was combined wit
 	\label{fig:04A-bias-x}
 \end{figure}
 
-The complete large-error grid provides the same interpretation at the estimator--DGP level. Large-error probabilities were concentrated in the GPD designs for several non-robust and deletion-based estimators, while additional deterioration appeared in contaminated-predictor designs under bad leverage (Figure~\ref{fig:04A-large-error-all}). The grid also shows that a favourable result in most regular cells can coexist with a very large pooled RMSE when a small number of DGP cells produce extreme coefficient estimates.
+The complete large-error grid provides the same interpretation at the estimator and DGP level. Large-error probabilities were concentrated in the GPD designs for several non-robust and deletion-based estimators, while additional deterioration appeared in contaminated-predictor designs under bad leverage (Figure~\ref{fig:04A-large-error-all}). The grid also shows that a favourable result in most regular cells can coexist with a very large pooled RMSE when a small number of DGP cells produce extreme coefficient estimates.
 
 \begin{figure}[H]
 	\centering
@@ -180,7 +180,7 @@ The \(p\)-value distributions support this interpretation. The mean final global
 	\label{fig:04A-sap-pvalues}
 \end{figure}
 
-The stopping-reason distribution makes the contrast explicit. Under bad leverage, \(87.9\%\) of runs reached \texttt{max\_iter}, whereas between \(95.4\%\) and \(97.0\%\) of runs under no contamination, vertical outliers, and good leverage stopped with \texttt{not\_significant} (Figure~\ref{fig:04A-sap-stops} and Table~\ref{tab:robust-sap-stop-reasons}). The large maximum-iteration share under bad leverage should therefore be interpreted as persistent evidence of coefficient influence rather than as a recorded computational error.
+The stopping-reason distribution makes the contrast explicit. Under bad leverage, \(87.9\%\) of runs reached \texttt{max\_iter}, whereas between \(95.4\%\) and \(97.0\%\) of runs under no contamination, vertical outliers, and good leverage stopped with \texttt{not\_significant} (Figure~\ref{fig:04A-sap-stops} and Table~\ref{tab:robust-sap-stop-reasons}). The large maximum-iteration share under bad leverage therefore provides persistent evidence of coefficient influence while the recorded error rate remains zero.
 
 \begin{figure}[H]
 	\centering
@@ -195,7 +195,7 @@ The distribution-specific results identify the conditions behind the aggregate M
 
 \input{../../output/04_robust/tables/supplement/04_tabA3_sap_by_error_distribution.tex}
 
-MIS-SAP often reduced mean absolute bias relative to OLS in the most difficult cells, particularly under bad leverage, but the size of this relative improvement must be interpreted alongside the absolute error level. Positive values in Figure~\ref{fig:04A-sap-bias-advantage} indicate lower mean absolute bias for MIS-SAP than for OLS. Some of the largest positive differences occur in GPD cells because both procedures produced extremely large errors and MIS-SAP was less inaccurate in relative terms. An advantage over OLS in these cells therefore does not imply that MIS-SAP achieved reliable absolute estimation.
+MIS-SAP often reduced mean absolute bias relative to OLS in the most difficult cells, particularly under bad leverage, but the size of this relative improvement must be interpreted alongside the absolute error level. Positive values in Figure~\ref{fig:04A-sap-bias-advantage} indicate lower mean absolute bias for MIS-SAP than for OLS. Some of the largest positive differences occur in GPD cells because both procedures produced extremely large errors and MIS-SAP was less inaccurate in relative terms. An advantage over OLS in these cells therefore still leaves MIS-SAP with unreliable absolute estimation in those cells.
 
 \begin{figure}[H]
 	\centering
@@ -208,7 +208,7 @@ MIS-SAP often reduced mean absolute bias relative to OLS in the most difficult c
 \subsubsection{Computational Performance and Numerical Availability}
 \label{app:estimation-computation}
 
-The numerical-availability checks show that the extreme coefficient errors were not caused by missing or non-finite outputs from the MIS procedures. All coefficient, coverage, and runtime values were finite for OLS, the diagnostic-deletion estimators, the four MIS procedures, and LTS. The MM-estimator returned finite coefficient and coverage values in \(99.6\%\) of the \(9{,}600\) recorded rows (Table~\ref{tab:robust-method-health}). Thus, the large errors in the demanding DGPs reflect the statistical behaviour of finite estimates rather than widespread numerical non-convergence.
+The numerical-availability checks show that the extreme coefficient errors occurred despite finite outputs from the MIS procedures. All coefficient, coverage, and runtime values were finite for OLS, the diagnostic-deletion estimators, the four MIS procedures, and LTS. The MM-estimator returned finite coefficient and coverage values in \(99.6\%\) of the \(9{,}600\) recorded rows (Table~\ref{tab:robust-method-health}). Thus, the large errors in the demanding DGPs reflect the statistical behaviour of finite estimates with widespread numerical convergence preserved.
 
 \input{../../output/04_robust/tables/supplement/04_tabA2_method_health.tex}
 
@@ -227,6 +227,8 @@ The runtime comparisons reveal a substantial computational cost for iterative pe
 \subsection{Supplementary EVT-Based Inference and Algorithmic Diagnostics}
 \label{app:evt-results}
 
+The EVT results are reported in the appendix because they support the simulation conclusions rather than constitute a separate main result. Their role is to check whether the MIS-based inferential step is numerically stable, whether it controls false rejection under the null, and whether algorithmic refinements affect detection accuracy and runtime. These diagnostics therefore complement the main detection and estimation results by showing when the EVT approximation is conservative, when it converges reliably, and when algorithmic choices matter for identifying influential sets.
+
 \subsubsection{Headline EVT Calibration and Runtime}
 \label{app:evt-calibration-runtime}
 
@@ -241,7 +243,7 @@ The EVT-based inference procedure was stable but conservative under the null. At
 
 \input{../../output/03_algorithmic/tables/main/03_tab3_null_calibration.tex}
 
-The computational cost of EVT fitting was small relative to the broader simulation design. Median EVT runtimes remained on the order of hundredths of a second across sample sizes, with only modest differences between the constrained and robust GEV configurations (Figure~\ref{fig:03-evt-runtime} and Table~\ref{tab:03-evt-configuration-summary}). The EVT diagnostics therefore suggest that the main limitation is calibration rather than computational feasibility.
+The computational cost of EVT fitting was small relative to the broader simulation design. Median EVT runtimes remained on the order of hundredths of a second across sample sizes, with only modest differences between the constrained and robust GEV configurations (Figure~\ref{fig:03-evt-runtime} and Table~\ref{tab:03-evt-configuration-summary}). The EVT diagnostics therefore suggest that calibration is the main limitation, while computational feasibility is maintained.
 
 \begin{figure}[H]
 	\centering
@@ -296,7 +298,7 @@ Detection remained computationally feasible across the considered sample sizes. 
 \subsubsection{Architecture-Level Calibration and Convergence}
 \label{app:evt-architecture-calibration}
 
-The architecture-level calibration results show that the conservative null behavior was not driven by a single design family. At the nominal \(5\%\) level, rejection rates were generally below nominal across architectures and set sizes for both GEV fitting methods (Figure~\ref{fig:03A-calibration-deviation} and Table~\ref{tab:03A-calibration-by-architecture}). The pooled QQ plots give the same interpretation: null \(p\)-values were not systematically anti-conservative, with most deviations reflecting conservative rather than inflated rejection behavior (Figure~\ref{fig:03A-null-pvalue-qq}).
+The architecture-level calibration results show that the conservative null behavior was not driven by a single design family. At the nominal \(5\%\) level, rejection rates were generally below nominal across architectures and set sizes for both GEV fitting methods (Figure~\ref{fig:03A-calibration-deviation} and Table~\ref{tab:03A-calibration-by-architecture}). The pooled QQ plots give the same interpretation: null \(p\)-values were generally conservative, and most deviations reflected lower rejection rates than the nominal benchmark (Figure~\ref{fig:03A-null-pvalue-qq}).
 
 \begin{figure}[H]
 	\centering
@@ -340,7 +342,7 @@ The selected influential sets were mostly stable as the target set size increase
 
 \input{../../output/03_algorithmic/tables/supplement/03_tabA5_nestedness_summary.tex}
 
-Collinearity had only limited effects on the relative performance of the exact-refined and greedy-refined procedures except in the smallest sample-size and largest-set configurations (Figure~\ref{fig:03A-collinearity-sensitivity}). Adaptive block-count capping also helped maintain computational feasibility as the requested number of blocks increased, while preserving adequate block counts for the EVT calculations (Table~\ref{tab:03A-block-capping}). Together, these diagnostics indicate that the supplementary EVT and algorithmic results are not primarily driven by numerical instability.
+Collinearity had only limited effects on the relative performance of the exact-refined and greedy-refined procedures except in the smallest sample-size and largest-set configurations (Figure~\ref{fig:03A-collinearity-sensitivity}). Adaptive block-count capping also helped maintain computational feasibility as the requested number of blocks increased, while preserving adequate block counts for the EVT calculations (Table~\ref{tab:03A-block-capping}). Together, these diagnostics indicate that the supplementary EVT and algorithmic results mainly reflect statistical and algorithmic behavior, with little evidence of numerical instability.
 
 \begin{figure}[H]
 	\centering
