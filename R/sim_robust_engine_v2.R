@@ -559,10 +559,28 @@ run_robust_comparison_iter_v2 <- function(
   # =================================================================
   data.frame(
     iter = iter,
+    
+    n_obs = n,
+    design_k = as.integer(k),
+    contam_prop = if (
+      outlier_method == "none"
+    ) {
+      0
+    } else {
+      k / n
+    },
+    
     x_type = x_type,
     error_type = error_type,
     outlier_method = outlier_method,
-    set_size = if (outlier_method == "none") 0L else k,
+    
+    set_size = if (
+      outlier_method == "none"
+    ) {
+      0L
+    } else {
+      as.integer(k)
+    },
     
     k_cd = length(cd_idx),
     k_lev = length(lev_idx),

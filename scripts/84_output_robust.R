@@ -470,7 +470,14 @@ reshape_mapped_columns <- function(
     metadata_key
 ) {
   scenario_columns <- c(
-    "iter", "x_type", "error_type", "outlier_method", "set_size"
+    "iter",
+    "n_obs",
+    "design_k",
+    "contam_prop",
+    "x_type",
+    "error_type",
+    "outlier_method",
+    "set_size"
   )
   
   result <- data %>%
@@ -562,7 +569,14 @@ make_metric_wide_table <- function(
 sim <- readRDS(input_main)
 
 required_columns <- c(
-  "iter", "x_type", "error_type", "outlier_method", "set_size",
+  "iter",
+  "n_obs",
+  "design_k",
+  "contam_prop",
+  "x_type",
+  "error_type",
+  "outlier_method",
+  "set_size",
   
   "k_cd", "k_lev", "k_dfb", "k_alpha", "k_oracle",
   "k_peel_v2", "k_peel_sap",
@@ -610,6 +624,52 @@ if (length(missing_columns) > 0L) {
   stop(
     "04sap_robust_comparison_results.rds is missing required column(s): ",
     paste(missing_columns, collapse = ", ")
+  )
+}
+
+n_obs_levels <- sim %>%
+  distinct(n_obs) %>%
+  arrange(n_obs) %>%
+  pull(n_obs)
+
+contam_prop_levels <- sim %>%
+  filter(outlier_method != "none") %>%
+  distinct(contam_prop) %>%
+  arrange(contam_prop) %>%
+  pull(contam_prop)
+
+expected_n_obs_levels <- c(
+  500L,
+  1000L,
+  2500L,
+  5000L
+)
+
+expected_contam_prop_levels <- c(
+  0.005,
+  0.010,
+  0.025,
+  0.050
+)
+
+if (!identical(
+  as.integer(n_obs_levels),
+  expected_n_obs_levels
+)) {
+  warning(
+    "Unexpected sample-size grid. Found: ",
+    paste(n_obs_levels, collapse = ", ")
+  )
+}
+
+if (!isTRUE(all.equal(
+  as.numeric(contam_prop_levels),
+  expected_contam_prop_levels,
+  tolerance = 1e-12
+))) {
+  warning(
+    "Unexpected contamination-proportion grid. Found: ",
+    paste(contam_prop_levels, collapse = ", ")
   )
 }
 
@@ -933,6 +993,11 @@ selection_long <- reshape_mapped_columns(
   metadata_key = "estimator_id"
 )
 
+selection_long <- selection_long %>%
+  mutate(
+    selected_prop = selected_k / n_obs
+  )
+
 overlap_long <- reshape_mapped_columns(
   data = sim,
   mapping = overlap_mapping,
@@ -946,38 +1011,72 @@ overlap_long <- reshape_mapped_columns(
 # Validate that recorded absolute bias agrees with the coefficient columns.
 bias_validation <- coefficient_long %>%
   select(
-    iter, x_type, error_type, outlier_method,
-    estimator_id, coefficient
+    iter,
+    n_obs,
+    design_k,
+    contam_prop,
+    x_type,
+    error_type,
+    outlier_method,
+    estimator_id,
+    coefficient
   ) %>%
   left_join(
     bias_long %>%
       select(
-        iter, x_type, error_type, outlier_method,
-        estimator_id, absolute_bias_recorded
+        iter,
+        n_obs,
+        design_k,
+        contam_prop,
+        x_type,
+        error_type,
+        outlier_method,
+        estimator_id,
+        absolute_bias_recorded
       ),
     by = c(
-      "iter", "x_type", "error_type",
-      "outlier_method", "estimator_id"
+      "iter",
+      "n_obs",
+      "design_k",
+      "contam_prop",
+      "x_type",
+      "error_type",
+      "outlier_method",
+      "estimator_id"
     )
   ) %>%
   mutate(
-    absolute_bias_recomputed = abs(coefficient - TRUE_BETA),
-    difference = absolute_bias_recorded - absolute_bias_recomputed
+    absolute_bias_recomputed = abs(
+      coefficient - TRUE_BETA
+    ),
+    difference =
+      absolute_bias_recorded -
+      absolute_bias_recomputed
   )
 
 max_bias_difference <- if (
   any(is.finite(bias_validation$difference))
 ) {
-  max(abs(bias_validation$difference), na.rm = TRUE)
+  max(
+    abs(bias_validation$difference),
+    na.rm = TRUE
+  )
 } else {
   NA_real_
 }
 
-if (is.finite(max_bias_difference) && max_bias_difference > 1e-8) {
+
+if (
+  is.finite(max_bias_difference) &&
+  max_bias_difference > 1e-8
+) {
   warning(
     "Recorded bias columns differ from abs(coefficient - TRUE_BETA). ",
     "Maximum absolute difference: ",
-    format(max_bias_difference, scientific = TRUE),
+    format(
+      max_bias_difference,
+      scientific = TRUE
+    ),
     ". Publication summaries use coefficient-based recomputation."
   )
 }
@@ -989,9 +1088,17 @@ if (is.finite(max_bias_difference) && max_bias_difference > 1e-8) {
 
 estimation_cell <- coefficient_long %>%
   group_by(
-    x_type, error_type, outlier_method,
-    estimator_id, estimator_label, estimator_short,
-    estimator_family, estimator_order
+    n_obs,
+    design_k,
+    contam_prop,
+    x_type,
+    error_type,
+    outlier_method,
+    estimator_id,
+    estimator_label,
+    estimator_short,
+    estimator_family,
+    estimator_order
   ) %>%
   summarise(
     n_valid_coef = sum(is.finite(coefficient)),
@@ -1024,7 +1131,12 @@ estimation_cell <- coefficient_long %>%
 
 coverage_cell <- coverage_long %>%
   group_by(
-    x_type, error_type, outlier_method,
+    n_obs,
+    design_k,
+    contam_prop,
+    x_type,
+    error_type,
+    outlier_method,
     estimator_id
   ) %>%
   summarise(
@@ -1039,7 +1151,13 @@ estimation_cell <- estimation_cell %>%
   left_join(
     coverage_cell,
     by = c(
-      "x_type", "error_type", "outlier_method", "estimator_id"
+      "n_obs",
+      "design_k",
+      "contam_prop",
+      "x_type",
+      "error_type",
+      "outlier_method",
+      "estimator_id"
     )
   )
 
@@ -1092,11 +1210,21 @@ estimation_broad <- estimation_cell %>%
 
 selection_cell <- selection_long %>%
   group_by(
-    x_type, error_type, outlier_method,
-    estimator_id, estimator_label,
-    estimator_order, selection_order
+    n_obs,
+    design_k,
+    contam_prop,
+    x_type,
+    error_type,
+    outlier_method,
+    estimator_id,
+    estimator_label,
+    estimator_order,
+    selection_order
   ) %>%
   summarise(
+    mean_selected_prop = safe_mean(selected_prop),
+    sd_selected_prop = safe_sd(selected_prop),
+    mcse_selected_prop = safe_mcse(selected_prop),
     n_valid_k = sum(is.finite(selected_k)),
     mean_selected_k = safe_mean(selected_k),
     sd_selected_k = safe_sd(selected_k),
@@ -1108,22 +1236,36 @@ selection_cell <- selection_long %>%
 selection_broad <- selection_cell %>%
   group_by(
     outlier_method,
-    estimator_id, estimator_label,
-    estimator_order, selection_order
+    estimator_id,
+    estimator_label,
+    estimator_order,
+    selection_order
   ) %>%
   summarise(
     n_design_cells = sum(is.finite(mean_selected_k)),
+    
     mean_selected_k = safe_mean(mean_selected_k),
+    
     mcse_selected_k = combined_cell_mcse(
       mcse_selected_k,
       mean_selected_k
     ),
+    
+    mean_selected_prop = safe_mean(
+      mean_selected_prop
+    ),
+    
+    mcse_selected_prop = combined_cell_mcse(
+      mcse_selected_prop,
+      mean_selected_prop
+    ),
+    
     .groups = "drop"
   )
 
-
 overlap_cell <- overlap_long %>%
   group_by(
+    n_obs, design_k, contam_prop,
     x_type, error_type, outlier_method,
     estimator_id, estimator_label,
     estimator_order, selection_order
@@ -1156,6 +1298,7 @@ overlap_broad <- overlap_cell %>%
 
 runtime_cell <- runtime_long %>%
   group_by(
+    n_obs, design_k, contam_prop,
     x_type, error_type, outlier_method,
     estimator_id, estimator_label,
     estimator_order
@@ -1186,12 +1329,22 @@ runtime_broad <- runtime_cell %>%
 
 
 sap_cell <- sim %>%
-  group_by(x_type, error_type, outlier_method) %>%
+  group_by(
+    n_obs,
+    design_k,
+    contam_prop,
+    x_type,
+    error_type,
+    outlier_method
+  ) %>%
   summarise(
     n_iter = n(),
     
     detection_rate = safe_mean(as.numeric(k_peel_sap > 0L)),
     mcse_detection = safe_prop_mcse(as.numeric(k_peel_sap > 0L)),
+    
+    mean_selected_prop = safe_mean( k_peel_sap / n_obs ),
+    mcse_selected_prop = safe_mcse( k_peel_sap / n_obs ),
     
     mean_selected_k = safe_mean(k_peel_sap),
     mcse_selected_k = safe_mcse(k_peel_sap),
@@ -1238,6 +1391,15 @@ sap_broad <- sap_cell %>%
     mcse_detection = combined_cell_mcse(
       mcse_detection,
       detection_rate
+    ),
+    
+    mean_selected_prop = safe_mean(
+      mean_selected_prop
+    ),
+    
+    mcse_selected_prop = combined_cell_mcse(
+      mcse_selected_prop,
+      mean_selected_prop
     ),
     
     mean_selected_k = safe_mean(mean_selected_k),
@@ -1372,8 +1534,22 @@ utils::write.csv(
 
 # Keep every finite coefficient error.
 # No trimming, Winsorization, or quantile-based removal is applied.
-coef_finite <- coefficient_long %>%
-  filter(is.finite(signed_error)) %>%
+coef_finite <- estimation_cell %>%
+  filter(
+    is.finite(mean_signed_bias)
+  ) %>%
+  transmute(
+    n_obs,
+    design_k,
+    contam_prop,
+    x_type,
+    error_type,
+    outlier_method,
+    estimator_id,
+    estimator_label,
+    estimator_order,
+    signed_error = mean_signed_bias
+  ) %>%
   add_outlier_display() %>%
   mutate(
     estimator_label = factor(
@@ -1534,10 +1710,10 @@ fig1_coef <- ggplot(
     ),
     y = NULL,
     caption = paste(
-      "Faint points: Monte Carlo estimates;",
-      "filled circles: means;",
-      "open diamonds: medians;",
-      "thick and thin intervals: 25th–75th and 5th–95th percentiles."
+      "Faint points: design-cell mean coefficient errors;",
+      "filled circles: equal-cell means;",
+      "open diamonds: medians across design cells;",
+      "thick and thin intervals: 25th–75th and 5th–95th percentiles across design cells."
     )
   ) +
   
@@ -1700,6 +1876,9 @@ tail_cell_summary <- coefficient_long %>%
     )
   ) %>%
   group_by(
+    n_obs,
+    design_k,
+    contam_prop,
     x_type,
     error_type,
     outlier_method,
@@ -1732,12 +1911,46 @@ tail_cell_summary <- coefficient_long %>%
     .groups = "drop"
   )
 
+tail_equal_grid_summary <- tail_cell_summary %>%
+  group_by(
+    x_type,
+    error_type,
+    outlier_method,
+    estimator_id,
+    estimator_label,
+    estimator_order
+  ) %>%
+  summarise(
+    exceedance_rate = safe_mean(
+      exceedance_rate
+    ),
+    
+    mcse_exceedance = combined_cell_mcse(
+      mcse_exceedance,
+      exceedance_rate
+    ),
+    
+    positive_exceedance_rate = safe_mean(
+      positive_exceedance_rate
+    ),
+    
+    negative_exceedance_rate = safe_mean(
+      negative_exceedance_rate
+    ),
+    
+    nonfinite_rate = safe_mean(
+      nonfinite_rate
+    ),
+    
+    .groups = "drop"
+  )
+
 
 # ------------------------------------------------------------------------------
 # Identify problematic DGP cells for the supplementary all-estimator figure
 # ------------------------------------------------------------------------------
 
-problem_dgp_cells <- tail_cell_summary %>%
+problem_dgp_cells <- tail_equal_grid_summary %>%
   group_by(
     x_type,
     error_type,
@@ -1779,7 +1992,7 @@ add_tail_annotations <- function(data) {
           negative_exceedance_rate >= 0.01 ~ "+",
         
         negative_exceedance_rate -
-          positive_exceedance_rate >= 0.01 ~ "\u2212",
+          positive_exceedance_rate >= 0.01 ~ "-",
         
         TRUE ~ "\u00B1"
       ),
@@ -1860,7 +2073,7 @@ tail_fill_scale <- function(legend_title) {
 # MIS-SAP data for the main-paper heatmap
 # ------------------------------------------------------------------------------
 
-tail_mis_sap_data <- tail_cell_summary %>%
+tail_mis_sap_data <- tail_equal_grid_summary %>%
   filter(
     estimator_id == "mis_sap"
   ) %>%
@@ -2086,11 +2299,18 @@ utils::write.csv(
 )
 
 # ==============================================================================
-# 8. Main Figure 3: selected-k distributions
+# 8. Main Figure 3: selected-proportion distributions
 # ==============================================================================
 
-selection_plot_data <- selection_long %>%
-  filter(is.finite(selected_k)) %>%
+# Each observation in this plotting data set is a design-cell mean.
+# Using selected proportions makes results comparable across sample sizes.
+selection_plot_data <- selection_cell %>%
+  filter(
+    is.finite(mean_selected_prop)
+  ) %>%
+  mutate(
+    selected_prop = mean_selected_prop
+  ) %>%
   add_outlier_display() %>%
   mutate(
     estimator_label = factor(
@@ -2102,64 +2322,65 @@ selection_plot_data <- selection_long %>%
   )
 
 
-selection_distribution_summary <- selection_long %>%
+# Equal-cell summaries across sample size, contamination proportion,
+# predictor distribution, and error distribution.
+selection_distribution_summary <- selection_plot_data %>%
   group_by(
     outlier_method,
-    estimator_id, estimator_label, selection_order
+    estimator_id,
+    estimator_label,
+    selection_order
   ) %>%
   summarise(
-    n_valid = sum(is.finite(selected_k)),
-    mean_selected_k = safe_mean(selected_k),
-    sd_selected_k = safe_sd(selected_k),
-    .groups = "drop"
-  ) %>%
-  add_outlier_display() %>%
-  mutate(
-    estimator_label = factor(
-      estimator_label,
-      levels = selection_meta$estimator_label[
-        order(selection_meta$selection_order)
-      ]
-    )
-  )
-
-
-true_k_reference <- sim %>%
-  group_by(outlier_method) %>%
-  summarise(
-    true_k = safe_mean(set_size),
+    n_valid = sum(
+      is.finite(selected_prop)
+    ),
+    
+    mean_selected_prop = safe_mean(
+      selected_prop
+    ),
+    
+    sd_selected_prop = safe_sd(
+      selected_prop
+    ),
+    
     .groups = "drop"
   ) %>%
   add_outlier_display()
 
 
-k_upper <- safe_quantile(
-  selection_plot_data$selected_k,
+# Retain the original quantile-based display limit,
+# but apply it to selected proportions rather than raw k.
+prop_upper <- safe_quantile(
+  selection_plot_data$selected_prop,
   K_MAIN_UPPER_QUANTILE
 )
 
-k_upper <- max(
-  k_upper,
-  max(true_k_reference$true_k, na.rm = TRUE),
-  na.rm = TRUE
-)
-
-if (!is.finite(k_upper) || k_upper <= 0) {
-  k_upper <- 1
+if (!is.finite(prop_upper) || prop_upper <= 0) {
+  prop_upper <- 0.05
 }
 
-k_upper <- k_upper * 1.05
+prop_upper <- min(
+  1,
+  prop_upper * 1.05
+)
 
+
+# Keep this variable name if it is referenced later in the script.
+# It now counts design cells outside the selected-proportion display range.
 n_k_outside_main <- sum(
-  selection_plot_data$selected_k < 0 |
-    selection_plot_data$selected_k > k_upper,
+  selection_plot_data$selected_prop < 0 |
+    selection_plot_data$selected_prop > prop_upper,
   na.rm = TRUE
 )
 
 
 fig3_k <- ggplot(
   selection_plot_data,
-  aes(x = selected_k, y = estimator_label)
+  aes(
+    x = selected_prop,
+    y = estimator_label
+  )
 ) +
   geom_violin(
     fill = COL_VIOLIN,
@@ -2169,11 +2390,19 @@ fig3_k <- ggplot(
     trim = TRUE,
     na.rm = TRUE
   ) +
+  
+  # Mean plus or minus one standard deviation across design cells
   geom_segment(
     data = selection_distribution_summary,
     aes(
-      x = pmax(0, mean_selected_k - sd_selected_k),
-      xend = mean_selected_k + sd_selected_k,
+      x = pmax(
+        0,
+        mean_selected_prop - sd_selected_prop
+      ),
+      xend = pmin(
+        1,
+        mean_selected_prop + sd_selected_prop
+      ),
       y = estimator_label,
       yend = estimator_label
     ),
@@ -2182,10 +2411,12 @@ fig3_k <- ggplot(
     linewidth = 0.65,
     na.rm = TRUE
   ) +
+  
+  # Equal-cell mean
   geom_point(
     data = selection_distribution_summary,
     aes(
-      x = mean_selected_k,
+      x = mean_selected_prop,
       y = estimator_label
     ),
     inherit.aes = FALSE,
@@ -2196,27 +2427,39 @@ fig3_k <- ggplot(
     colour = COL_BLACK,
     na.rm = TRUE
   ) +
-  geom_vline(
-    data = true_k_reference,
-    aes(xintercept = true_k),
-    colour = COL_ORANGE,
-    linetype = "dashed",
-    linewidth = 0.75
-  ) +
+  
   facet_wrap(
     ~ outlier_label_plot,
     ncol = 2,
     scales = "fixed"
   ) +
+  
+  scale_x_continuous(
+    labels = scales::label_percent(
+      accuracy = 0.1
+    ),
+    expand = expansion(
+      mult = c(0.01, 0.04)
+    )
+  ) +
+  
   coord_cartesian(
-    xlim = c(0, k_upper),
+    xlim = c(0, prop_upper),
     clip = "on"
   ) +
+  
   labs(
-    x = "Selected number of observations",
-    y = NULL
+    x = "Selected proportion of observations",
+    y = NULL,
+    caption = paste(
+      "Violins show the distribution of design-cell mean selected proportions;",
+      "points show equal-cell means and intervals show plus or minus one",
+      "standard deviation across design cells."
+    )
   ) +
+  
   theme_distribution() +
+  
   theme(
     legend.position = "none"
   )
@@ -2224,14 +2467,21 @@ fig3_k <- ggplot(
 
 save_plot(
   fig3_k,
-  file.path(fig_main_dir, "04_fig3_selected_k_distributions.pdf"),
+  file.path(
+    fig_main_dir,
+    "04_fig3_selected_k_distributions.pdf"
+  ),
   width = 10.4,
   height = 7.1
 )
 
+
 utils::write.csv(
   selection_distribution_summary,
-  file.path(data_dir, "04_fig3_selected_k_distribution_summary.csv"),
+  file.path(
+    data_dir,
+    "04_fig3_selected_k_distribution_summary.csv"
+  ),
   row.names = FALSE
 )
 
@@ -2240,8 +2490,13 @@ utils::write.csv(
 # 9. Main Figure 4: detection-overlap distributions
 # ==============================================================================
 
-overlap_plot_data <- overlap_long %>%
-  filter(is.finite(overlap)) %>%
+overlap_plot_data <- overlap_cell %>%
+  filter(
+    is.finite(mean_overlap)
+  ) %>%
+  mutate(
+    overlap = mean_overlap
+  ) %>%
   add_outlier_display() %>%
   mutate(
     estimator_label = factor(
@@ -2253,7 +2508,7 @@ overlap_plot_data <- overlap_long %>%
   )
 
 
-overlap_distribution_summary <- overlap_long %>%
+overlap_distribution_summary <- overlap_plot_data %>%
   group_by(
     outlier_method,
     estimator_id, estimator_label, selection_order
@@ -2374,8 +2629,10 @@ write_tex_table(
   ),
   caption = paste0(
     "Arithmetic mean coefficient estimates by estimator and contamination ",
-    "mechanism. Monte Carlo standard errors are in parentheses. ",
-    "The true coefficient is beta0 = 1."
+    "mechanism. The true coefficient is beta0 = 1. Results give equal ",
+    "weight to each sample-size, contamination-proportion, ",
+    "predictor-distribution, and error-distribution design cell. ",
+    "Monte Carlo standard errors are in parentheses."
   ),
   label = "tab:robust-mean-coefficients",
   resize_width = TABLE_WIDTH_MEDIUM,
@@ -2400,7 +2657,10 @@ write_tex_table(
   ),
   caption = paste0(
     "Mean absolute coefficient bias by estimator and contamination mechanism. ",
-    "Monte Carlo standard errors are in parentheses."
+    "Results give equal weight to each sample-size, ",
+    "contamination-proportion, predictor-distribution, and ",
+    "error-distribution design cell. Monte Carlo standard errors are ",
+    "in parentheses."
   ),
   label = "tab:robust-mean-absolute-bias",
   resize_width = TABLE_WIDTH_MEDIUM,
@@ -2425,7 +2685,10 @@ write_tex_table(
   ),
   caption = paste0(
     "Root mean squared error by estimator and contamination mechanism. ",
-    "Delta-method Monte Carlo standard errors are in parentheses."
+    "Results give equal weight to each sample-size, ",
+    "contamination-proportion, predictor-distribution, and ",
+    "error-distribution design cell. Delta-method Monte Carlo standard ",
+    "errors are in parentheses."
   ),
   label = "tab:robust-rmse",
   resize_width = TABLE_WIDTH_MEDIUM,
@@ -2450,7 +2713,10 @@ write_tex_table(
   ),
   caption = paste0(
     "Empirical coverage of nominal 95 percent confidence intervals. ",
-    "Monte Carlo standard errors in percentage points are in parentheses."
+    "Results give equal weight to each sample-size, ",
+    "contamination-proportion, predictor-distribution, and ",
+    "error-distribution design cell. Monte Carlo standard errors in ",
+    "percentage points are in parentheses."
   ),
   label = "tab:robust-coverage",
   resize_width = TABLE_WIDTH_MEDIUM,
@@ -2462,9 +2728,15 @@ write_tex_table(
 # Table 3a: selected k.
 tab3a_selected_k <- make_metric_wide_table(
   data = selection_broad,
-  mean_column = "mean_selected_k",
-  mcse_column = "mcse_selected_k",
-  formatter = function(x, se) fmt_mean_mcse(x, se, digits = 2L),
+  mean_column = "mean_selected_prop",
+  mcse_column = "mcse_selected_prop",
+  formatter = function(x, se) {
+    fmt_pct_mcse(
+      x,
+      se,
+      digits = 1L
+    )
+  },
   include_clean = TRUE
 )
 
@@ -2475,14 +2747,17 @@ write_tex_table(
     "04_tab3a_mean_selected_k.tex"
   ),
   caption = paste0(
-    "Mean number of observations selected or removed by each detection method. ",
-    "Monte Carlo standard errors are in parentheses."
+    "Mean proportion of observations selected or removed by each ",
+    "detection method. Results give equal weight to each sample-size, ",
+    "contamination-proportion, predictor-distribution, and ",
+    "error-distribution design cell. Monte Carlo standard errors in ",
+    "percentage points are in parentheses."
   ),
   label = "tab:robust-selected-k",
   resize_width = TABLE_WIDTH_MEDIUM,
-  align = "lrrrr"
+  align = "lrrrr",
+  escape_cells = FALSE
 )
-
 
 # Table 3b: detection overlap.
 tab3b_overlap <- make_metric_wide_table(
@@ -2501,7 +2776,10 @@ write_tex_table(
   ),
   caption = paste0(
     "Mean fraction of injected observations recovered by each detection method. ",
-    "Monte Carlo standard errors in percentage points are in parentheses."
+    "Results give equal weight to each sample-size, ",
+    "contamination-proportion, predictor-distribution, and ",
+    "error-distribution design cell. Monte Carlo standard errors in ",
+    "percentage points are in parentheses."
   ),
   label = "tab:robust-detection-overlap",
   resize_width = TABLE_WIDTH_MEDIUM,
@@ -2520,10 +2798,10 @@ tab4_sap <- sap_broad %>%
       mcse_detection,
       digits = 1L
     ),
-    `Mean selected k` = fmt_mean_mcse(
-      mean_selected_k,
-      mcse_selected_k,
-      digits = 2L
+    `Mean selected proportion` = fmt_pct_mcse(
+      mean_selected_prop,
+      mcse_selected_prop,
+      digits = 1L
     ),
     `Exact-k rate` = fmt_pct_mcse(
       exact_k_rate,
@@ -2565,7 +2843,10 @@ write_tex_table(
   ),
   caption = paste0(
     "Selection-adjusted permutation MIS diagnostics by contamination mechanism. ",
-    "Entries are arithmetic means with Monte Carlo standard errors in parentheses."
+    "Results give equal weight to each sample-size, ",
+    "contamination-proportion, predictor-distribution, and ",
+    "error-distribution design cell. Entries are arithmetic means with ",
+    "Monte Carlo standard errors in parentheses."
   ),
   label = "tab:robust-sap-diagnostics",
   resize_width = TABLE_WIDTH_WIDE,
@@ -3075,86 +3356,132 @@ utils::write.csv(
 
 
 # ==============================================================================
-# 14. Supplementary Figure A4: runtime distributions
+# 14. Supplementary Figure A4: runtime across the n x contamination grid
 # ==============================================================================
 
-runtime_plot_data <- runtime_long %>%
+# Ordered contamination-proportion labels used in the figure.
+runtime_contam_levels <- runtime_cell %>%
   filter(
-    is.finite(runtime_seconds),
-    runtime_seconds >= 0
+    outlier_method != "none",
+    is.finite(contam_prop)
+  ) %>%
+  distinct(contam_prop) %>%
+  arrange(contam_prop) %>%
+  pull(contam_prop)
+
+
+# Average equally across predictor distributions, error distributions,
+# and contaminated mechanisms within each n x contamination cell.
+runtime_grid <- runtime_cell %>%
+  filter(
+    outlier_method != "none",
+    is.finite(mean_runtime)
+  ) %>%
+  group_by(
+    n_obs,
+    contam_prop,
+    estimator_id,
+    estimator_label,
+    estimator_order
+  ) %>%
+  summarise(
+    mean_runtime = safe_mean(
+      mean_runtime
+    ),
+    .groups = "drop"
   ) %>%
   mutate(
+    contam_label = factor(
+      scales::percent(
+        contam_prop,
+        accuracy = 0.1
+      ),
+      levels = scales::percent(
+        runtime_contam_levels,
+        accuracy = 0.1
+      )
+    ),
+    
     estimator_label = factor(
       estimator_label,
       levels = estimator_meta$estimator_label
     )
-  )
-
-
-runtime_distribution_summary <- runtime_plot_data %>%
-  group_by(
-    estimator_id, estimator_label, estimator_order
   ) %>%
-  summarise(
-    n_valid = n(),
-    mean_runtime = safe_mean(runtime_seconds),
-    sd_runtime = safe_sd(runtime_seconds),
-    .groups = "drop"
+  arrange(
+    estimator_order,
+    contam_prop,
+    n_obs
   )
 
 
 figA4_runtime <- ggplot(
-  runtime_plot_data,
-  aes(x = runtime_seconds, y = estimator_label)
+  runtime_grid,
+  aes(
+    x = n_obs,
+    y = mean_runtime,
+    group = contam_label,
+    linetype = contam_label,
+    shape = contam_label
+  )
 ) +
-  geom_violin(
-    fill = COL_VIOLIN,
-    colour = COL_GREY_DARK,
-    linewidth = 0.25,
-    scale = "width",
-    trim = TRUE
-  ) +
-  geom_segment(
-    data = runtime_distribution_summary,
-    aes(
-      x = pmax(0, mean_runtime - sd_runtime),
-      xend = mean_runtime + sd_runtime,
-      y = estimator_label,
-      yend = estimator_label
-    ),
-    inherit.aes = FALSE,
-    colour = COL_BLUE,
+  geom_line(
     linewidth = 0.65,
     na.rm = TRUE
   ) +
   geom_point(
-    data = runtime_distribution_summary,
-    aes(
-      x = mean_runtime,
-      y = estimator_label
-    ),
-    inherit.aes = FALSE,
-    shape = 21,
-    size = 2.2,
-    stroke = 0.45,
-    fill = COL_BLUE,
-    colour = COL_BLACK,
+    size = 2.1,
+    stroke = 0.6,
     na.rm = TRUE
   ) +
+  facet_wrap(
+    ~ estimator_label,
+    scales = "free_y",
+    ncol = 2
+  ) +
   scale_x_continuous(
+    breaks = sort(
+      unique(runtime_grid$n_obs)
+    ),
+    labels = scales::label_comma(
+      accuracy = 1
+    )
+  ) +
+  scale_y_continuous(
     trans = scales::pseudo_log_trans(
       base = 10,
       sigma = 1e-4
     ),
-    labels = scales::label_number(accuracy = 0.001)
+    labels = scales::label_number(
+      accuracy = 0.001
+    )
   ) +
   labs(
-    x = "Runtime per Monte Carlo draw (seconds)",
-    y = NULL
+    x = "Sample size",
+    y = "Mean runtime per Monte Carlo draw (seconds)",
+    linetype = "Contamination proportion",
+    shape = "Contamination proportion",
+    caption = paste(
+      "Points are equal-cell mean runtimes across predictor distributions,",
+      "error distributions, and contaminated mechanisms."
+    )
   ) +
-  theme_distribution() +
+  theme_paper() +
   theme(
-    legend.position = "none"
+    legend.position = "bottom",
+    axis.text.x = element_text(
+      angle = 0,
+      hjust = 0.5
+    ),
+    plot.caption = element_text(
+      hjust = 0
+    )
+  ) +
+  guides(
+    linetype = guide_legend(
+      nrow = 1,
+      byrow = TRUE
+    ),
+    shape = "none"
   )
 
 
@@ -3164,16 +3491,19 @@ save_plot(
     fig_supp_dir,
     "04_figA4_runtime_distributions.pdf"
   ),
-  width = 8.3,
-  height = 5.7
+  width = 10.5,
+  height = 8.0
 )
+
 
 utils::write.csv(
-  runtime_distribution_summary,
-  file.path(data_dir, "04_figA4_runtime_distribution_summary.csv"),
+  runtime_grid,
+  file.path(
+    data_dir,
+    "04_figA4_runtime_distribution_summary.csv"
+  ),
   row.names = FALSE
 )
-
 
 # ==============================================================================
 # 15. Supplementary Figure A5: SAP p-value distributions
@@ -3492,13 +3822,24 @@ utils::write.csv(
 # ==============================================================================
 
 sap_advantage_heatmap <- estimation_cell %>%
-  filter(estimator_id %in% c("full", "mis_sap")) %>%
-  select(
-    x_type,
-    error_type,
+  filter(
+    outlier_method != "none",
+    estimator_id %in% c(
+      "full",
+      "mis_sap"
+    )
+  ) %>%
+  group_by(
+    n_obs,
+    contam_prop,
     outlier_method,
-    estimator_id,
-    mean_abs_bias
+    estimator_id
+  ) %>%
+  summarise(
+    mean_abs_bias = safe_mean(
+      mean_abs_bias
+    ),
+    .groups = "drop"
   ) %>%
   pivot_wider(
     names_from = estimator_id,
@@ -3506,17 +3847,29 @@ sap_advantage_heatmap <- estimation_cell %>%
   ) %>%
   mutate(
     sap_bias_advantage = full - mis_sap,
-    x_label = factor(
-      unname(x_labels_plot[as.character(x_type)]),
-      levels = unname(x_labels_plot[x_order])
+    
+    n_label = factor(
+      n_obs,
+      levels = n_obs_levels
     ),
-    error_label = factor(
-      unname(error_labels_plot[as.character(error_type)]),
-      levels = unname(error_labels_plot[error_order])
+    
+    contam_label = factor(
+      scales::percent(
+        contam_prop,
+        accuracy = 0.1
+      ),
+      levels = scales::percent(
+        contam_prop_levels,
+        accuracy = 0.1
+      )
     ),
+    
     cell_label = ifelse(
       is.finite(sap_bias_advantage),
-      sprintf("%+.3f", sap_bias_advantage),
+      sprintf(
+        "%+.3f",
+        sap_bias_advantage
+      ),
       ""
     )
   ) %>%
@@ -3524,11 +3877,16 @@ sap_advantage_heatmap <- estimation_cell %>%
 
 
 max_abs_advantage <- max(
-  abs(sap_advantage_heatmap$sap_bias_advantage),
+  abs(
+    sap_advantage_heatmap$sap_bias_advantage
+  ),
   na.rm = TRUE
 )
 
-if (!is.finite(max_abs_advantage) || max_abs_advantage <= 0) {
+if (
+  !is.finite(max_abs_advantage) ||
+  max_abs_advantage <= 0
+) {
   max_abs_advantage <- 1
 }
 
@@ -3536,8 +3894,8 @@ if (!is.finite(max_abs_advantage) || max_abs_advantage <= 0) {
 figA8_advantage <- ggplot(
   sap_advantage_heatmap,
   aes(
-    x = x_label,
-    y = error_label,
+    x = n_label,
+    y = contam_label,
     fill = sap_bias_advantage
   )
 ) +
@@ -3553,25 +3911,42 @@ figA8_advantage <- ggplot(
   ) +
   facet_wrap(
     ~ outlier_label_plot,
-    ncol = 2
+    ncol = 3
   ) +
   scale_fill_gradient2(
     low = COL_ORANGE,
     mid = COL_NEUTRAL,
     high = COL_BLUE,
     midpoint = 0,
-    limits = c(-max_abs_advantage, max_abs_advantage),
+    limits = c(
+      -max_abs_advantage,
+      max_abs_advantage
+    ),
     name = "OLS MAB -\nSAP MAB"
   ) +
+  scale_x_discrete(
+    drop = FALSE
+  ) +
+  scale_y_discrete(
+    drop = FALSE
+  ) +
   labs(
-    x = "Predictor distribution",
-    y = "Error distribution"
+    x = "Sample size",
+    y = "Contamination proportion",
+    caption = paste(
+      "Positive values indicate lower mean absolute bias for MIS-SAP than",
+      "for OLS. Each tile is an equal-cell mean across predictor and error",
+      "distributions."
+    )
   ) +
   theme_heatmap() +
   theme(
     axis.text.x = element_text(
-      angle = 25,
-      hjust = 1
+      angle = 0,
+      hjust = 0.5
+    ),
+    plot.caption = element_text(
+      hjust = 0
     )
   )
 
@@ -3582,140 +3957,104 @@ save_plot(
     fig_supp_dir,
     "04_figA8_sap_bias_advantage_heatmap.pdf"
   ),
-  width = 9.4,
-  height = 7.0
+  width = 10.5,
+  height = 5.8
 )
+
 
 utils::write.csv(
   sap_advantage_heatmap,
-  file.path(data_dir, "04_figA8_sap_bias_advantage_data.csv"),
+  file.path(
+    data_dir,
+    "04_figA8_sap_bias_advantage_data.csv"
+  ),
   row.names = FALSE
 )
 
 # ==============================================================================
 # 18b. Supplementary Figure A9:
-#      all-estimator large-error DGP heatmap
+#      all-estimator large-error n x contamination grid
 # ==============================================================================
 
-# ------------------------------------------------------------------------------
-# Adjustable supplementary-figure settings
-# ------------------------------------------------------------------------------
-
-FIGA9_NCOL <- 1L
-
-FIGA9_TILE_WIDTH  <- 0.98
-FIGA9_TILE_HEIGHT <- 0.92
-FIGA9_TILE_TEXT_SIZE <- 2.45
-
-FIGA9_X_TEXT_SIZE <- 7.2
-FIGA9_Y_TEXT_SIZE <- 8.4
-FIGA9_STRIP_TEXT_SIZE <- 10.5
-
-FIGA9_LEGEND_WIDTH_CM  <- 11.0
-FIGA9_LEGEND_HEIGHT_CM <- 0.48
-
-FIGA9_WIDTH_IN  <- 16.0
-FIGA9_HEIGHT_IN <- 13.5
-
-
-# ------------------------------------------------------------------------------
-# Ordered combined DGP labels
-# ------------------------------------------------------------------------------
-
-dgp_label_levels <- tidyr::expand_grid(
-  x_type = x_order,
-  error_type = error_order
-) %>%
-  mutate(
-    dgp_label = paste0(
-      "Predictor: ",
-      unname(
-        x_labels_table[
-          as.character(x_type)
-        ]
-      ),
-      "\n",
-      "Error: ",
-      unname(
-        error_labels_table[
-          as.character(error_type)
-        ]
-      )
-    )
+# Average large-error probabilities equally across predictor and
+# error-distribution cells within each n x contamination cell.
+tail_grid_all_estimators <- tail_cell_summary %>%
+  filter(
+    outlier_method != "none"
   ) %>%
-  pull(dgp_label)
-
-
-# ------------------------------------------------------------------------------
-# All-estimator supplementary data
-# ------------------------------------------------------------------------------
-
-tail_all_estimator_data <- tail_cell_summary %>%
-  semi_join(
-    problem_dgp_cells,
-    by = c(
-      "x_type",
-      "error_type",
-      "outlier_method"
+  group_by(
+    n_obs,
+    contam_prop,
+    outlier_method,
+    estimator_id,
+    estimator_label,
+    estimator_order
+  ) %>%
+  summarise(
+    exceedance_rate = safe_mean(
+      exceedance_rate
+    ),
+    
+    positive_exceedance_rate = safe_mean(
+      positive_exceedance_rate
+    ),
+    
+    negative_exceedance_rate = safe_mean(
+      negative_exceedance_rate
+    ),
+    
+    nonfinite_rate = safe_mean(
+      nonfinite_rate
+    ),
+    
+    .groups = "drop"
+  ) %>%
+  mutate(
+    n_label = factor(
+      n_obs,
+      levels = n_obs_levels
+    ),
+    
+    contam_label = factor(
+      scales::percent(
+        contam_prop,
+        accuracy = 0.1
+      ),
+      levels = scales::percent(
+        contam_prop_levels,
+        accuracy = 0.1
+      )
+    ),
+    
+    # OLS is the first row, followed by the remaining estimators.
+    estimator_label = factor(
+      estimator_label,
+      levels = estimator_meta$estimator_label
     )
   ) %>%
   add_outlier_display() %>%
-  mutate(
-    dgp_label = paste0(
-      "Predictor: ",
-      unname(
-        x_labels_table[
-          as.character(x_type)
-        ]
-      ),
-      "\n",
-      "Error: ",
-      unname(
-        error_labels_table[
-          as.character(error_type)
-        ]
-      )
-    ),
-    
-    dgp_label = factor(
-      dgp_label,
-      levels = dgp_label_levels
-    ),
-    
-    # Reverse levels so OLS appears at the top.
-    estimator_label = factor(
-      estimator_label,
-      levels = rev(
-        estimator_meta$estimator_label
-      )
-    )
-  ) %>%
   add_tail_annotations() %>%
   arrange(
-    outlier_method,
     estimator_order,
-    x_type,
-    error_type
+    outlier_method,
+    contam_prop,
+    n_obs
   )
 
 
-# ------------------------------------------------------------------------------
-# Supplementary Figure A9
-# ------------------------------------------------------------------------------
-
 figA9_all_estimators_tail <- ggplot(
-  tail_all_estimator_data,
+  tail_grid_all_estimators,
   aes(
-    x = dgp_label,
-    y = estimator_label,
+    x = n_label,
+    y = contam_label,
     fill = exceedance_rate
   )
 ) +
   geom_tile(
     colour = "white",
-    linewidth = 0.45,
-    width = FIGA9_TILE_WIDTH,
-    height = FIGA9_TILE_HEIGHT
+    linewidth = 0.40,
+    width = 0.96,
+    height = 0.92
   ) +
   
   geom_text(
@@ -3723,15 +4062,14 @@ figA9_all_estimators_tail <- ggplot(
       label = tile_label,
       colour = label_colour
     ),
-    size = FIGA9_TILE_TEXT_SIZE,
+    size = 2.25,
     lineheight = 0.86,
     show.legend = FALSE
   ) +
   
-  facet_wrap(
-    ~outlier_label_plot,
-    ncol = FIGA9_NCOL,
-    scales = "free_x",
+  # Rows are estimators; columns are contamination mechanisms.
+  facet_grid(
+    estimator_label ~ outlier_label_plot,
     drop = TRUE
   ) +
   
@@ -3746,9 +4084,9 @@ figA9_all_estimators_tail <- ggplot(
   scale_colour_identity() +
   
   scale_x_discrete(
-    drop = TRUE,
+    drop = FALSE,
     expand = expansion(
-      mult = c(0.002, 0.002)
+      mult = c(0.01, 0.01)
     )
   ) +
   
@@ -3760,11 +4098,12 @@ figA9_all_estimators_tail <- ggplot(
   ) +
   
   labs(
-    x = paste(
-      "Data-generating process:",
-      "predictor and error distributions"
-    ),
-    y = "Estimator"
+    x = "Sample size",
+    y = "Contamination proportion",
+    caption = paste(
+      "Each tile gives the equal-cell mean large-error probability",
+      "across predictor and error distributions."
+    )
   ) +
   
   guides(
@@ -3773,78 +4112,58 @@ figA9_all_estimators_tail <- ggplot(
       title.hjust = 0.5,
       label.position = "bottom",
       barwidth = grid::unit(
-        FIGA9_LEGEND_WIDTH_CM,
+        10.5,
         "cm"
       ),
       barheight = grid::unit(
-        FIGA9_LEGEND_HEIGHT_CM,
+        0.48,
         "cm"
       ),
       ticks = TRUE
     )
   ) +
   
-  theme_heatmap(base_size = 10) +
+  theme_heatmap(
+    base_size = 9
+  ) +
   
   theme(
     legend.position = "bottom",
     legend.justification = "center",
     
     axis.text.x = element_text(
-      angle = 40,
-      hjust = 1,
-      vjust = 1,
-      size = FIGA9_X_TEXT_SIZE,
-      lineheight = 0.9,
+      size = 7.5,
       colour = COL_BLACK
     ),
     
     axis.text.y = element_text(
-      size = FIGA9_Y_TEXT_SIZE,
+      size = 7.5,
       colour = COL_BLACK
     ),
     
-    axis.title.x = element_text(
-      colour = COL_BLACK,
-      margin = margin(t = 12)
+    strip.text.x = element_text(
+      size = 9,
+      face = "bold"
     ),
     
-    axis.title.y = element_text(
-      colour = COL_BLACK,
-      margin = margin(r = 10)
-    ),
-    
-    strip.text = element_text(
-      size = FIGA9_STRIP_TEXT_SIZE,
+    strip.text.y = element_text(
+      size = 8,
       face = "bold",
-      colour = COL_BLACK,
-      margin = margin(
-        t = 6,
-        b = 6
-      )
+      angle = 0
     ),
     
-    legend.title = element_text(
-      size = 9.5,
-      colour = COL_BLACK,
-      hjust = 0.5
-    ),
-    
-    legend.text = element_text(
-      size = 8.5,
-      colour = COL_BLACK
-    ),
-    
-    panel.spacing.y = grid::unit(
-      1.4,
+    panel.spacing.x = grid::unit(
+      0.8,
       "lines"
     ),
     
-    plot.margin = margin(
-      t = 10,
-      r = 16,
-      b = 18,
-      l = 12
+    panel.spacing.y = grid::unit(
+      0.5,
+      "lines"
+    ),
+    
+    plot.caption = element_text(
+      hjust = 0
     )
   )
 
@@ -3855,13 +4174,13 @@ save_plot(
     fig_supp_dir,
     "04_figA9_large_error_dgp_heatmap_all_estimators.pdf"
   ),
-  width = FIGA9_WIDTH_IN,
-  height = FIGA9_HEIGHT_IN
+  width = 13.5,
+  height = 18.0
 )
 
 
 utils::write.csv(
-  tail_all_estimator_data,
+  tail_grid_all_estimators,
   file.path(
     data_dir,
     "04_figA9_large_error_dgp_heatmap_all_estimators_data.csv"
@@ -4056,6 +4375,8 @@ write_tex_table(
 complete_cell_table <- estimation_cell %>%
   arrange(
     outlier_method,
+    n_obs,
+    contam_prop,
     x_type,
     error_type,
     estimator_order
@@ -4076,13 +4397,22 @@ complete_detection_cell_table <- full_join(
   selection_cell,
   overlap_cell,
   by = c(
-    "x_type", "error_type", "outlier_method",
-    "estimator_id", "estimator_label",
-    "estimator_order", "selection_order"
+    "n_obs",
+    "design_k",
+    "contam_prop",
+    "x_type",
+    "error_type",
+    "outlier_method",
+    "estimator_id",
+    "estimator_label",
+    "estimator_order",
+    "selection_order"
   )
 ) %>%
   arrange(
     outlier_method,
+    n_obs,
+    contam_prop,
     x_type,
     error_type,
     selection_order
@@ -4119,7 +4449,9 @@ publication_summaries <- list(
   figure2_full_tail_summary = tail_cell_summary,
   figure2_problem_dgp_cells = problem_dgp_cells,
   
-  figureA9_all_estimator_tail_data = tail_all_estimator_data,
+  figureA8_bias_advantage_data = sap_advantage_heatmap,
+  figureA9_all_estimator_tail_data = tail_grid_all_estimators,
+  runtime_grid = runtime_grid,
   
   figure3_summary = selection_distribution_summary,
   figure4_summary = overlap_distribution_summary
@@ -4135,12 +4467,14 @@ saveRDS(
 # 21. Diagnostics, clipping audit, and manifest
 # ==============================================================================
 
-n_coef_finite_displayed <- sum(
-  is.finite(coefficient_long$signed_error)
+n_coef_finite_displayed <- nrow(
+  coef_finite
 )
 
 n_coef_nonfinite_excluded <- sum(
-  !is.finite(coefficient_long$signed_error)
+  !is.finite(
+    estimation_cell$mean_signed_bias
+  )
 )
 
 
@@ -4152,9 +4486,9 @@ input_audit <- data.frame(
     "Unique contamination mechanisms",
     "Unique Monte Carlo iteration IDs",
     "Maximum recorded-versus-recomputed bias difference",
-    "Finite coefficient errors displayed in Figure 1",
-    "Non-finite coefficient errors excluded from Figure 1",
-    "Selected-k observations outside main-figure x limits",
+    "Finite design-cell coefficient errors displayed in Figure 1",
+    "Non-finite design-cell coefficient errors excluded from Figure 1",
+    "Selected-proportion cells outside main-figure x limits",
     "Optional summary RDS present",
     "Optional bias-summary RDS present"
   ),
@@ -4192,7 +4526,7 @@ clipping_audit <- data.frame(
   ),
   upper_limit = c(
     NA_real_,
-    k_upper
+    prop_upper
   ),
   observations_outside_display = c(
     0L,
@@ -4200,10 +4534,10 @@ clipping_audit <- data.frame(
   ),
   note = c(
     paste0(
-      "No finite coefficient errors are clipped. ",
-      "All finite values are displayed using a signed pseudo-logarithmic axis. ",
-      n_coef_nonfinite_excluded,
-      " non-finite coefficient errors are excluded and reported separately."
+      "The Figure 3 display limit is based on the ",
+      100 * K_MAIN_UPPER_QUANTILE,
+      "th percentile of design-cell mean selected proportions, ",
+      "with an additional 5% plotting margin."
     ),
     paste0(
       "The Figure 3 display limit is based on the ",
@@ -4238,7 +4572,7 @@ cat(sprintf(
 ))
 
 cat(sprintf(
-  "Selected-k observations outside main display: %d\n",
+  "Selected-proportion cells outside main display: %d\n",
   n_k_outside_main
 ))
 

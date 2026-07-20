@@ -80,8 +80,6 @@ if (length(missing_functions) > 0L) {
 sim_params <- list(
   # 1L = smoke test, 10L = pilot, 100L = final simulation.
   n_iters = 100L,
-  n_obs = 5000L,
-  set_size = 50L,
   magnitude = 10,
   seed = 20260503L,
   
@@ -90,6 +88,28 @@ sim_params <- list(
   sap_k_grid = c(1L, 2L, 5L, 10L, 20L, 50L, 100L),
   sap_max_iter = 1L
 )
+
+n_obs_grid <- c(500L, 1000L, 2500L, 5000L)
+
+contam_prop_grid <- c(
+  0.005,
+  0.010,
+  0.025,
+  0.050
+)
+
+# Grid of N * k
+nk_grid <- expand.grid(
+  n_obs = n_obs_grid,
+  contam_prop = contam_prop_grid,
+  stringsAsFactors = FALSE
+) %>%
+  mutate(
+    set_size = pmax(
+      floor(n_obs * contam_prop),
+      2L
+    )
+  )
 
 param_grid <- expand.grid(
   x_type = c("normal", "mixed_normal", "contaminated"),
@@ -103,10 +123,46 @@ param_grid <- expand.grid(
   stringsAsFactors = FALSE
 )
 
+contaminated_grid <- merge(
+  nk_grid,
+  param_grid %>%
+    filter(outlier_method != "none"),
+  by = NULL
+)
+
+clean_grid <- merge(
+  data.frame(
+    n_obs = n_obs_grid,
+    stringsAsFactors = FALSE
+  ),
+  param_grid %>%
+    filter(outlier_method == "none"),
+  by = NULL
+) %>%
+  mutate(
+    contam_prop = 0,
+    set_size = 0L
+  )
+
+design_grid <- bind_rows(
+  clean_grid,
+  contaminated_grid
+) %>%
+  arrange(
+    n_obs,
+    contam_prop,
+    x_type,
+    error_type,
+    outlier_method
+  ) %>%
+  mutate(
+    design_id = row_number()
+  )
+
 set.seed(sim_params$seed)
 
-n_scenarios <- nrow(param_grid)
-n_expected <- n_scenarios * sim_params$n_iters
+n_designs <- nrow(design_grid)
+n_expected <- n_designs * sim_params$n_iters
 num_workers <- min(
   max(1L, future::availableCores() - 2L),
   sim_params$n_iters
@@ -118,19 +174,22 @@ future::plan(future::multisession, workers = num_workers)
 cat(sprintf(
   paste0(
     "\nStarting Script 04: Robust MIS-SAP Comparison\n",
-    "  Scenarios:           %d\n",
-    "  Iterations/scenario: %d\n",
+    "  Design cells:        %d\n",
+    "  Iterations/design:   %d\n",
     "  Expected draws:      %d\n",
-    "  Sample size:         %d\n",
-    "  Injected k:          %d\n",
+    "  Sample sizes:        %s\n",
+    "  Contamination grid:  %s\n",
     "  SAP permutations:    %d\n",
     "  SAP k-grid:          %s\n\n"
   ),
-  n_scenarios,
+  n_designs,
   sim_params$n_iters,
   n_expected,
-  sim_params$n_obs,
-  sim_params$set_size,
+  paste(n_obs_grid, collapse = ", "),
+  paste(
+    paste0(100 * contam_prop_grid, "%"),
+    collapse = ", "
+  ),
   sim_params$sap_B_perm,
   paste(sim_params$sap_k_grid, collapse = ", ")
 ))
@@ -140,29 +199,38 @@ cat(sprintf(
 # 3. Checkpointed parallel simulation
 # ==============================================================================
 
-for (i in seq_len(n_scenarios)) {
-  p_current <- param_grid[i, , drop = FALSE]
+for (i in seq_len(n_designs)) {
+  d_current <- design_grid[i, , drop = FALSE]
   chunk_file <- sprintf(
-    "../output/temp_04sap/04sap_chunk_%03d.rds", i
+    paste0(
+      "../output/temp_04sap/",
+      "04sap_chunk_n%d_cp%04d_k%d_s%04d.rds"
+    ),
+    d_current$n_obs,
+    round(10000 * d_current$contam_prop),
+    d_current$set_size,
+    i
   )
   
   if (is_computed(chunk_file)) {
     cat(sprintf(
       "[%03d/%03d] Cached: x=%s | error=%s | outlier=%s\n",
-      i, n_scenarios,
-      p_current$x_type,
-      p_current$error_type,
-      p_current$outlier_method
+      i,
+      n_designs,
+      d_current$x_type,
+      d_current$error_type,
+      d_current$outlier_method
     ))
     next
   }
   
   cat(sprintf(
     "[%03d/%03d] Running: x=%s | error=%s | outlier=%s ... ",
-    i, n_scenarios,
-    p_current$x_type,
-    p_current$error_type,
-    p_current$outlier_method
+    i,
+    n_designs,
+    d_current$x_type,
+    d_current$error_type,
+    d_current$outlier_method
   ))
   
   scenario_results <- furrr::future_map_dfr(
@@ -171,12 +239,12 @@ for (i in seq_len(n_scenarios)) {
       tryCatch(
         run_robust_comparison_iter_v2(
           iter = iter_id,
-          n = sim_params$n_obs,
+          n = d_current$n_obs,
           p = 1L,
-          x_type = p_current$x_type,
-          error_type = p_current$error_type,
-          outlier_method = p_current$outlier_method,
-          k = sim_params$set_size,
+          x_type = d_current$x_type,
+          error_type = d_current$error_type,
+          outlier_method = d_current$outlier_method,
+          k = d_current$set_size,
           magnitude = sim_params$magnitude,
           sap_alpha = sim_params$sap_alpha,
           sap_B_perm = sim_params$sap_B_perm,
@@ -187,9 +255,9 @@ for (i in seq_len(n_scenarios)) {
           warning(sprintf(
             "Iter %d failed for x=%s|error=%s|outlier=%s: %s",
             iter_id,
-            p_current$x_type,
-            p_current$error_type,
-            p_current$outlier_method,
+            d_current$x_type,
+            d_current$error_type,
+            d_current$outlier_method,
             conditionMessage(e)
           ))
           NULL
@@ -200,7 +268,39 @@ for (i in seq_len(n_scenarios)) {
     .options = furrr::furrr_options(seed = sim_params$seed + i)
   )
   
-  safe_save_rds(scenario_results, chunk_file)
+  if (nrow(scenario_results) > 0L) {
+    scenario_results <- scenario_results %>%
+      mutate(
+        n_obs = as.integer(
+          d_current$n_obs
+        ),
+        
+        design_k = as.integer(
+          d_current$set_size
+        ),
+        
+        # Nominal contamination proportion from the requested grid.
+        contam_prop = as.numeric(
+          d_current$contam_prop
+        ),
+        
+        # Actual injected proportion after integer rounding of k.
+        realized_contam_prop = ifelse(
+          outlier_method == "none",
+          0,
+          set_size / n_obs
+        ),
+        
+        design_id = as.integer(
+          d_current$design_id
+        )
+      )
+  }
+  
+  safe_save_rds(
+    scenario_results,
+    chunk_file
+  )
   
   cat(sprintf(
     "Done: %d successful, %d failed.\n",
@@ -240,8 +340,20 @@ if (nrow(results) != n_expected) {
 }
 
 duplicate_rows <- results %>%
-  count(x_type, error_type, outlier_method, iter, name = "n") %>%
-  filter(n > 1L)
+  count(
+    design_id,
+    n_obs,
+    design_k,
+    contam_prop,
+    x_type,
+    error_type,
+    outlier_method,
+    iter,
+    name = "n"
+  ) %>%
+  filter(
+    n > 1L
+  )
 
 if (nrow(duplicate_rows) > 0L) {
   warning("Duplicate scenario-iteration rows detected.")
