@@ -1632,42 +1632,43 @@ fig1_coef <- ggplot(
     colour = COL_BLUE_LIGHT
   ) +
   
-  # Individual finite Monte Carlo estimates
+  # Design-cell mean coefficient errors
   geom_point(
+    aes(shape = "Design-cell mean error"),
     position = position_jitter(
       width = 0,
       height = 0.11,
       seed = 84
     ),
-    alpha = 0.10,
-    size = 0.55,
+    alpha = 0.5,
+    size = 0.65,
     colour = COL_BLUE
   ) +
   
-  # Arithmetic mean: primary summary
+  # Arithmetic mean across equally weighted design cells
   geom_point(
     data = coef_distribution_summary,
     aes(
       x = mean_error,
-      y = estimator_label
+      y = estimator_label,
+      shape = "Equal-cell mean"
     ),
     inherit.aes = FALSE,
-    shape = 21,
     size = 2.4,
     stroke = 0.5,
     fill = COL_BLUE_DARK,
     colour = COL_BLACK
   ) +
   
-  # Median: secondary marker used only to display skewness
+  # Median across design cells
   geom_point(
     data = coef_distribution_summary,
     aes(
       x = median_error,
-      y = estimator_label
+      y = estimator_label,
+      shape = "Median across design cells"
     ),
     inherit.aes = FALSE,
-    shape = 23,
     size = 2.3,
     stroke = 0.6,
     fill = "white",
@@ -1704,23 +1705,59 @@ fig1_coef <- ggplot(
     )
   ) +
   
+  scale_shape_manual(
+    name = NULL,
+    breaks = c(
+      "Design-cell mean error",
+      "Equal-cell mean",
+      "Median across design cells"
+    ),
+    values = c(
+      "Design-cell mean error" = 16,
+      "Equal-cell mean" = 21,
+      "Median across design cells" = 23
+    )
+  ) +
+  
+  guides(
+    shape = guide_legend(
+      direction = "horizontal",
+      nrow = 1,
+      byrow = TRUE,
+      override.aes = list(
+        alpha = c(0.30, 1, 1),
+        size = c(1.7, 3.0, 3.0),
+        colour = c(
+          COL_BLUE,
+          COL_BLACK,
+          COL_BLACK
+        ),
+        fill = c(
+          NA,
+          COL_BLUE_DARK,
+          "white"
+        ),
+        stroke = c(0, 0.5, 0.6)
+      )
+    )
+  ) +
+  
   labs(
     x = expression(
       hat(beta) - beta[0] ~ "(signed pseudo-log scale)"
     ),
-    y = NULL,
-    caption = paste(
-      "Faint points: design-cell mean coefficient errors;",
-      "filled circles: equal-cell means;",
-      "open diamonds: medians across design cells;",
-      "thick and thin intervals: 25th–75th and 5th–95th percentiles across design cells."
-    )
+    y = NULL
   ) +
   
   theme_distribution(base_size = 9.5) +
   
   theme(
-    legend.position = "none",
+    legend.position = "top",
+    legend.justification = "center",
+    legend.direction = "horizontal",
+    legend.text = element_text(size = 8.5),
+    legend.margin = margin(b = 3),
+    legend.box.margin = margin(b = 2),
     panel.grid.major.y = element_blank(),
     panel.grid.minor = element_blank(),
     
@@ -1733,16 +1770,10 @@ fig1_coef <- ggplot(
       margin = margin(t = 10)
     ),
     
-    plot.caption = element_text(
-      hjust = 0,
-      size = 7.5,
-      margin = margin(t = 10)
-    ),
-    
     plot.margin = margin(
       t = 8,
       r = 16,
-      b = 22,
+      b = 10,
       l = 8
     )
   )
@@ -3303,7 +3334,11 @@ figA3_bias_x <- ggplot(
       base = 10,
       sigma = 0.001
     ),
-    labels = scales::label_number(accuracy = 0.001)
+    breaks = compact_pseudolog_breaks,
+    labels = compact_scientific_labels,
+    expand = expansion(
+      mult = c(0.02, 0.08)
+    )
   ) +
   scale_colour_manual(
     values = method_colors,
@@ -3824,30 +3859,44 @@ utils::write.csv(
 sap_advantage_heatmap <- estimation_cell %>%
   filter(
     outlier_method != "none",
-    estimator_id %in% c(
-      "full",
-      "mis_sap"
-    )
+    estimator_id %in% c("full", "mis_sap"),
+    is.finite(mean_abs_bias),
+    mean_abs_bias > 0
   ) %>%
-  group_by(
+  select(
     n_obs,
     contam_prop,
+    x_type,
+    error_type,
     outlier_method,
-    estimator_id
-  ) %>%
-  summarise(
-    mean_abs_bias = safe_mean(
-      mean_abs_bias
-    ),
-    .groups = "drop"
+    estimator_id,
+    mean_abs_bias
   ) %>%
   pivot_wider(
     names_from = estimator_id,
     values_from = mean_abs_bias
   ) %>%
+  filter(
+    is.finite(full),
+    is.finite(mis_sap),
+    full > 0,
+    mis_sap > 0
+  ) %>%
   mutate(
-    sap_bias_advantage = full - mis_sap,
-    
+    # Positive values favour MIS-SAP.
+    log2_bias_ratio = log2(full / mis_sap)
+  ) %>%
+  group_by(
+    n_obs,
+    contam_prop,
+    outlier_method
+  ) %>%
+  summarise(
+    # Equal-cell mean across predictor and error distributions.
+    log2_bias_ratio = safe_mean(log2_bias_ratio),
+    .groups = "drop"
+  ) %>%
+  mutate(
     n_label = factor(
       n_obs,
       levels = n_obs_levels
@@ -3865,29 +3914,24 @@ sap_advantage_heatmap <- estimation_cell %>%
     ),
     
     cell_label = ifelse(
-      is.finite(sap_bias_advantage),
-      sprintf(
-        "%+.3f",
-        sap_bias_advantage
-      ),
+      is.finite(log2_bias_ratio),
+      sprintf("%+.1f", log2_bias_ratio),
       ""
     )
   ) %>%
   add_outlier_display()
 
 
-max_abs_advantage <- max(
-  abs(
-    sap_advantage_heatmap$sap_bias_advantage
-  ),
-  na.rm = TRUE
+advantage_limit <- safe_quantile(
+  abs(sap_advantage_heatmap$log2_bias_ratio),
+  0.95
 )
 
 if (
-  !is.finite(max_abs_advantage) ||
-  max_abs_advantage <= 0
+  !is.finite(advantage_limit) ||
+  advantage_limit <= 0
 ) {
-  max_abs_advantage <- 1
+  advantage_limit <- 1
 }
 
 
@@ -3896,7 +3940,7 @@ figA8_advantage <- ggplot(
   aes(
     x = n_label,
     y = contam_label,
-    fill = sap_bias_advantage
+    fill = log2_bias_ratio
   )
 ) +
   geom_tile(
@@ -3919,10 +3963,13 @@ figA8_advantage <- ggplot(
     high = COL_BLUE,
     midpoint = 0,
     limits = c(
-      -max_abs_advantage,
-      max_abs_advantage
+      -advantage_limit,
+      advantage_limit
     ),
-    name = "OLS MAB -\nSAP MAB"
+    oob = scales::squish,
+    breaks = scales::breaks_pretty(n = 5),
+    labels = scales::label_number(accuracy = 0.1),
+    name = "log2(OLS MAB /\nMIS-SAP MAB)"
   ) +
   scale_x_discrete(
     drop = FALSE
@@ -3934,9 +3981,20 @@ figA8_advantage <- ggplot(
     x = "Sample size",
     y = "Contamination proportion",
     caption = paste(
-      "Positive values indicate lower mean absolute bias for MIS-SAP than",
-      "for OLS. Each tile is an equal-cell mean across predictor and error",
-      "distributions."
+      "Positive values favour MIS-SAP; +1 means OLS mean absolute bias is twice",
+      "MIS-SAP mean absolute bias, while -1 indicates the reverse.\n",
+      "Tiles are equal-cell means across predictor and error distributions.\n",
+      "The colour scale is capped at the 95th percentile of absolute values."
+    )
+  ) +
+  guides(
+    fill = guide_colourbar(
+      title.position = "top",
+      title.hjust = 0.5,
+      label.position = "bottom",
+      barwidth = grid::unit(8.5, "cm"),
+      barheight = grid::unit(0.55, "cm"),
+      ticks = TRUE
     )
   ) +
   theme_heatmap() +
@@ -3946,7 +4004,10 @@ figA8_advantage <- ggplot(
       hjust = 0.5
     ),
     plot.caption = element_text(
-      hjust = 0
+      hjust = 0,
+      size = 8,
+      lineheight = 1.05,
+      margin = margin(t = 8)
     )
   )
 
