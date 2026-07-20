@@ -3983,7 +3983,7 @@ figA8_advantage <- ggplot(
     caption = paste(
       "Positive values favour MIS-SAP; +1 means OLS mean absolute bias is twice",
       "MIS-SAP mean absolute bias, while -1 indicates the reverse.\n",
-      "Tiles are equal-cell means across predictor and error distributions.\n",
+      "Tiles are equal-cell means across predictor and error distributions.",
       "The colour scale is capped at the 95th percentile of absolute values."
     )
   ) +
