@@ -1,8 +1,6 @@
 # ==============================================================================
 # MIS-sek: theorem-aligned conservative effective-k certification
 #
-# Replace the existing mis_sek() and print.mis_sek() definitions with this file.
-#
 # Core contract:
 #   K_sek_hat = K0_hat ∩ K1_hat ∩ K2_hat ∩ K3_hat
 #
