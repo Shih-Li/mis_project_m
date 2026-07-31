@@ -937,6 +937,49 @@
   invisible(TRUE)
 }
 
+.sap_profile_dinkelbach <- function(
+    x, r, k_grid, sgn, sum_x2,
+    max_iter = 50L, tol = 1e-9
+) {
+  n_val <- sgn * (x * r)
+  d_val <- -(x^2)
+  K     <- length(k_grid)
+  
+  lambda    <- rep(0, K)
+  idx_list  <- vector("list", K)
+  converged <- rep(FALSE, K)
+  
+  eval_profile <- function(lambda_ref) {
+    w     <- n_val - lambda_ref * d_val
+    ord   <- order(w, decreasing = TRUE)
+    cum_n <- cumsum(n_val[ord])[k_grid]
+    cum_d <- cumsum(d_val[ord])[k_grid]
+    list(ratio = cum_n / (sum_x2 + cum_d), ord = ord)
+  }
+  
+  for (j in seq_len(K)) {
+    if (j > 1L && !converged[j]) {
+      lambda[j] <- max(lambda[j], lambda[j - 1L])
+    }
+    ev <- NULL
+    for (iter in seq_len(max_iter)) {
+      ev    <- eval_profile(lambda[j])
+      new_l <- ev$ratio[j]
+      hint <- !converged & ev$ratio > lambda
+      hint[j] <- FALSE
+      lambda[hint] <- ev$ratio[hint]
+      if (abs(new_l - lambda[j]) < tol) {
+        lambda[j] <- new_l
+        break
+      }
+      lambda[j] <- new_l
+    }
+    idx_list[[j]] <- ev$ord[seq_len(k_grid[j])]
+    converged[j]  <- TRUE
+  }
+  
+  list(lambda = lambda, dfbeta = sgn * lambda, indices = idx_list)
+}
 
 .sap_search_multiscale <- function(
     x,
@@ -975,72 +1018,46 @@
     )
   }
   
+  prof_pos <- .sap_profile_dinkelbach(
+    x = x, r = r, k_grid = k_grid, sgn =  1L, sum_x2 = sum_x2
+  )
+  prof_neg <- .sap_profile_dinkelbach(
+    x = x, r = r, k_grid = k_grid, sgn = -1L, sum_x2 = sum_x2
+  )
+  
+  prof_pos <- .sap_profile_dinkelbach(
+    x = x, r = r, k_grid = k_grid, sgn =  1L, sum_x2 = sum_x2
+  )
+  prof_neg <- .sap_profile_dinkelbach(
+    x = x, r = r, k_grid = k_grid, sgn = -1L, sum_x2 = sum_x2
+  )
+  
   searches <- lapply(
-    k_grid,
-    function(k_now) {
-      fit_pos <- dinkelbach_topk(
-        x = x,
-        r = r,
-        k = k_now,
-        sgn = 1L,
-        sum_x2 = sum_x2
-      )
-      
-      fit_neg <- dinkelbach_topk(
-        x = x,
-        r = r,
-        k = k_now,
-        sgn = -1L,
-        sum_x2 = sum_x2
-      )
-      
-      if (
-        abs(
-          fit_pos$dfbeta
-        ) >=
-        abs(
-          fit_neg$dfbeta
-        )
-      ) {
+    seq_along(k_grid),
+    function(j) {
+      shift_pos <- prof_pos$dfbeta[j]
+      shift_neg <- prof_neg$dfbeta[j]
+      if (abs(shift_pos) >= abs(shift_neg)) {
         selected_direction <- 1L
-        selected_statistic <- abs(
-          fit_pos$dfbeta
-        )
-        selected_indices <- fit_pos$indices
+        selected_statistic <- abs(shift_pos)
+        selected_indices   <- prof_pos$indices[[j]]
       } else {
         selected_direction <- -1L
-        selected_statistic <- abs(
-          fit_neg$dfbeta
-        )
-        selected_indices <- fit_neg$indices
+        selected_statistic <- abs(shift_neg)
+        selected_indices   <- prof_neg$indices[[j]]
       }
-      
       list(
-        k = as.integer(k_now),
-        direction = as.integer(
-          selected_direction
+        k         = as.integer(k_grid[j]),
+        direction = as.integer(selected_direction),
+        statistic = unname(selected_statistic),
+        indices   = as.integer(selected_indices),
+        positive  = list(
+          indices = as.integer(prof_pos$indices[[j]]),
+          shift   = unname(shift_pos)
         ),
-        statistic = unname(
-          selected_statistic
-        ),
-        indices = as.integer(
-          selected_indices
-        ),
-        positive = list(
-          indices = as.integer(
-            fit_pos$indices
-          ),
-          shift = unname(
-            fit_pos$dfbeta
-          )
-        ),
-        negative = list(
-          indices = as.integer(
-            fit_neg$indices
-          ),
-          shift = unname(
-            fit_neg$dfbeta
-          )
+        negative  = list(
+          indices = as.integer(prof_neg$indices[[j]]),
+          shift   = unname(shift_neg)
         )
       )
     }
@@ -1155,38 +1172,43 @@
   perm_stats <- matrix(
     NA_real_,
     nrow = B_perm,
-    ncol = length(
-      effective_grid
-    )
+    ncol = length(effective_grid)
   )
+  
+  observed_global_now <- max(observed$profile$observed_stat)
+  
+  # Besag–Clifford early stop: once `h` exceedances of the global max
+  # are seen, p >= h/(b+1) > alpha is guaranteed -> cannot reject.
+  h_stop      <- ceiling(alpha * (B_perm + 1))
+  exceedances <- 0L
+  b_used      <- 0L
   
   for (b in seq_len(B_perm)) {
     y_permuted <- fwl_fit$fitted +
-      sample(
-        fwl_fit$residual,
-        replace = FALSE
-      )
+      sample(fwl_fit$residual, replace = FALSE)
     
-    beta_permuted <- sum(
-      fwl_fit$x_fwl *
-        y_permuted
-    ) /
+    beta_permuted <- sum(fwl_fit$x_fwl * y_permuted) /
       fwl_fit$target_energy
     
     residual_permuted <- y_permuted -
-      fwl_fit$x_fwl *
-      beta_permuted
+      fwl_fit$x_fwl * beta_permuted
     
     permuted_search <- .sap_search_multiscale(
-      x = fwl_fit$x_fwl,
-      r = residual_permuted,
+      x      = fwl_fit$x_fwl,
+      r      = residual_permuted,
       k_grid = effective_grid
     )
     
-    perm_stats[
-      b,
-    ] <- permuted_search$profile$observed_stat
+    perm_stats[b, ] <- permuted_search$profile$observed_stat
+    b_used <- b
+    
+    if (max(perm_stats[b, ]) >= observed_global_now) {
+      exceedances <- exceedances + 1L
+      if (exceedances >= h_stop) break
+    }
   }
+  
+  perm_stats <- perm_stats[seq_len(b_used), , drop = FALSE]
   
   null_mean <- colMeans(
     perm_stats
@@ -1218,7 +1240,7 @@
           )
       ) /
         (
-          B_perm +
+          b_used +
             1
         )
     },
@@ -1247,7 +1269,7 @@
       )
   ) /
     (
-      B_perm +
+      b_used +
         1
     )
   
@@ -1316,10 +1338,10 @@
     ),
     profile = profile,
     permutation_count = as.integer(
-      B_perm
+      b_used
     ),
     min_attainable_p = 1 / (
-      B_perm +
+      b_used +
         1
     ),
     effective_k_grid = as.integer(

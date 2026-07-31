@@ -99,19 +99,14 @@ sim_params <- list(
   
   sap_alpha = 0.05,
   sap_B_perm = 199L,
-  sap_k_grid = c(1L, 2L, 5L, 10L, 20L, 50L, 100L),
-  sap_alpha = 0.05,
-  sap_B_perm = 199L,
-  sap_k_grid = c(
-    1L, 2L, 5L, 10L, 20L, 50L, 100L
-  ),
+  # Dense soft grid: 1:250 covers floor(0.05 * 5000); each method's
+  # validator trims to floor(0.05 * n) per cell automatically.
+  sap_k_grid = seq_len(250L),
   sap_max_fraction = 0.05,
   
   sek_alpha = 0.05,
   sek_B_cal = 199L,
-  sek_k_grid = c(
-    1L, 2L, 5L, 10L, 20L, 50L, 100L
-  ),
+  sek_k_grid = seq_len(250L),
   sek_max_fraction = 0.05,
   sek_eta_n = 0,
   sek_minimum_denominator_fraction = 0.05

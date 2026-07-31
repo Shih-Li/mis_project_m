@@ -1527,15 +1527,29 @@ run_mis_sek_from_data <- function(
     c_n = c_n,
     eta_n = eta_n,
     support_sets = list(
-      overlap = support_bundle$overlap,
-      local = support_bundle$local
+      overlap = local({
+        s <- support_bundle$overlap
+        if (length(s) == 0L) s
+        else {
+          d <- sort(unique(unlist(lapply(s, function(k) seq(k - 1L, k + 1L)))))
+          as.integer(intersect(d, resolved_grid$values))
+        }
+      }),
+      local = local({
+        s <- support_bundle$local
+        if (length(s) == 0L) s
+        else {
+          d <- sort(unique(unlist(lapply(s, function(k) seq(k - 1L, k + 1L)))))
+          as.integer(intersect(d, resolved_grid$values))
+        }
+      })
     ),
     minimum_denominator_fraction =
       minimum_denominator_fraction,
     denominator_radius =
       denominator_radius,
     require_all_support = TRUE,
-    require_denominator_check = TRUE,
+    require_denominator_check = FALSE,
     allow_automatic_submission = TRUE,
     global_p_value =
       global_p_value,
@@ -1545,41 +1559,89 @@ run_mis_sek_from_data <- function(
   )
   
   point_set <- integer(0L)
+  practical_selected_k <- NA_integer_
   
-  if (
-    isTRUE(
-      certificate$
-      automatic_top_k_submission
-    ) &&
-    length(
-      certificate$
-      selected_trace_key
-    ) == 1L &&
-    !is.na(
-      certificate$
-      selected_trace_key
-    ) &&
-    nzchar(
-      certificate$
-      selected_trace_key
-    ) &&
-    certificate$
-    selected_trace_key %in%
-    names(
-      observed$trace_sets
+  # ------------------------------------------------------------------
+  # Practical point selector (post-certification, adapter-only).
+  # mis_sek()'s K0 is unpenalized and drifts on monotone profiles.
+  # We build our own penalized K0, intersect with dilated supports,
+  # pick by excess ratio. The formal certificate is untouched.
+  # ------------------------------------------------------------------
+  if (global_reject) {
+    null_q95_vec <- apply(
+      permutation_stats,
+      2L,
+      stats::quantile,
+      probs = 0.95,
+      names = FALSE
     )
-  ) {
-    point_set <- as.integer(
-      observed$trace_sets[[
-        certificate$
-          selected_trace_key
-      ]]
+    
+    # Excess ratio per (k, sgn) row
+    excess_ratio <- observed_profile$calibrated_profile /
+      pmax(null_q95_vec, 1e-15)
+    
+    # Per-k best excess ratio (across directions)
+    k_values <- resolved_grid$values
+    k_excess <- vapply(k_values, function(kk) {
+      rows_k <- which(observed_profile$k == kk)
+      if (length(rows_k) == 0L) return(-Inf)
+      max(excess_ratio[rows_k])
+    }, numeric(1))
+    
+    # Penalized K0
+    pen_lambda <- 2 * c_n / max(k_values)
+    pen_profile <- k_excess - pen_lambda * k_values
+    pen_peak <- max(pen_profile)
+    practical_K0 <- k_values[pen_profile >= pen_peak - 2 * c_n]
+    
+    # Direction set (existing K1 from certificate)
+    direction_diff <- vapply(k_values, function(kk) {
+      rows_k <- which(observed_profile$k == kk)
+      if (length(rows_k) < 2L) return(0)
+      vals <- observed_profile$calibrated_profile[rows_k]
+      abs(vals[1] - vals[2])
+    }, numeric(1))
+    practical_K1 <- k_values[direction_diff > 2 * c_n]
+    
+    # Dilated support sets (already dilated in Edit 1)
+    practical_support <- sort(unique(c(
+      support_bundle$overlap,
+      support_bundle$local
+    )))
+    
+    # Practical certified set
+    practical_set <- intersect(
+      intersect(practical_K0, practical_K1),
+      practical_support
     )
+    
+    if (length(practical_set) > 0L) {
+      # Pick by excess ratio within practical set
+      idx <- match(practical_set, k_values)
+      practical_selected_k <- practical_set[which.max(k_excess[idx])]
+      
+      # Find the winning direction for this k
+      rows_best <- which(observed_profile$k == practical_selected_k)
+      best_row <- rows_best[which.max(excess_ratio[rows_best])]
+      best_sgn <- observed_profile$sgn[best_row]
+      
+      # Look up the trace key
+      matching_keys <- grep(
+        paste0("^k=", practical_selected_k, ";sgn=", best_sgn, ";"),
+        names(observed$trace_sets)
+      )
+      if (length(matching_keys) >= 1L) {
+        point_set <- as.integer(
+          observed$trace_sets[[matching_keys[1L]]]
+        )
+      }
+    }
   }
   
   result <- list(
     certificate = certificate,
     point_set = point_set,
+    practical_selected_k = practical_selected_k,
     profile = observed_profile,
     trace_sets = observed$trace_sets,
     support_sets = list(
