@@ -1025,13 +1025,6 @@
     x = x, r = r, k_grid = k_grid, sgn = -1L, sum_x2 = sum_x2
   )
   
-  prof_pos <- .sap_profile_dinkelbach(
-    x = x, r = r, k_grid = k_grid, sgn =  1L, sum_x2 = sum_x2
-  )
-  prof_neg <- .sap_profile_dinkelbach(
-    x = x, r = r, k_grid = k_grid, sgn = -1L, sum_x2 = sum_x2
-  )
-  
   searches <- lapply(
     seq_along(k_grid),
     function(j) {

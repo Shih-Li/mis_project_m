@@ -67,6 +67,23 @@ iterative_peel_v2 <- function(formula, data,
                               detector    = "dinkelbach",
                               k_method    = "leverage",
                               verbose     = FALSE) {
+  
+  detector <- match.arg(
+    detector,
+    c(
+      "dinkelbach",
+      "greedy"
+    )
+  )
+  
+  k_method <- match.arg(
+    k_method,
+    c(
+      "leverage",
+      "alpha",
+      "any"
+    )
+  )
 
   n_total   <- nrow(data)
   max_k_abs <- floor(n_total * max_k_frac)
@@ -77,13 +94,6 @@ iterative_peel_v2 <- function(formula, data,
   # ------------------------------------------------------------------
   mod_ols_init   <- stats::lm(formula, data = data)
   sigma_current  <- summary(mod_ols_init)$sigma
-
-  # We still need lmrob for the k-selector (leverage_k / alpha_k),
-  # but NOT for direction selection.
-  mod_mm_init <- tryCatch(
-    robustbase::lmrob(formula, data = data, setting = "KS2014"),
-    error = function(e) NULL
-  )
 
   # ------------------------------------------------------------------
   # State tracking

@@ -32,6 +32,7 @@ source("../R/diagnostics_classical.R")
 source("../R/estimators_robust.R")
 source("../R/dynamic_k_adaptive.R")
 source("../R/dinkelbach_topk.R")
+source("../R/fast_sens_topk.R")
 source("../R/leverage_k.R")
 source("../R/iterative_peel_v2.R")
 source("../R/mis_sap.R")
@@ -68,7 +69,10 @@ if (length(missing_engine_args) > 0L) {
 required_functions <- c(
   "generate_complex_data", "apply_influence_shift", "get_classical_set",
   "fit_clean_ols", "fit_mm_estimator", "fit_lts_estimator",
-  "alpha_k", "oracle_k", "dinkelbach_topk", "dinkelbach_topk_lm",
+  "alpha_k", "oracle_k",
+  "leverage_k",
+  "dinkelbach_topk", "dinkelbach_topk_lm",
+  "fast_sens_topk",
   "iterative_peel_v2",
   "mis_sap",
   "mis_sek",

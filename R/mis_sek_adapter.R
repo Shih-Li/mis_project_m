@@ -1511,6 +1511,19 @@ run_mis_sek_from_data <- function(
         local_profile_multiplier
     )
   
+  dilate_support_set <- function(support_set) {
+    if (length(support_set) == 0L) {
+      return(integer(0L))
+    }
+    expanded <- sort(unique(unlist(
+      lapply(support_set, function(k) seq.int(k - 1L, k + 1L))
+    )))
+    as.integer(intersect(expanded, resolved_grid$values))
+  }
+  
+  overlap_support_dilated <- dilate_support_set(support_bundle$overlap)
+  local_support_dilated   <- dilate_support_set(support_bundle$local)
+  
   certificate <- mis_sek(
     profile = observed_profile[
       ,
@@ -1527,22 +1540,8 @@ run_mis_sek_from_data <- function(
     c_n = c_n,
     eta_n = eta_n,
     support_sets = list(
-      overlap = local({
-        s <- support_bundle$overlap
-        if (length(s) == 0L) s
-        else {
-          d <- sort(unique(unlist(lapply(s, function(k) seq(k - 1L, k + 1L)))))
-          as.integer(intersect(d, resolved_grid$values))
-        }
-      }),
-      local = local({
-        s <- support_bundle$local
-        if (length(s) == 0L) s
-        else {
-          d <- sort(unique(unlist(lapply(s, function(k) seq(k - 1L, k + 1L)))))
-          as.integer(intersect(d, resolved_grid$values))
-        }
-      })
+      overlap = overlap_support_dilated,
+      local = local_support_dilated
     ),
     minimum_denominator_fraction =
       minimum_denominator_fraction,
@@ -1603,10 +1602,10 @@ run_mis_sek_from_data <- function(
     }, numeric(1))
     practical_K1 <- k_values[direction_diff > 2 * c_n]
     
-    # Dilated support sets (already dilated in Edit 1)
+    # Dilated support sets (union: a k passes if supported by either diagnostic)
     practical_support <- sort(unique(c(
-      support_bundle$overlap,
-      support_bundle$local
+      overlap_support_dilated,
+      local_support_dilated
     )))
     
     # Practical certified set
