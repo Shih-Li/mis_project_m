@@ -362,6 +362,12 @@ make_method_row05 <- function(
     n =
       base_meta$n,
     
+    true_beta =
+      base_meta$true_beta,
+    
+    draw_seed =
+      base_meta$draw_seed,
+    
     x_type =
       base_meta$x_type,
     
@@ -1349,7 +1355,8 @@ run_misspec_iter <- function(
     n =
       n,
     
-    true_beta = beta1,
+    true_beta =
+      dat$true_beta,
     
     draw_seed =
       as.integer(
@@ -1375,10 +1382,7 @@ run_misspec_iter <- function(
       dat$severity_realized,
     
     raw_misspec_coef =
-      dat$raw_misspec_coef,
-    
-    true_beta =
-      dat$true_beta
+      dat$raw_misspec_coef
   )
   
   

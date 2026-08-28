@@ -217,7 +217,11 @@ generate_misspec_data <- function(
     miss_component <- hinge
     cal <- calibrate_additive_misspec(miss_component, eps0, sev)
     miss_term <- cal$term; raw_coef <- cal$raw_coef; realized_severity <- cal$realized_ratio
-    affected_idx <- which(x > c0)
+    affected_idx <- if (sev > 0) {
+      which(x > c0)
+    } else {
+      NULL
+    }
     correct_formula <- y ~ x + hinge
     
   } else if (scenario == "missing_interaction") {
@@ -243,7 +247,7 @@ generate_misspec_data <- function(
     xs <- abs(as.numeric(scale(x)))
     mult <- exp(sev * pmin(xs, 3) / 3)
     eps <- eps0 * mult
-    eps <- eps - stats::median(eps)
+    eps <- eps - mean(eps, na.rm = TRUE)
     realized_severity <- sev
     raw_coef <- sev
   }
