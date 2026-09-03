@@ -395,10 +395,9 @@ dir.create(
 )
 
 
-# ------------------------------------------------------------------------------
-# IMPORTANT:
-# Keep all final RDS filenames unchanged.
-# ------------------------------------------------------------------------------
+# Legacy single-file raw-results path.
+# Intentionally not written because the complete formal result is too large
+# to compile safely in memory. Raw results remain in checkpoint RDS files.
 
 final_results_path <- file.path(
   output_dir,
@@ -886,35 +885,59 @@ tryCatch({
   
   
   # ============================================================================
-  # 10. Compile all checkpoints
+  # 10. Memory-safe checkpoint post-processing
+  #
+  # IMPORTANT:
+  #
+  # The formal experiment contains approximately 19 million raw result rows.
+  # Do NOT compile all checkpoint rows into one in-memory data frame.
+  #
+  # The 3936 checkpoint RDS files are the raw formal output.
+  #
+  # This section reads one checkpoint at a time and constructs only the much
+  # smaller:
+  #
+  #   05_misspecification_summary.rds
+  #   05_detection_power.rds
+  #   05_detection_boundary.rds
+  #
+  # The raw checkpoint files remain unchanged.
   # ============================================================================
   
-  results <- compile_checkpoints(
-    
-    temp_dir =
+  
+  checkpoint_files <- sort(
+    list.files(
       checkpoint_dir,
+      pattern = "^05_cell_[0-9]+\\.rds$",
+      full.names = TRUE
+    )
+  )
+  
+  
+  if (
+    length(checkpoint_files) !=
+    nrow(design_grid)
+  ) {
     
-    pattern =
-      "^05_cell_[0-9]+\\.rds$",
-    
-    final_output_path =
-      final_results_path,
-    
-    # Keep checkpoints so experiment can still be resumed/rechecked.
-    clear_temp =
-      FALSE
+    stop(
+      "Checkpoint count mismatch: expected ",
+      nrow(design_grid),
+      ", found ",
+      length(checkpoint_files),
+      "."
+    )
+  }
+  
+  
+  message(
+    "Post-processing ",
+    length(checkpoint_files),
+    " completed checkpoints."
   )
   
   
   # ============================================================================
   # 11. Safe summary helper functions
-  #
-  # Avoid:
-  #
-  #   mean(c(NA, NA), na.rm = TRUE) -> NaN
-  #
-  # For non-applicable quantities such as overlap under OVB, we want NA,
-  # not NaN.
   # ============================================================================
   
   mean_or_na05 <- function(x) {
@@ -968,234 +991,260 @@ tryCatch({
   
   
   # ============================================================================
-  # 12. Detailed summary table
+  # 12. Detailed summary table — checkpoint by checkpoint
+  #
+  # Every grouping combination below lives entirely inside one checkpoint,
+  # because a checkpoint already fixes:
+  #
+  #   n
+  #   x_type
+  #   error_type
+  #   scenario
+  #   severity_level
+  #
+  # Therefore each checkpoint can be summarised independently and the small
+  # summaries can safely be combined afterward.
   # ============================================================================
   
-  summary_table <- results |>
-    
-    group_by(
-      
-      n,
-      
-      x_type,
-      
-      error_type,
-      
-      scenario,
-      
-      severity_level,
-      
-      severity_target,
-      
-      k_fraction,
-      
-      model_state,
-      
-      diagnostic,
-      
-      estimator
-      
-    ) |>
-    
-    summarise(
-      
-      # ------------------------------------------------------------------------
-      # Number of recorded result rows
-      # ------------------------------------------------------------------------
-      
-      n_records =
-        dplyr::n(),
-      
-      
-      # ------------------------------------------------------------------------
-      # True target coefficient
-      # ------------------------------------------------------------------------
-      
-      true_beta =
-        mean_or_na05(
-          true_beta
-        ),
-      
-      
-      # ------------------------------------------------------------------------
-      # Estimation
-      # ------------------------------------------------------------------------
-      
-      mean_coef =
-        mean_or_na05(
-          coef
-        ),
-      
-      mean_se =
-        mean_or_na05(
-          se
-        ),
-      
-      mean_bias =
-        mean_or_na05(
-          bias
-        ),
-      
-      mean_abs_bias =
-        mean_or_na05(
-          abs_bias
-        ),
-      
-      rmse =
-        rmse_or_na05(
-          bias
-        ),
-      
-      coverage =
-        mean_or_na05(
-          coverage
-        ),
-      
-      
-      # ------------------------------------------------------------------------
-      # Absolute coefficient sensitivity
-      # ------------------------------------------------------------------------
-      
-      mean_delta_beta =
-        mean_or_na05(
-          delta_beta
-        ),
-      
-      mean_standardized_delta =
-        mean_or_na05(
-          standardized_delta
-        ),
-      
-      
-      # ------------------------------------------------------------------------
-      # Signed coefficient sensitivity
-      # ------------------------------------------------------------------------
-      
-      mean_signed_delta_beta =
-        mean_or_na05(
-          signed_delta_beta
-        ),
-      
-      mean_signed_standardized_delta =
-        mean_or_na05(
-          signed_standardized_delta
-        ),
-      
-      mean_relative_delta_beta =
-        mean_or_na05(
-          relative_delta_beta
-        ),
-      
-      
-      # ------------------------------------------------------------------------
-      # Residual abnormality
-      # ------------------------------------------------------------------------
-      
-      mean_outlier_rate =
-        mean_or_na05(
-          outlier_rate
-        ),
-      
-      mean_n_abnormal =
-        mean_or_na05(
-          n_abnormal
-        ),
-      
-      mean_residual_mad =
-        mean_or_na05(
-          residual_mad
-        ),
-      
-      mean_q95_abs_std_resid =
-        mean_or_na05(
-          q95_abs_std_resid
-        ),
-      
-      mean_max_abs_std_resid =
-        mean_or_na05(
-          max_abs_std_resid
-        ),
-      
-      
-      # ------------------------------------------------------------------------
-      # Design / leverage stability
-      # ------------------------------------------------------------------------
-      
-      mean_max_leverage =
-        mean_or_na05(
-          max_leverage
-        ),
-      
-      mean_condition_number =
-        mean_or_na05(
-          condition_number
-        ),
-      
-      
-      # ------------------------------------------------------------------------
-      # Genuine subgroup information
-      #
-      # Applicable mainly to:
-      #
-      # heterogeneous
-      # structural_break
-      # threshold
-      # ------------------------------------------------------------------------
-      
-      mean_affected_n =
-        mean_or_na05(
-          affected_n
-        ),
-      
-      mean_affected_fraction =
-        mean_or_na05(
-          affected_fraction
-        ),
-      
-      mean_overlap_n =
-        mean_or_na05(
-          overlap_n
-        ),
-      
-      mean_overlap_recall =
-        mean_or_na05(
-          overlap_recall
-        ),
-      
-      mean_overlap_precision =
-        mean_or_na05(
-          overlap_precision
-        ),
-      
-      mean_selection_lift =
-        mean_or_na05(
-          selection_lift
-        ),
-      
-      
-      # ------------------------------------------------------------------------
-      # Selected set size
-      # ------------------------------------------------------------------------
-      
-      mean_selected_size =
-        mean_or_na05(
-          selected_size
-        ),
-      
-      
-      # ------------------------------------------------------------------------
-      # Runtime
-      # ------------------------------------------------------------------------
-      
-      mean_runtime =
-        mean_or_na05(
-          runtime
-        ),
-      
-      
-      .groups =
-        "drop"
+  
+  summary_parts <-
+    vector(
+      "list",
+      length(checkpoint_files)
     )
+  
+  
+  checkpoint_row_counts <-
+    numeric(
+      length(checkpoint_files)
+    )
+  
+  
+  for (
+    j in seq_along(checkpoint_files)
+  ) {
+    
+    x <-
+      readRDS(
+        checkpoint_files[j]
+      )
+    
+    
+    checkpoint_row_counts[j] <-
+      nrow(x)
+    
+    
+    summary_parts[[j]] <-
+      x |>
+      
+      group_by(
+        
+        n,
+        
+        x_type,
+        
+        error_type,
+        
+        scenario,
+        
+        severity_level,
+        
+        severity_target,
+        
+        k_fraction,
+        
+        model_state,
+        
+        diagnostic,
+        
+        estimator
+        
+      ) |>
+      
+      summarise(
+        
+        n_records =
+          dplyr::n(),
+        
+        
+        true_beta =
+          mean_or_na05(
+            true_beta
+          ),
+        
+        
+        mean_coef =
+          mean_or_na05(
+            coef
+          ),
+        
+        mean_se =
+          mean_or_na05(
+            se
+          ),
+        
+        mean_bias =
+          mean_or_na05(
+            bias
+          ),
+        
+        mean_abs_bias =
+          mean_or_na05(
+            abs_bias
+          ),
+        
+        rmse =
+          rmse_or_na05(
+            bias
+          ),
+        
+        coverage =
+          mean_or_na05(
+            coverage
+          ),
+        
+        
+        mean_delta_beta =
+          mean_or_na05(
+            delta_beta
+          ),
+        
+        mean_standardized_delta =
+          mean_or_na05(
+            standardized_delta
+          ),
+        
+        
+        mean_signed_delta_beta =
+          mean_or_na05(
+            signed_delta_beta
+          ),
+        
+        mean_signed_standardized_delta =
+          mean_or_na05(
+            signed_standardized_delta
+          ),
+        
+        mean_relative_delta_beta =
+          mean_or_na05(
+            relative_delta_beta
+          ),
+        
+        
+        mean_outlier_rate =
+          mean_or_na05(
+            outlier_rate
+          ),
+        
+        mean_n_abnormal =
+          mean_or_na05(
+            n_abnormal
+          ),
+        
+        mean_residual_mad =
+          mean_or_na05(
+            residual_mad
+          ),
+        
+        mean_q95_abs_std_resid =
+          mean_or_na05(
+            q95_abs_std_resid
+          ),
+        
+        mean_max_abs_std_resid =
+          mean_or_na05(
+            max_abs_std_resid
+          ),
+        
+        
+        mean_max_leverage =
+          mean_or_na05(
+            max_leverage
+          ),
+        
+        mean_condition_number =
+          mean_or_na05(
+            condition_number
+          ),
+        
+        
+        mean_affected_n =
+          mean_or_na05(
+            affected_n
+          ),
+        
+        mean_affected_fraction =
+          mean_or_na05(
+            affected_fraction
+          ),
+        
+        mean_overlap_n =
+          mean_or_na05(
+            overlap_n
+          ),
+        
+        mean_overlap_recall =
+          mean_or_na05(
+            overlap_recall
+          ),
+        
+        mean_overlap_precision =
+          mean_or_na05(
+            overlap_precision
+          ),
+        
+        mean_selection_lift =
+          mean_or_na05(
+            selection_lift
+          ),
+        
+        
+        mean_selected_size =
+          mean_or_na05(
+            selected_size
+          ),
+        
+        
+        mean_runtime =
+          mean_or_na05(
+            runtime
+          ),
+        
+        
+        .groups =
+          "drop"
+      )
+    
+    
+    rm(x)
+    
+    
+    if (
+      j %% 250L ==
+      0L
+    ) {
+      
+      gc(
+        verbose = FALSE
+      )
+    }
+  }
+  
+  
+  summary_table <-
+    dplyr::bind_rows(
+      summary_parts
+    )
+  
+  
+  rm(
+    summary_parts
+  )
+  
+  
+  gc(
+    verbose = FALSE
+  )
   
   
   safe_save_rds(
@@ -1204,36 +1253,254 @@ tryCatch({
   )
   
   
+  message(
+    "Summary table saved: ",
+    summary_path
+  )
+  
+  
   # ============================================================================
-  # 13. Detection power
+  # 13. Detection power — memory-safe two-pass calculation
   #
-  # Detection is defined using the intentionally fitted model ("wrong" state).
+  # Existing definition:
   #
-  # For scenario == "correct", the wrong state is simply the baseline model.
+  #   1. severity_level = 0 determines the 95% null cutoff
+  #   2. each severity is compared with its matching null cutoff
   #
-  # Correctly respecified states are used for H3 / respecification analysis,
-  # not for the main misspecification-detection power calculation.
+  # Matching dimensions:
+  #
+  #   n
+  #   x_type
+  #   error_type
+  #   scenario
+  #   k_fraction
+  #   diagnostic
   # ============================================================================
   
-  detection_input <- results |>
-    
-    filter(
-      
-      model_state ==
-        "wrong",
-      
-      estimator ==
-        "OLS",
-      
-      diagnostic !=
-        "none"
+  
+  detection_group_vars <- c(
+    "n",
+    "x_type",
+    "error_type",
+    "scenario",
+    "k_fraction",
+    "diagnostic"
+  )
+  
+  
+  # ----------------------------------------------------------------------------
+  # PASS 1:
+  # Calculate severity-0 null cutoffs
+  # ----------------------------------------------------------------------------
+  
+  null_parts <-
+    vector(
+      "list",
+      length(checkpoint_files)
     )
+  
+  
+  for (
+    j in seq_along(checkpoint_files)
+  ) {
+    
+    x <-
+      readRDS(
+        checkpoint_files[j]
+      )
+    
+    
+    if (
+      unique(
+        x$severity_level
+      )[1L] ==
+      0L
+    ) {
+      
+      z <-
+        x |>
+        
+        filter(
+          
+          model_state ==
+            "wrong",
+          
+          estimator ==
+            "OLS",
+          
+          diagnostic !=
+            "none"
+          
+        ) |>
+        
+        group_by(
+          across(
+            all_of(
+              detection_group_vars
+            )
+          )
+        ) |>
+        
+        summarise(
+          
+          null_cutoff =
+            stats::quantile(
+              standardized_delta,
+              probs = 0.95,
+              na.rm = TRUE,
+              names = FALSE
+            ),
+          
+          .groups =
+            "drop"
+        )
+      
+      
+      null_parts[[j]] <-
+        z
+    }
+    
+    
+    rm(x)
+    
+    
+    if (
+      j %% 250L ==
+      0L
+    ) {
+      
+      gc(
+        verbose = FALSE
+      )
+    }
+  }
+  
+  
+  null_table <-
+    dplyr::bind_rows(
+      null_parts
+    )
+  
+  
+  rm(
+    null_parts
+  )
+  
+  
+  gc(
+    verbose = FALSE
+  )
+  
+  
+  # ----------------------------------------------------------------------------
+  # PASS 2:
+  # Calculate detection power for every severity level
+  # ----------------------------------------------------------------------------
+  
+  power_parts <-
+    vector(
+      "list",
+      length(checkpoint_files)
+    )
+  
+  
+  for (
+    j in seq_along(checkpoint_files)
+  ) {
+    
+    x <-
+      readRDS(
+        checkpoint_files[j]
+      )
+    
+    
+    z <-
+      x |>
+      
+      filter(
+        
+        model_state ==
+          "wrong",
+        
+        estimator ==
+          "OLS",
+        
+        diagnostic !=
+          "none"
+        
+      ) |>
+      
+      left_join(
+        null_table,
+        by =
+          detection_group_vars
+      ) |>
+      
+      group_by(
+        
+        across(
+          all_of(
+            c(
+              detection_group_vars,
+              "severity_level",
+              "severity_target"
+            )
+          )
+        )
+        
+      ) |>
+      
+      summarise(
+        
+        detection_power =
+          mean(
+            standardized_delta >
+              null_cutoff,
+            na.rm = TRUE
+          ),
+        
+        .groups =
+          "drop"
+      )
+    
+    
+    power_parts[[j]] <-
+      z
+    
+    
+    rm(
+      x,
+      z
+    )
+    
+    
+    if (
+      j %% 250L ==
+      0L
+    ) {
+      
+      gc(
+        verbose = FALSE
+      )
+    }
+  }
   
   
   power_table <-
-    compute_detection_power05(
-      detection_input
+    dplyr::bind_rows(
+      power_parts
     )
+  
+  
+  rm(
+    power_parts,
+    null_table
+  )
+  
+  
+  gc(
+    verbose = FALSE
+  )
   
   
   safe_save_rds(
@@ -1242,9 +1509,18 @@ tryCatch({
   )
   
   
+  message(
+    "Detection-power table saved: ",
+    power_path
+  )
+  
+  
   # ============================================================================
   # 14. Detection boundary
+  #
+  # power_table is small enough to use the existing project helper normally.
   # ============================================================================
+  
   
   boundary_table <-
     estimate_detection_boundary05(
@@ -1262,19 +1538,31 @@ tryCatch({
   )
   
   
+  message(
+    "Detection-boundary table saved: ",
+    boundary_path
+  )
+  
   # ============================================================================
   # 15. Final validation messages
   # ============================================================================
   
+  
   message(
-    "Final result rows: ",
-    nrow(results)
+    "Raw checkpoint files: ",
+    length(checkpoint_files)
   )
   
   
   message(
-    "Final result columns: ",
-    ncol(results)
+    "Raw formal result rows across checkpoints: ",
+    format(
+      sum(
+        checkpoint_row_counts
+      ),
+      big.mark = ",",
+      scientific = FALSE
+    )
   )
   
   
@@ -1285,16 +1573,53 @@ tryCatch({
   
   
   message(
-    "Script 05 completed successfully."
+    "Detection-power rows: ",
+    nrow(power_table)
   )
   
   
-}, finally = {
+  message(
+    "Detection-boundary rows: ",
+    nrow(boundary_table)
+  )
   
+  
+  message(
+    "Summary file exists: ",
+    file.exists(summary_path)
+  )
+  
+  
+  message(
+    "Power file exists: ",
+    file.exists(power_path)
+  )
+  
+  
+  message(
+    "Boundary file exists: ",
+    file.exists(boundary_path)
+  )
+  
+  
+  message(
+    paste0(
+      "Raw formal results remain in the ",
+      length(checkpoint_files),
+      " checkpoint RDS files."
+    )
+  )
+  
+  
+  message(
+    "Script 05 completed successfully."
+  )
   
   # ============================================================================
   # 16. Clean shutdown
   # ============================================================================
+  
+}, finally = {
   
   future::plan(
     future::sequential
