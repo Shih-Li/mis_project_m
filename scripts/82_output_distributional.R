@@ -27,7 +27,7 @@
 #   - No title or subtitle inside plots; captions are handled in LaTeX.
 #   - Blue-orange diverging heatmaps: orange = MIS worse, blue = MIS better.
 #   - Sequential quantities use blue, never red-green.
-#   - Main tables are complete \begin{table}[H] environments.
+#   - Main tables are complete \begin{table}[htbp] floating environments.
 #   - Compact tables use 0.7\columnwidth; wider tables use a larger width only
 #     when needed for readable labels and indicators.
 # ==============================================================================
@@ -270,7 +270,7 @@ write_tex_table <- function(
     resize_width = TABLE_WIDTH_COMPACT,
     align = NULL,
     csv_path = sub("\\.tex$", ".csv", tex_path),
-    placement = "H"
+    placement = "htbp"
 ) {
   if (!is.data.frame(data) || ncol(data) == 0L) {
     stop("write_tex_table() requires a non-empty data.frame.")

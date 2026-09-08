@@ -30,7 +30,7 @@
 #   - Labels, legends, facets, and margins are sized for formal papers.
 #   - Color is never the only indicator: line type and point shape are also used.
 #   - Diverging heatmaps use orange-white-blue, never red-green.
-#   - Main tables are complete \begin{table}[H] environments.
+#   - Main tables are complete \begin{table}[htbp] floating environments.
 #   - Compact tables use 0.7\columnwidth; wider tables use a larger width only
 #     when needed to preserve readable labels and indicators.
 # ==============================================================================
@@ -252,7 +252,7 @@ write_tex_table <- function(
     resize_width = TABLE_WIDTH_COMPACT,
     align = NULL,
     csv_path = sub("\\.tex$", ".csv", tex_path),
-    placement = "H",
+    placement = "htbp",
     font_command = NULL
 ) {
   if (!is.data.frame(data) || ncol(data) == 0L) {
