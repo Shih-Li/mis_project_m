@@ -140,6 +140,33 @@ row_max_na <- function(...) {
   })
 }
 
+row_min_na <- function(...) {
+  values <- cbind(...)
+  apply(values, 1L, function(x) {
+    if (all(is.na(x))) NA_real_ else min(x, na.rm = TRUE)
+  })
+}
+
+benchmark_letter <- function(cooks, leverage, dfbetas, use_max = TRUE) {
+  values <- c(CD  = cooks, Lev = leverage, DFB = dfbetas)
+  valid <- is.finite(values)
+  if (!any(valid)) {
+    return("")
+  }
+  values <- values[valid]
+  benchmark <- if (use_max) {
+    max(values)
+  } else {
+    min(values)
+  }
+  # Allow multiple letters if diagnostics are tied.
+  winners <- names(values)[
+    abs(values - benchmark) < 1e-12
+  ]
+  
+  paste(winners, collapse = "/")
+}
+
 safe_ratio <- function(numerator, denominator) {
   out <- rep(NA_real_, length(numerator))
   valid <- is.finite(numerator) & is.finite(denominator) &
@@ -572,15 +599,18 @@ utils::write.csv(
 # ==============================================================================
 
 # ----------------------------------------------------------------------------
-# Figure 1: MIS advantage over the best classical diagnostic
+# Figure 1: Target-aware MIS advantage over classical diagnostics
+# Bad leverage rewards higher recovery; vertical outliers and good leverage
+# reward lower unnecessary recovery relative to the classical benchmark.
 # ----------------------------------------------------------------------------
 
 heatmap_main <- det_cell %>%
-  # Aggregate by the nominal contamination level used for display. The saved
-  # realized contam_prop can contain more than one numeric value that maps to
-  # the same nominal label, especially when integer k rounding or old cached
-  # simulation chunks are present.
-  group_by(n_obs, contam_target, contam_label, outlier_label) %>%
+  group_by(
+    n_obs,
+    contam_target,
+    contam_label,
+    outlier_label
+  ) %>%
   summarise(
     mis_overlap = safe_mean(overlap_mis),
     cooks_overlap = safe_mean(overlap_cooks),
@@ -589,19 +619,90 @@ heatmap_main <- det_cell %>%
     .groups = "drop"
   ) %>%
   mutate(
-    best_classical_overlap = row_max_na(
-      cooks_overlap, leverage_overlap, dfbetas_overlap
+    highest_classical_overlap = row_max_na(
+      cooks_overlap,
+      leverage_overlap,
+      dfbetas_overlap
     ),
-    mis_advantage = mis_overlap - best_classical_overlap,
-    n_label = factor(n_obs, levels = sort(unique(n_obs)))
+    
+    lowest_classical_overlap = row_min_na(
+      cooks_overlap,
+      leverage_overlap,
+      dfbetas_overlap
+    ),
+    
+    # --------------------------------------------------------------
+    # Target-aware comparison
+    #
+    # Bad leverage:
+    #   More recovery is desirable.
+    #   Benchmark = highest-recovery classical method.
+    #
+    # Vertical outliers / good leverage:
+    #   Lower unnecessary recovery is desirable.
+    #   Benchmark = lowest-recovery classical method.
+    #
+    # Positive values always favour MIS.
+    # --------------------------------------------------------------
+    mis_advantage = case_when(
+      
+      as.character(outlier_label) == "Bad leverage" ~
+        mis_overlap - highest_classical_overlap,
+      
+      as.character(outlier_label) %in%
+        c("Vertical outliers", "Good leverage") ~
+        lowest_classical_overlap - mis_overlap,
+      
+      TRUE ~ NA_real_
+    ),
+    
+    # --------------------------------------------------------------
+    # Identify which classical diagnostic defines the benchmark.
+    #
+    # CD = Cook's D
+    # Lev = Leverage
+    # DFB = DFBETAS
+    # --------------------------------------------------------------
+    benchmark_method = mapply(
+      FUN = function(cooks, leverage, dfbetas, mechanism) {
+        
+        use_max <- mechanism == "Bad leverage"
+        
+        benchmark_letter(
+          cooks = cooks,
+          leverage = leverage,
+          dfbetas = dfbetas,
+          use_max = use_max
+        )
+      },
+      
+      cooks_overlap,
+      leverage_overlap,
+      dfbetas_overlap,
+      as.character(outlier_label),
+      
+      USE.NAMES = FALSE
+    ),
+    
+    n_label = factor(
+      n_obs,
+      levels = sort(unique(n_obs))
+    )
   )
 
-max_heat <- max(abs(heatmap_main$mis_advantage), na.rm = TRUE)
-if (!is.finite(max_heat) || max_heat == 0) max_heat <- 0.01
+max_heat <- max(
+  abs(heatmap_main$mis_advantage),
+  na.rm = TRUE
+)
+
+if (!is.finite(max_heat) || max_heat == 0) {
+  max_heat <- 0.01}
+
 heatmap_main <- heatmap_main %>%
   mutate(
-    cell_label = sprintf("%+.1f", 100 * mis_advantage),
-    text_color = ifelse(abs(mis_advantage) >= 0.58 * max_heat, "white", "black")
+    cell_label = sprintf( "%+.1f", 100 * mis_advantage),
+    text_color = ifelse(
+      abs(mis_advantage) >= 0.58 * max_heat, "white", "black")
   )
 
 utils::write.csv(
@@ -616,7 +717,13 @@ p_fig1 <- ggplot(
   aes(x = n_label, y = contam_label, fill = mis_advantage)
 ) +
   geom_tile(colour = "white", linewidth = 0.55) +
-  geom_text(aes(label = cell_label, colour = text_color), size = 3.25) +
+  geom_text(aes(label = cell_label, colour = text_color), size = 3.25, 
+            nudge_y = 0.10) +
+  geom_text(aes(label = benchmark_method, colour = text_color),
+    size = 2.05,
+    fontface = "bold",
+    nudge_y = -0.23
+  ) +
   facet_wrap(~outlier_label, nrow = 1, drop = TRUE) +
   scale_fill_gradient2(
     low = COL_ORANGE,
@@ -626,7 +733,7 @@ p_fig1 <- ggplot(
     limits = c(-max_heat, max_heat),
     oob = scales::squish,
     labels = scales::label_number(accuracy = 1, scale = 100, suffix = " pp"),
-    name = "MIS advantage over best\nclassical diagnostic"
+    name = "Target-aware MIS advantage\nover classical diagnostics"
   ) +
   scale_colour_identity() +
   labs(
@@ -905,6 +1012,176 @@ save_plot(
   file.path(fig_supp_dir, "02_figA1_all_method_overlap_heatmaps.pdf"),
   width = 12.2,
   height = 8.8
+)
+
+# ----------------------------------------------------------------------------
+# Figure A1b: Injected-set top-k recovery across DGPs
+#             Predictor distribution × error distribution
+# ----------------------------------------------------------------------------
+
+x_levels <- c(
+  "normal",
+  "skewed_t",
+  "pareto"
+)
+
+x_labels <- c(
+  "normal"   = "Normal",
+  "skewed_t" = "Skewed t",
+  "pareto"   = "Pareto"
+)
+
+dgp_overlap_heatmap <- det_cell %>%
+  select(
+    x_type,
+    error_type,
+    outlier_label,
+    all_of(method_metric_levels)
+  ) %>%
+  
+  pivot_longer(
+    cols = all_of(method_metric_levels),
+    names_to = "metric",
+    values_to = "overlap"
+  ) %>%
+  
+  mutate(
+    method = factor(
+      metric,
+      levels = method_metric_levels,
+      labels = method_levels
+    ),
+    
+    x_type = factor(
+      as.character(x_type),
+      levels = x_levels,
+      labels = unname(x_labels[x_levels])
+    ),
+    
+    error_label = factor(
+      unname(error_labels[as.character(error_type)]),
+      levels = unname(error_labels[error_levels])
+    )
+  ) %>%
+  
+  # Average over:
+  #   n,
+  #   contamination proportion,
+  #   dist_param,
+  #   mix_prop,
+  # while retaining the X × error DGP structure.
+  group_by(
+    x_type,
+    error_label,
+    outlier_label,
+    method
+  ) %>%
+  
+  summarise(
+    overlap = safe_mean(overlap),
+    n_cells = sum(is.finite(overlap)),
+    .groups = "drop"
+  ) %>%
+  
+  mutate(
+    cell_label = scales::percent(
+      overlap,
+      accuracy = 1
+    ),
+    
+    text_color = ifelse(
+      overlap >= 0.62,
+      "white",
+      "black"
+    )
+  )
+
+
+utils::write.csv(
+  dgp_overlap_heatmap,
+  file.path(
+    data_dir,
+    "02_figA1b_all_method_overlap_dgp_heatmaps_data.csv"
+  ),
+  row.names = FALSE,
+  na = ""
+)
+
+
+p_figA1b <- ggplot(
+  dgp_overlap_heatmap,
+  aes(
+    x = x_type,
+    y = error_label,
+    fill = overlap
+  )
+) +
+  
+  geom_tile(
+    colour = "white",
+    linewidth = 0.45
+  ) +
+  
+  geom_text(
+    aes(
+      label = cell_label,
+      colour = text_color
+    ),
+    size = 2.45
+  ) +
+  
+  facet_grid(
+    rows = vars(outlier_label),
+    cols = vars(method),
+    drop = TRUE
+  ) +
+  
+  scale_fill_gradient(
+    low = "#F7FBFF",
+    high = COL_BLUE_DARK,
+    limits = c(0, 1),
+    oob = scales::squish,
+    labels = scales::label_percent(
+      accuracy = 1
+    ),
+    name = "Injected-set\ntop-k recovery"
+  ) +
+  
+  scale_colour_identity() +
+  
+  labs(
+    x = "Predictor distribution",
+    y = "Error distribution"
+  ) +
+  
+  guides(
+    fill = guide_colourbar(
+      title.position = "top",
+      title.hjust = 0.5,
+      barwidth = grid::unit(8.0, "cm")
+    )
+  ) +
+  
+  theme_heatmap(
+    base_size = 9.3
+  ) +
+  
+  theme(
+    axis.text.x = element_text(
+      angle = 0,
+      hjust = 0.5
+    )
+  )
+
+
+save_plot(
+  p_figA1b,
+  file.path(
+    fig_supp_dir,
+    "02_figA1b_all_method_overlap_dgp_heatmaps.pdf"
+  ),
+  width = 12.2,
+  height = 10.2
 )
 
 # ----------------------------------------------------------------------------
@@ -1206,7 +1483,7 @@ write_tex_table(
 # ==============================================================================
 
 # ----------------------------------------------------------------------------
-# Table A1: MIS advantage grid by sample size and contamination proportion
+# Table A1: Target-aware MIS advantage grid
 # ----------------------------------------------------------------------------
 
 heatmap_key_audit <- heatmap_main %>%
@@ -1251,8 +1528,11 @@ write_tex_table(
   tabA1_display,
   tex_path = file.path(tab_supp_dir, "02_tabA1_mis_advantage_grid.tex"),
   caption = paste0(
-    "MIS overlap advantage, in percentage points, over the best classical ",
-    "diagnostic by sample size and contamination proportion."
+    "Target-aware MIS advantage, in percentage points, by sample size and ",
+    "contamination proportion. For bad leverage, positive values indicate ",
+    "greater recovery by MIS than the highest-recovery classical diagnostic. ",
+    "For vertical outliers and good leverage, positive values indicate lower ",
+    "unnecessary recovery by MIS than the lowest-recovery classical diagnostic."
   ),
   label = "tab:02A-mis-advantage-grid",
   resize_width = TABLE_WIDTH_MEDIUM,

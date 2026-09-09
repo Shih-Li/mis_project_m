@@ -146,16 +146,24 @@ TRUE_BETA <- 1
 # Color-blind-conscious palette: no red-green scale.
 COL_ORANGE      <- "#E69F00"
 COL_ORANGE_DARK <- "#B35806"
+
 COL_BLUE        <- "#0072B2"
 COL_BLUE_LIGHT  <- "#56B4E9"
 COL_BLUE_DARK   <- "#08519C"
+
 COL_PURPLE      <- "#6A3D9A"
+
 COL_BLACK       <- "#111111"
 COL_GREY_DARK   <- "#4D4D4D"
 COL_GREY        <- "#7A7A7A"
 COL_GREY_LIGHT  <- "#B8B8B8"
 COL_NEUTRAL     <- "#F7F7F7"
 COL_VIOLIN      <- "#DCE6EF"
+COL_RISK_0   <- "#F8F5F1"
+COL_RISK_10  <- "#F3E3D8"
+COL_RISK_25  <- "#EBC9B7"
+COL_RISK_50  <- "#DFA58B"
+COL_RISK_100 <- "#A96352"
 
 TABLE_WIDTH_COMPACT <- "0.7\\columnwidth"
 TABLE_WIDTH_MEDIUM  <- "0.85\\columnwidth"
@@ -2117,7 +2125,7 @@ add_tail_annotations <- function(data) {
       
       label_colour = ifelse(
         is.finite(exceedance_rate) &
-          exceedance_rate >= 0.25,
+          exceedance_rate >= 0.45,
         "white",
         COL_BLACK
       )
@@ -2168,6 +2176,39 @@ tail_fill_scale <- function(legend_title) {
   )
 }
 
+main_large_error_fill_scale <- function(legend_title) {
+  scale_fill_gradientn(
+    colours = c(
+      COL_RISK_0,
+      COL_RISK_10,
+      COL_RISK_25,
+      COL_RISK_50,
+      COL_RISK_100
+    ),
+    values = scales::rescale(
+      c(
+        0,
+        0.10,
+        0.25,
+        0.50,
+        1.00
+      )
+    ),
+    limits = c(0, 1),
+    oob = scales::squish,
+    breaks = c(
+      0,
+      0.10,
+      0.25,
+      0.50,
+      1.00
+    ),
+    labels = scales::label_percent(
+      accuracy = 1
+    ),
+    name = legend_title
+  )
+}
 
 # ------------------------------------------------------------------------------
 # MIS-oracle data for the main-paper heatmap
@@ -2246,7 +2287,7 @@ fig2_mis_oracle_tail <- ggplot(
     drop = TRUE
   ) +
   
-  tail_fill_scale(
+  main_large_error_fill_scale(
     paste0(
       "MIS-oracle probability that absolute\n",
       "coefficient error exceeds ",
