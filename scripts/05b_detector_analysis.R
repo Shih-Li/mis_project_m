@@ -94,6 +94,8 @@ if (!file.exists(summary_path)) {
         rCk  <- s$Cook     > cCk
         rDF  <- s$DFBETAS  > cDF
         rLv  <- s$Leverage > cLv
+        rRS  <- s$reset_p  < cRS
+        rBP  <- s$bp_p     < cBP
         
         ptr <- ptr + 1L
         rows[[ptr]] <- data.frame(
@@ -134,7 +136,19 @@ if (!file.exists(summary_path)) {
             mean(!rMIS & (s$reset_p < cRS), na.rm = TRUE),
           net_vs_BP = mean(rMIS & !(s$bp_p < cBP), na.rm = TRUE) -
             mean(!rMIS & (s$bp_p < cBP), na.rm = TRUE),
-          
+          # Components of the net advantage. net_* is a difference and cannot
+          # distinguish "MIS supersedes the rival" from "MIS complements it":
+          # +0.30 is 0.35/0.05 or 0.60/0.30, which are different claims.
+          only_MIS_vs_Cook     = mean(rMIS & !rCk, na.rm = TRUE),
+          only_Cook_vs_MIS     = mean(!rMIS & rCk, na.rm = TRUE),
+          only_MIS_vs_DFBETAS  = mean(rMIS & !rDF, na.rm = TRUE),
+          only_DFBETAS_vs_MIS  = mean(!rMIS & rDF, na.rm = TRUE),
+          only_MIS_vs_Leverage = mean(rMIS & !rLv, na.rm = TRUE),
+          only_Leverage_vs_MIS = mean(!rMIS & rLv, na.rm = TRUE),
+          only_MIS_vs_RESET    = mean(rMIS & !rRS, na.rm = TRUE),
+          only_RESET_vs_MIS    = mean(!rMIS & rRS, na.rm = TRUE),
+          only_MIS_vs_BP       = mean(rMIS & !rBP, na.rm = TRUE),
+          only_BP_vs_MIS       = mean(!rMIS & rBP, na.rm = TRUE),
           mean_precision = mean(s$mis_precision, na.rm = TRUE),
           mean_recall = mean(s$mis_recall, na.rm = TRUE),
           mean_lift = mean(s$mis_lift, na.rm = TRUE),
@@ -380,25 +394,33 @@ cat("\n8. ISOTONIC 80% DETECTION BOUNDARY -- k = 5%\n", subline, "\n", sep = "")
 
 bd_rows <- list()
 
-for (key in unique(paste(P$env_id, P$scenario, sep = "|"))) {
-  parts <- strsplit(key, "|", fixed = TRUE)[[1]]
-  g <- P[P$env_id == as.integer(parts[1]) & P$scenario == parts[2], ]
-  g <- g[order(g$severity_target), ]
-  if (nrow(g) < 3L) next
-  bd_rows[[length(bd_rows) + 1L]] <- data.frame(
-    env_id = g$env_id[1], n = g$n[1], x_type = g$x_type[1],
-    error_type = g$error_type[1], scenario = g$scenario[1],
-    b_MIS = boundary80(g$severity_target, g$rej_MIS),
-    b_Cook = boundary80(g$severity_target, g$rej_Cook),
-    b_DFBETAS = boundary80(g$severity_target, g$rej_DFBETAS),
-    b_Leverage = boundary80(g$severity_target, g$rej_Leverage),
-    b_RESET = boundary80(g$severity_target, g$rej_RESET_cal),
-    b_BP = boundary80(g$severity_target, g$rej_BP_cal),
-    stringsAsFactors = FALSE)
+for (kf in k_grid) {
+  
+  Pk <- W[W$k_fraction == kf, ]
+  
+  for (key in unique(paste(Pk$env_id, Pk$scenario, sep = "|"))) {
+    parts <- strsplit(key, "|", fixed = TRUE)[[1]]
+    g <- Pk[Pk$env_id == as.integer(parts[1]) & Pk$scenario == parts[2], ]
+    g <- g[order(g$severity_target), ]
+    if (nrow(g) < 3L) next
+    bd_rows[[length(bd_rows) + 1L]] <- data.frame(
+      env_id = g$env_id[1], n = g$n[1], x_type = g$x_type[1],
+      error_type = g$error_type[1], scenario = g$scenario[1],
+      k_fraction = kf,
+      b_MIS = boundary80(g$severity_target, g$rej_MIS),
+      b_Cook = boundary80(g$severity_target, g$rej_Cook),
+      b_DFBETAS = boundary80(g$severity_target, g$rej_DFBETAS),
+      b_Leverage = boundary80(g$severity_target, g$rej_Leverage),
+      b_RESET = boundary80(g$severity_target, g$rej_RESET_cal),
+      b_BP = boundary80(g$severity_target, g$rej_BP_cal),
+      stringsAsFactors = FALSE)
+  }
 }
 
-bd <- do.call(rbind, bd_rows)
-safe_save_rds(bd, bound_path)
+bd_all <- do.call(rbind, bd_rows)
+safe_save_rds(bd_all, bound_path)
+
+bd <- bd_all[bd_all$k_fraction == PRIMARY_K, ]
 
 reach <- do.call(rbind, lapply(split(bd, bd$scenario), function(g)
   data.frame(scenario = g$scenario[1], environments = nrow(g),
