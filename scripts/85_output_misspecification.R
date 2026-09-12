@@ -59,20 +59,6 @@
 # 0. Packages, paths, configuration
 # ==============================================================================
 
-required_packages <- c("dplyr", "tidyr", "ggplot2", "scales")
-
-missing_packages <- required_packages[
-  !vapply(required_packages, requireNamespace, logical(1), quietly = TRUE)
-]
-
-if (length(missing_packages) > 0L) {
-  stop(
-    "Missing required package(s): ",
-    paste(missing_packages, collapse = ", "),
-    ". Install them before running scripts/85_output_misspecification.R."
-  )
-}
-
 suppressPackageStartupMessages({
   library(dplyr)
   library(tidyr)
@@ -144,29 +130,12 @@ for (path in c(
   dir.create(path, recursive = TRUE, showWarnings = FALSE)
 }
 
-required_inputs <- c(
-  input_05a_summary,
-  input_05a_boundary,
-  input_05a_null,
-  input_05c_specificity,
-  input_05c_correct_cutoffs
-)
-
-missing_inputs <- required_inputs[!file.exists(required_inputs)]
-
-if (length(missing_inputs) > 0L) {
-  stop(
-    "Missing required formal detector input(s):\n  ",
-    paste(missing_inputs, collapse = "\n  ")
-  )
-}
-
 HAS_FROZEN_05 <- file.exists(input_05_frozen_summary)
 
 if (!HAS_FROZEN_05) {
   warning(
     "Frozen Script 05 summary not found: ", input_05_frozen_summary,
-    "\nSections 8 and 10 will be skipped."
+    "\nSections 10 and 12 will be skipped."
   )
 }
 
@@ -181,26 +150,6 @@ PNG_DPI <- 320
 TABLE_WIDTH_COMPACT <- "0.70\\columnwidth"
 TABLE_WIDTH_MEDIUM  <- "0.85\\columnwidth"
 TABLE_WIDTH_WIDE    <- "\\columnwidth"
-
-
-# ------------------------------------------------------------------------------
-# Remove obsolete output-layer wrappers from earlier Script 85 versions.
-# Tables keep their .tex output; figure directories contain PDFs only.
-# ------------------------------------------------------------------------------
-
-stale_figure_tex <- c(
-  list.files(fig_main_dir, pattern = "\\.tex$", full.names = TRUE),
-  list.files(fig_supp_dir, pattern = "\\.tex$", full.names = TRUE),
-  file.path(output_root, "05_main_exhibits.tex"),
-  file.path(output_root, "05_supplement_exhibits.tex")
-)
-
-stale_figure_tex <- stale_figure_tex[file.exists(stale_figure_tex)]
-
-if (length(stale_figure_tex) > 0L) {
-  unlink(stale_figure_tex)
-}
-
 
 # ------------------------------------------------------------------------------
 # Exhibit registry
@@ -347,7 +296,7 @@ exhibit_registry <- data.frame(
     "Power by error distribution.",
     "Power by X distribution.",
     "Power by sample size.",
-    "Worst-case maximum-severity environment summary.",
+    "Across-environment MIS power distribution at maximum simulated severity.",
     "Frozen-05 correct-versus-wrong full-MM estimation.",
     "Frozen-05 full OLS versus full MM.",
     "Frozen-05 MM win counts.",
@@ -426,11 +375,9 @@ if (anyDuplicated(exhibit_registry$id)) {
 
 exhibit_path <- function(id) {
   row <- exhibit_registry[exhibit_registry$id == id, , drop = FALSE]
-  
   if (nrow(row) != 1L) {
     stop("Unknown or duplicated exhibit id: ", id)
-  }
-  
+  } 
   root <- if (row$type == "figure") {
     if (row$destination == "main") fig_main_dir else fig_supp_dir
   } else {
@@ -454,69 +401,6 @@ all_exhibit_paths <- normalize_soft(
 
 if (anyDuplicated(all_exhibit_paths)) {
   stop("Two exhibit IDs resolve to one path.")
-}
-
-# Keep figure directories exact: remove PDFs left by older 85 layouts or by
-# previous destination assignments.
-expected_figure_paths <- vapply(
-  exhibit_registry$id[exhibit_registry$type == "figure"],
-  exhibit_path,
-  character(1)
-)
-
-existing_figure_paths <- c(
-  list.files(fig_main_dir, pattern = "\\.pdf$", full.names = TRUE),
-  list.files(fig_supp_dir, pattern = "\\.pdf$", full.names = TRUE)
-)
-
-if (length(existing_figure_paths) > 0L) {
-  
-  obsolete_figure_paths <- existing_figure_paths[
-    !(normalize_soft(existing_figure_paths) %in%
-        normalize_soft(expected_figure_paths))
-  ]
-  
-  if (length(obsolete_figure_paths) > 0L) {
-    unlink(obsolete_figure_paths)
-  }
-}
-
-
-# Keep table directories exact: remove .tex/.csv files left by older layouts
-# or previous destination assignments.
-expected_table_paths <- vapply(
-  exhibit_registry$id[
-    exhibit_registry$type %in% c("table", "text")
-  ],
-  exhibit_path,
-  character(1)
-)
-
-expected_all <- c(
-  expected_table_paths,
-  sub("\\.tex$", ".csv", expected_table_paths)
-)
-
-existing_table_paths <- c(
-  list.files(
-    tab_main_dir,
-    pattern = "\\.(tex|csv)$",
-    full.names = TRUE
-  ),
-  list.files(
-    tab_supp_dir,
-    pattern = "\\.(tex|csv)$",
-    full.names = TRUE
-  )
-)
-
-obsolete_tables <- existing_table_paths[
-  !(normalize_soft(existing_table_paths) %in%
-      normalize_soft(expected_all))
-]
-
-if (length(obsolete_tables) > 0L) {
-  unlink(obsolete_tables)
 }
 
 # ------------------------------------------------------------------------------
@@ -677,19 +561,6 @@ fmt_sci <- function(x, digits = 2L) {
   )
 }
 
-
-require_columns <- function(data, columns, object_name) {
-  missing <- setdiff(columns, names(data))
-  if (length(missing) > 0L) {
-    stop(
-      object_name, " is missing required column(s): ",
-      paste(missing, collapse = ", ")
-    )
-  }
-  invisible(TRUE)
-}
-
-
 escape_latex <- function(x) {
   replacements <- c(
     "\\" = "\\textbackslash{}",
@@ -727,7 +598,8 @@ write_tex_table <- function(
     csv_path = sub("\\.tex$", ".csv", tex_path),
     placement = "htbp",
     note = NULL,
-    note_raw = FALSE
+    note_raw = FALSE,
+    addlinespace_after = integer(0)
 ) {
   if (!is.data.frame(data) || ncol(data) == 0L || nrow(data) == 0L) {
     stop("write_tex_table() requires a non-empty data.frame.")
@@ -759,6 +631,18 @@ write_tex_table <- function(
   body_rows <- apply(escaped_data, 1L, function(row) {
     paste0(paste(row, collapse = " & "), " \\\\")
   })
+  
+  if (length(addlinespace_after) > 0L) {
+    body_rows <- unlist(
+      lapply(seq_along(body_rows), function(i) {
+        c(
+          body_rows[[i]],
+          if (i %in% addlinespace_after) "\\addlinespace" else NULL
+        )
+      }),
+      use.names = FALSE
+    )
+  }
   
   note_lines <- character(0)
   if (!is.null(note) && length(note) == 1L && nzchar(note)) {
@@ -978,6 +862,11 @@ scenario_labels <- c(
   "threshold" = "Threshold"
 )
 
+frozen_scenario_labels <- c(
+  scenario_labels,
+  "structural_break" = "Structural break"
+)
+
 x_labels <- c(
   "normal" = "Normal X",
   "mixed_normal" = "Mixed-normal X",
@@ -1002,84 +891,6 @@ N0 <- readRDS(input_05a_null)
 SPEC <- readRDS(input_05c_specificity)
 CORRECT_CUT <- readRDS(input_05c_correct_cutoffs)
 
-require_columns(
-  S,
-  c(
-    "cell_id", "env_id", "seed_group_id", "n", "x_type", "error_type",
-    "scenario", "severity_index", "severity_target", "model_state",
-    "k_fraction", "mean_MIS",
-    "rej_MIS", "rej_Cook", "rej_DFBETAS", "rej_Leverage",
-    "rej_RESET_cal", "rej_BP_cal", "rej_RESET_nom", "rej_BP_nom",
-    "mean_precision", "mean_recall", "mean_lift", "mean_affected"
-  ),
-  "05a_detector_summary.rds"
-)
-
-# Renewed 05b requirement. These columns do NOT exist in the old summary.
-renewed_05b_columns <- c(
-  "only_MIS_vs_Cook", "only_Cook_vs_MIS",
-  "only_MIS_vs_DFBETAS", "only_DFBETAS_vs_MIS",
-  "only_MIS_vs_Leverage", "only_Leverage_vs_MIS",
-  "only_MIS_vs_RESET", "only_RESET_vs_MIS",
-  "only_MIS_vs_BP", "only_BP_vs_MIS"
-)
-
-if (!all(renewed_05b_columns %in% names(S))) {
-  stop(
-    "05a_detector_summary.rds is the OLD 05b summary.\n",
-    "The renewed 05b output must contain only_MIS_vs_* and only_*_vs_MIS.\n",
-    "Delete or move output/05a_detector_summary.rds, then rerun ",
-    "scripts/05b_detector_analysis.R before running 85."
-  )
-}
-
-require_columns(
-  BD,
-  c(
-    "env_id", "n", "x_type", "error_type", "scenario",
-    "b_MIS", "b_Cook", "b_DFBETAS", "b_Leverage", "b_RESET", "b_BP"
-  ),
-  "05a_detection_boundary.rds"
-)
-
-# Renewed 05b writes boundaries for all k, so k_fraction must be present.
-if (!"k_fraction" %in% names(BD)) {
-  stop(
-    "05a_detection_boundary.rds is the OLD single-k boundary file.\n",
-    "Rerun the renewed scripts/05b_detector_analysis.R so the boundary file ",
-    "contains k_fraction."
-  )
-}
-
-require_columns(
-  N0,
-  c(
-    "n", "x_type", "error_type", "null_class", "k_fraction",
-    "cut_MIS", "null_mean_MIS", "finite_MIS_rate"
-  ),
-  "05a_null_cutoffs.rds"
-)
-
-require_columns(
-  SPEC,
-  c(
-    "cell_id", "env_id", "n", "x_type", "error_type", "scenario",
-    "severity_index", "severity_target", "k_fraction",
-    "mean_MIS_correct", "mean_MIS_wrong",
-    "power_correct_calibrated", "correct_cutoff"
-  ),
-  "05a_specificity_corrected.rds"
-)
-
-require_columns(
-  CORRECT_CUT,
-  c(
-    "n", "x_type", "error_type", "correct_class", "k_fraction",
-    "cut_MIS", "null_mean_MIS", "finite_MIS_rate"
-  ),
-  "05a_correct_cutoffs.rds"
-)
-
 W <- S %>%
   filter(model_state == "wrong")
 
@@ -1091,14 +902,6 @@ PW <- P %>%
 
 BD_PRIMARY <- BD %>%
   filter(near_num(k_fraction, PRIMARY_K))
-
-if (nrow(P) == 0L) {
-  stop("No detector rows found at PRIMARY_K = ", PRIMARY_K)
-}
-
-if (nrow(BD_PRIMARY) == 0L) {
-  stop("No boundary rows found at PRIMARY_K = ", PRIMARY_K)
-}
 
 cat(
   "Loaded formal detector summary: ",
@@ -1240,10 +1043,10 @@ size_table_main <- size_by_k %>%
     `Cook's D` = fmt_pct(Cook, 2),
     DFBETAS = fmt_pct(DFBETAS, 2),
     Leverage = fmt_pct(Leverage, 2),
-    `RESET calibrated` = fmt_pct(RESET_cal, 2),
-    `RESET nominal` = fmt_pct(RESET_nom, 2),
-    `BP calibrated` = fmt_pct(BP_cal, 2),
-    `BP nominal` = fmt_pct(BP_nom, 2)
+    `RESET (cal.)` = fmt_pct(RESET_cal, 2),
+    `RESET (nom.)` = fmt_pct(RESET_nom, 2),
+    `BP (cal.)` = fmt_pct(BP_cal, 2),
+    `BP (nom.)` = fmt_pct(BP_nom, 2)
   )
 
 write_tex_table(
@@ -1285,13 +1088,16 @@ write_tex_table(
     transmute(
       `Error distribution` = unname(error_labels[error_type]),
       MIS = fmt_pct(MIS, 2),
-      `RESET calibrated` = fmt_pct(RESET_cal, 2),
-      `RESET nominal` = fmt_pct(RESET_nom, 2),
-      `BP calibrated` = fmt_pct(BP_cal, 2),
-      `BP nominal` = fmt_pct(BP_nom, 2)
+      `RESET (cal.)` = fmt_pct(RESET_cal, 2),
+      `RESET (nom.)` = fmt_pct(RESET_nom, 2),
+      `BP (cal.)` = fmt_pct(BP_cal, 2),
+      `BP (nom.)` = fmt_pct(BP_nom, 2)
     ),
   exhibit_path("tabS01_size_error"),
-  caption = "Empirical size by error distribution at k/n = 2.5 percent.",
+  caption = paste0(
+    "Empirical size by error distribution at k/n = 2.5 percent for MIS, ",
+    "RESET, and BP."
+  ),
   label = "tab:05-size-by-error",
   resize_width = TABLE_WIDTH_MEDIUM,
   align = "lrrrrr",
@@ -1314,6 +1120,17 @@ utils::write.csv(
 
 write_tex_table(
   size_by_x_n %>%
+    mutate(
+      x_order = factor(
+        x_type,
+        levels = c(
+          "normal",
+          "mixed_normal",
+          "contaminated"
+        )
+      )
+    ) %>%
+    arrange(x_order, n) %>%
     transmute(
       `X distribution` = unname(x_labels[x_type]),
       n = n,
@@ -1324,7 +1141,8 @@ write_tex_table(
   label = "tab:05-size-by-x-n",
   resize_width = TABLE_WIDTH_COMPACT,
   align = "lrr",
-  placement = "htbp"
+  placement = "htbp",
+  addlinespace_after = c(4L, 8L)
 )
 
 
@@ -1417,10 +1235,17 @@ save_plot(
 
 write_tex_table(
   null_slopes %>%
+    mutate(
+      x_order = factor(
+        x_type,
+        levels = c("normal", "mixed_normal", "contaminated")
+      )
+    ) %>%
+    arrange(x_order) %>%
     transmute(
       `X distribution` = unname(x_labels[x_type]),
       `Log-log slope` = fmt_num(slope, 3),
-      `R squared` = fmt_num(r_squared, 4)
+      `R-squared` = fmt_num(r_squared, 4)
     ),
   exhibit_path("tab02_null_slopes"),
   caption = "Log-log scaling of the null mean MIS statistic with sample size.",
@@ -1769,13 +1594,17 @@ make_exclusive_plot(
 
 exclusive_specialist_table <- exclusive_summary %>%
   filter(rival %in% c("RESET", "BP")) %>%
+  mutate(
+    scenario_order = match(scenario, scenario_levels),
+    rival_order = match(rival, c("BP", "RESET"))
+  ) %>%
+  arrange(rival_order, scenario_order) %>%
   transmute(
     Scenario = unname(scenario_labels[scenario]),
     Rival = rival,
     `MIS only` = fmt_pct(mis_only, 1),
     `Rival only` = fmt_pct(rival_only, 1)
-  ) %>%
-  arrange(Rival, Scenario)
+  )
 
 write_tex_table(
   exclusive_specialist_table,
@@ -1787,7 +1616,8 @@ write_tex_table(
   label = "tab:05-exclusive-specialists",
   resize_width = TABLE_WIDTH_MEDIUM,
   align = "llrr",
-  placement = "htbp"
+  placement = "htbp",
+  addlinespace_after = 8L
 )
 
 
@@ -1908,6 +1738,15 @@ boundary_scenario_linetypes <- c(
   "threshold" = "twodash"
 )
 
+boundary_scenario_shapes <- c(
+  "endogeneity_nl" = 15,
+  "heterogeneous" = 16,
+  "heteroskedastic" = 17,
+  "missing_interaction" = 18,
+  "nonlinear" = 8,
+  "threshold" = 3
+)
+
 
 boundary_plot_data <- boundary_by_n %>%
   filter(scenario %in% boundary_line_scenarios) %>%
@@ -1929,6 +1768,7 @@ fig_boundary <- ggplot(
     x = n,
     colour = scenario,
     linetype = scenario,
+    shape = scenario,
     group = scenario
   )
 ) +
@@ -1945,8 +1785,7 @@ fig_boundary <- ggplot(
     data = boundary_plot_data %>%
       filter(median_identified),
     aes(y = censored_median),
-    size = 2.3,
-    show.legend = FALSE
+    size = 2.4
   ) +
   geom_point(
     data = boundary_plot_data %>%
@@ -1964,7 +1803,11 @@ fig_boundary <- ggplot(
   ) +
   scale_colour_manual(
     values = boundary_scenario_colours,
-    guide = "none"
+    breaks = names(boundary_scenario_linetypes),
+    labels = unname(
+      scenario_labels[names(boundary_scenario_linetypes)]
+    ),
+    name = NULL
   ) +
   scale_linetype_manual(
     values = boundary_scenario_linetypes,
@@ -1972,14 +1815,15 @@ fig_boundary <- ggplot(
     labels = unname(
       scenario_labels[names(boundary_scenario_linetypes)]
     ),
-    guide = guide_legend(
-      nrow = 2,
-      byrow = TRUE,
-      override.aes = list(
-        colour = COL_GREY_DARK,
-        linewidth = 1.0
-      )
-    )
+    name = NULL
+  ) +
+  scale_shape_manual(
+    values = boundary_scenario_shapes,
+    breaks = names(boundary_scenario_linetypes),
+    labels = unname(
+      scenario_labels[names(boundary_scenario_linetypes)]
+    ),
+    name = NULL
   ) +
   labs(
     x = "Sample size n (log scale)",
@@ -1995,8 +1839,8 @@ fig_boundary <- ggplot(
   theme(
     legend.position = "bottom",
     legend.box = "vertical",
-    legend.key.width = grid::unit(2.8, "cm"),
-    legend.key.height = grid::unit(0.5, "cm"),
+    legend.key.width = grid::unit(1.25, "cm"),
+    legend.key.height = grid::unit(0.45, "cm"),
     plot.caption = element_text(
       size = 8.5,
       colour = COL_GREY_DARK,
@@ -2219,7 +2063,7 @@ utils::write.csv(
 
 boundary_note <- paste0(
   "Boundaries are right-censored at the maximum simulated severity, so the ",
-  "censored-sample median is reported; it is identified whenever fewer than ",
+  "censoring-aware median is reported; it is identified whenever fewer than ",
   "half of environments are censored. Means over the reaching subset, which ",
   "condition on detection succeeding and therefore understate the boundary, ",
   "are given in Table~\\ref{tab:05-boundary-mean}."
@@ -2232,7 +2076,7 @@ write_tex_table(
       `Reachers / 96` = paste0(reachers, " / ", total),
       Censored = censored,
       `Reach rate` = fmt_pct(reach_rate, 1),
-      `Censored median` = fmt_censored_boundary(
+      `Censoring-aware median` = fmt_censored_boundary(
         censored_median,
         median_identified,
         censor_limit,
@@ -2260,7 +2104,7 @@ write_tex_table(
       `Reachers / 96` = paste0(reachers, " / ", total),
       Censored = censored,
       `Reach rate` = fmt_pct(reach_rate, 1),
-      `Censored median` = fmt_censored_boundary(
+      `Censoring-aware median` = fmt_censored_boundary(
         censored_median,
         median_identified,
         censor_limit,
@@ -2462,8 +2306,7 @@ write_tex_table(
     transmute(
       `k/n` = fmt_pct(k_fraction, 1),
       `MIS reach` = fmt_pct(MIS_reach, 1),
-      `MIS count` = MIS_count,
-      `MIS censored median (normalized)` = fmt_num(
+      `Normalized MIS boundary` = fmt_num(
         MIS_censored_median_normalized, 3
       ),
       `Cook reach` = fmt_pct(Cook_reach, 1),
@@ -2480,7 +2323,7 @@ write_tex_table(
   ),
   label = "tab:05-budget-summary",
   resize_width = TABLE_WIDTH_WIDE,
-  align = "lrrrrrrrr",
+  align = "lrrrrrrr",
   placement = "htbp"
 )
 
@@ -2508,7 +2351,7 @@ write_tex_table(
       `k/n` = fmt_pct(k_fraction, 1),
       `Reachers / 96` = paste0(reachers, " / ", total),
       Censored = censored,
-      `Censored median` = fmt_censored_boundary(
+      `Censoring-aware median` = fmt_censored_boundary(
         censored_median,
         median_identified,
         censor_limit,
@@ -2522,7 +2365,8 @@ write_tex_table(
   align = "lrrrr",
   placement = "htbp",
   note = budget_note,
-  note_raw = TRUE
+  note_raw = TRUE,
+  addlinespace_after = seq(4L, 28L, by = 4L)
 )
 
 
@@ -2543,7 +2387,7 @@ write_tex_table(
       `Reachers / 96` = paste0(reachers, " / ", total),
       Censored = censored,
       `Reach rate` = fmt_pct(reach_rate, 1),
-      `Censored median` = fmt_censored_boundary(
+      `Censoring-aware median` = fmt_censored_boundary(
         censored_median,
         median_identified,
         censor_limit,
@@ -2561,7 +2405,8 @@ write_tex_table(
   label = "tab:05-budget-mean",
   resize_width = TABLE_WIDTH_WIDE,
   align = "lrrrrrrr",
-  placement = "htbp"
+  placement = "htbp",
+  addlinespace_after = seq(4L, 28L, by = 4L)
 )
 
 
@@ -2754,7 +2599,8 @@ write_tex_table(
   exhibit_path("tab06_specificity"),
   caption = paste0(
     "Wrong-model rejection probability and correctly calibrated false-positive ",
-    "rate at k/n = 2.5 percent."
+    "rate at k/n = 2.5 percent for the five scenarios with an explicit ",
+    "corrected-model specification in 05c."
   ),
   label = "tab:05-specificity",
   resize_width = TABLE_WIDTH_MEDIUM,
@@ -2812,7 +2658,7 @@ correct_spread <- spec_primary %>%
 blind_table_numeric <- data.frame(
   case = c(
     "Linear endogeneity",
-    "Omitted-variable bias",
+    "Omitted variable",
     "Correctly respecified models"
   ),
   interpretation = c(
@@ -2854,15 +2700,16 @@ write_tex_table(
       `Max statistic deviation` = fmt_sci(max_statistic_deviation, 2)
     ),
   exhibit_path("tab07_invariance"),
-  caption = paste0(
-    "Blind-set and invariance diagnostics at k/n = 2.5 percent. ",
-    "A machine-scale statistic deviation in the linear-endogeneity case is ",
-    "evidence of the algebraic invariance rather than a low-power curve alone."
-  ),
+  caption = "Blind-set and invariance diagnostics at k/n = 2.5 percent.",
   label = "tab:05-invariance-blind-set",
   resize_width = TABLE_WIDTH_WIDE,
   align = "llrrr",
-  placement = "htbp"
+  placement = "htbp",
+  note = paste0(
+    "A machine-scale maximum statistic deviation under linear endogeneity ",
+    "supports the fitted-span invariance result rather than merely indicating ",
+    "low power."
+  )
 )
 
 
@@ -2893,7 +2740,10 @@ invariance_tex <- c(
   paste0(
     "Thus a departure that changes only the fitted-span coefficient and an ",
     "overall residual scale is invisible to the standardized MIS statistic. ",
-    "The common-random-number simulation checks this proposition numerically."
+    "Because this equality holds for every admissible deletion set \\(S\\), ",
+    "maximizing the standardized statistic over \\(S\\) preserves the same ",
+    "invariance. The common-random-number simulation checks this proposition ",
+    "numerically."
   )
 )
 
@@ -2957,25 +2807,20 @@ write_tex_table(
   localisation %>%
     transmute(
       Scenario = as.character(scenario_display),
-      `Affected fraction` = fmt_pct(affected_fraction, 1),
-      `Selected fraction` = fmt_pct(selected_fraction, 2),
       Precision = fmt_num(precision, 3),
-      Recall = fmt_num(recall, 3),
-      `Recall ceiling` = fmt_num(recall_ceiling, 3),
-      `Recall efficiency` = fmt_pct(recall_efficiency, 1),
-      Lift = fmt_num(lift, 2),
-      `Recall / precision` = fmt_num(recall_precision_ratio, 3)
+      Lift = fmt_num(lift, 2)
     ),
   exhibit_path("tab08_localisation"),
-  caption = paste0(
-    "MIS localisation at k/n = 2.5 percent. Because the selected fraction and ",
-    "affected fraction are fixed, recall is a constant multiple of precision; ",
-    "precision, lift, and recall efficiency carry the substantive information."
-  ),
+  caption = "MIS localisation at k/n = 2.5 percent.",
   label = "tab:05-localisation",
-  resize_width = TABLE_WIDTH_WIDE,
-  align = "lrrrrrrrr",
-  placement = "htbp"
+  resize_width = TABLE_WIDTH_COMPACT,
+  align = "lrr",
+  placement = "htbp",
+  note = paste0(
+    "The affected fraction is 25 percent. Lift is precision relative to this ",
+    "chance benchmark. Because recall efficiency reduces algebraically to ",
+    "precision under the fixed affected-set design, it is not reported separately."
+  )
 )
 
 
@@ -3054,16 +2899,6 @@ fig_localisation <- ggplot(
 if (HAS_FROZEN_05) {
   
   F05 <- readRDS(input_05_frozen_summary)
-  
-  require_columns(
-    F05,
-    c(
-      "n", "x_type", "error_type", "scenario", "severity_level",
-      "severity_target", "k_fraction", "model_state", "diagnostic",
-      "estimator", "rmse", "coverage", "mean_bias", "mean_abs_bias", "mean_se"
-    ),
-    "05_misspecification_summary.rds"
-  )
   
   deletion_ladder <- F05 %>%
     filter(
@@ -3147,15 +2982,38 @@ if (HAS_FROZEN_05) {
   
   write_tex_table(
     frozen_rmse_mean_median %>%
+      mutate(
+        x_order = factor(
+          x_type,
+          levels = c(
+            "normal",
+            "mixed_normal",
+            "contaminated"
+          )
+        ),
+        arm_order = factor(
+          arm,
+          levels = c(
+            "Full OLS",
+            "MIS deletion",
+            "Cook deletion",
+            "DFBETAS deletion",
+            "Leverage deletion"
+          )
+        )
+      ) %>%
+      arrange(
+        x_order,
+        k_fraction,
+        arm_order
+      ) %>%
       transmute(
         `X distribution` = unname(x_labels[x_type]),
         `k/n` = fmt_pct(k_fraction, 1),
         Arm = arm,
         `Mean cell RMSE` = fmt_num(mean_cell_RMSE, 3),
-        `Median cell RMSE` = fmt_num(median_cell_RMSE, 3),
-        Cells = cells
-      ) %>%
-      arrange(`X distribution`, `k/n`, Arm),
+        `Median cell RMSE` = fmt_num(median_cell_RMSE, 3)
+      ),
     exhibit_path("tabA06_frozen_rmse_mean"),
     caption = paste0(
       "Frozen-05 deletion-arm RMSE sensitivity. Arithmetic means and medians ",
@@ -3164,8 +3022,9 @@ if (HAS_FROZEN_05) {
     ),
     label = "tab:05-frozen-rmse-mean-median",
     resize_width = TABLE_WIDTH_WIDE,
-    align = "lllrrr",
-    placement = "htbp"
+    align = "lllrr",
+    placement = "htbp",
+    addlinespace_after = seq(5L, 55L, by = 5L)
   )
   
   arm_colours <- c(
@@ -3300,8 +3159,11 @@ write_tex_table(
       BP = fmt_pct(BP, 1)
     ),
   exhibit_path("tabS05_power_error"),
-  caption = "Mean positive-severity detection power by error distribution at k/n = 2.5 percent.",
-  label = "tab:05-power-by-error",
+  caption = paste0(
+    "Mean detection power across positive-severity simulation cells by error ",
+    "distribution at k/n = 2.5 percent; scenario-specific severity grids are ",
+    "retained."
+  ),label = "tab:05-power-by-error",
   resize_width = TABLE_WIDTH_WIDE,
   align = "lrrrrrr",
   placement = "htbp"
@@ -3310,6 +3172,13 @@ write_tex_table(
 
 write_tex_table(
   env_x %>%
+    mutate(
+      x_order = factor(
+        x_type,
+        levels = c("normal", "mixed_normal", "contaminated")
+      )
+    ) %>%
+    arrange(x_order) %>%
     transmute(
       `X distribution` = unname(x_labels[x_type]),
       MIS = fmt_pct(MIS, 1),
@@ -3320,7 +3189,11 @@ write_tex_table(
       BP = fmt_pct(BP, 1)
     ),
   exhibit_path("tabS06_power_x"),
-  caption = "Mean positive-severity detection power by X distribution at k/n = 2.5 percent.",
+  caption = paste0(
+    "Mean detection power across positive-severity simulation cells by X ",
+    "distribution at k/n = 2.5 percent; scenario-specific severity grids are ",
+    "retained."
+  ),
   label = "tab:05-power-by-x",
   resize_width = TABLE_WIDTH_WIDE,
   align = "lrrrrrr",
@@ -3340,7 +3213,10 @@ write_tex_table(
       BP = fmt_pct(BP, 1)
     ),
   exhibit_path("tabS07_power_n"),
-  caption = "Mean positive-severity detection power by sample size at k/n = 2.5 percent.",
+  caption = paste0(
+    "Mean detection power across positive-severity simulation cells by sample ",
+    "size at k/n = 2.5 percent; scenario-specific severity grids are retained."
+  ),
   label = "tab:05-power-by-n",
   resize_width = TABLE_WIDTH_MEDIUM,
   align = "lrrrrrr",
@@ -3348,7 +3224,7 @@ write_tex_table(
 )
 
 
-# Worst case at each scenario's maximum simulated severity.
+# Across-environment power distribution at each scenario's maximum severity.
 max_severity_rows <- P %>%
   group_by(scenario, env_id) %>%
   filter(severity_index == max(severity_index)) %>%
@@ -3568,14 +3444,24 @@ if (HAS_FROZEN_05) {
   
   write_tex_table(
     mm05_compare %>%
+      mutate(
+        x_order = factor(
+          x_type,
+          levels = c("normal", "mixed_normal", "contaminated")
+        )
+      )%>%
       transmute(
         `X distribution` = unname(x_labels[x_type]),
         Scenario = ifelse(
-          scenario %in% names(scenario_labels),
-          unname(scenario_labels[scenario]),
+          scenario %in% names(frozen_scenario_labels),
+          unname(frozen_scenario_labels[scenario]),
           scenario
         ),
-        State = model_state,
+        State = ifelse(
+          model_state == "correct",
+          "Correct",
+          "Wrong"
+        ),
         `Abs. bias` = fmt_num(mean_abs_bias, 3),
         RMSE = fmt_num(rmse, 3),
         Coverage = fmt_pct(coverage, 1),
@@ -3585,18 +3471,21 @@ if (HAS_FROZEN_05) {
       arrange(`X distribution`, Scenario, State),
     exhibit_path("tabA01_mm_correct_wrong"),
     caption = paste0(
-      "Frozen-05 full-MM estimation under wrong and correctly respecified models. ",
-      "X distributions are kept separate. SE ratio is mean reported SE divided ",
-      "by the sampling-SD proxy sqrt(RMSE squared minus mean bias squared); ",
-      "predicted coverage is the corresponding normal approximation."
+      "Frozen-05 full-MM estimation under wrong and correctly respecified ",
+      "models, reported separately by X distribution."
     ),
     label = "tab:05-frozen-mm-correct-wrong",
     resize_width = TABLE_WIDTH_WIDE,
     align = "lllrrrrr",
-    placement = "htbp"
+    placement = "htbp",
+    note = paste0(
+      "SE ratio is mean reported SE divided by the sampling-SD proxy ",
+      "sqrt(RMSE squared minus mean bias squared); predicted coverage is the ",
+      "corresponding normal approximation."
+    ),
+    addlinespace_after = c(12L, 24L)
   )
-  
-  
+
   # ---------------------------------------------------------------------------
   # 12.2 Full OLS vs full MM, by x_type and scenario
   # ---------------------------------------------------------------------------
@@ -3636,23 +3525,28 @@ if (HAS_FROZEN_05) {
   
   write_tex_table(
     base05 %>%
+      mutate(
+        x_order = factor(
+          x_type,
+          levels = c("normal", "mixed_normal", "contaminated")
+        )
+      ) %>%
+      arrange(x_order, scenario) %>%
       transmute(
         `X distribution` = unname(x_labels[x_type]),
         Scenario = ifelse(
-          scenario %in% names(scenario_labels),
-          unname(scenario_labels[scenario]),
+          scenario %in% names(frozen_scenario_labels),
+          unname(frozen_scenario_labels[scenario]),
           scenario
         ),
         `OLS RMSE` = fmt_num(rmse_OLS, 3),
         `MM RMSE` = fmt_num(rmse_MM, 3),
-        `MM lower RMSE` = ifelse(MM_lower_RMSE, "Yes", "No"),
         `OLS coverage` = fmt_pct(coverage_OLS, 1),
         `MM coverage` = fmt_pct(coverage_MM, 1),
         `MM closer to 95 percent` = ifelse(
           MM_closer_coverage, "Yes", "No"
         )
-      ) %>%
-      arrange(`X distribution`, Scenario),
+      ),
     exhibit_path("tabA02_ols_mm"),
     caption = paste0(
       "Frozen-05 estimation comparison of full OLS and full MM. ",
@@ -3661,8 +3555,9 @@ if (HAS_FROZEN_05) {
     ),
     label = "tab:05-frozen-ols-vs-mm",
     resize_width = TABLE_WIDTH_WIDE,
-    align = "llrrlrrl",
-    placement = "htbp"
+    align = "llrrrrl",
+    placement = "htbp",
+    addlinespace_after = c(8L, 16L)
   )
   
   
@@ -3685,9 +3580,8 @@ if (HAS_FROZEN_05) {
     mm_win_counts %>%
       transmute(
         `X distribution` = unname(x_labels[x_type]),
-        Scenarios = scenarios,
-        `MM RMSE wins` = MM_RMSE_wins,
-        `MM coverage wins` = MM_coverage_wins
+        `MM RMSE wins` = paste0(MM_RMSE_wins, "/", scenarios),
+        `MM coverage wins` = paste0(MM_coverage_wins, "/", scenarios)
       ),
     exhibit_path("tabA03_mm_wins"),
     caption = paste0(
@@ -3696,7 +3590,7 @@ if (HAS_FROZEN_05) {
     ),
     label = "tab:05-frozen-mm-win-counts",
     resize_width = TABLE_WIDTH_COMPACT,
-    align = "lrrr",
+    align = "lrr",
     placement = "htbp"
   )
 }
@@ -3745,189 +3639,9 @@ write_tex_table(
 )
 
 
-
-
 # ==============================================================================
-# 13.5 HEADLINE REPRODUCTION AUDIT
+# 15. FINAL CONSOLE SUMMARY
 # ==============================================================================
-
-expected_reach <- data.frame(
-  method = c("MIS", "BP", "RESET", "DFBETAS", "Cook's D", "Leverage"),
-  expected = c(551L, 525L, 384L, 145L, 140L, 29L),
-  stringsAsFactors = FALSE
-)
-
-headline_reach_audit <- reach_counts %>%
-  mutate(method = as.character(method)) %>%
-  select(method, actual = reached) %>%
-  right_join(expected_reach, by = "method") %>%
-  mutate(pass = actual == expected)
-
-headline_specificity_audit <- spec_summary %>%
-  transmute(
-    scenario = as.character(scenario),
-    k_fraction = PRIMARY_K,
-    actual_fpr = correct_fpr,
-    target_fpr = 0.05,
-    abs_deviation = abs(correct_fpr - 0.05),
-    tolerance = 0.01,
-    pass = abs_deviation <= tolerance
-  )
-
-spec_k5_summary <- SPEC %>%
-  filter(
-    near_num(k_fraction, 0.05),
-    severity_index > 1L
-  ) %>%
-  group_by(scenario) %>%
-  summarise(
-    correct_fpr = safe_mean(power_correct_calibrated),
-    .groups = "drop"
-  )
-
-specificity_k5_min <- min(
-  spec_k5_summary$correct_fpr,
-  na.rm = TRUE
-)
-
-specificity_k5_max <- max(
-  spec_k5_summary$correct_fpr,
-  na.rm = TRUE
-)
-
-specificity_k5_repro_audit <- data.frame(
-  metric = c(
-    "minimum correct-model FPR",
-    "maximum correct-model FPR"
-  ),
-  actual = c(
-    specificity_k5_min,
-    specificity_k5_max
-  ),
-  expected = c(
-    0.0498,
-    0.0508
-  ),
-  tolerance = c(
-    0.00025,
-    0.00025
-  ),
-  stringsAsFactors = FALSE
-) %>%
-  mutate(
-    pass = abs(actual - expected) <= tolerance
-  )
-
-loc_audit_source <- localisation %>%
-  mutate(scenario = as.character(scenario))
-
-headline_localisation_audit <- data.frame(
-  scenario = c("threshold", "heterogeneous"),
-  expected_lift = c(2.43, 1.10),
-  tolerance = c(0.05, 0.05),
-  stringsAsFactors = FALSE
-) %>%
-  left_join(
-    loc_audit_source %>% select(scenario, actual_lift = lift),
-    by = "scenario"
-  ) %>%
-  mutate(
-    pass = abs(actual_lift - expected_lift) <= tolerance
-  )
-
-utils::write.csv(
-  headline_reach_audit,
-  file.path(diag_dir, "05_headline_reach_audit.csv"),
-  row.names = FALSE
-)
-
-utils::write.csv(
-  headline_specificity_audit,
-  file.path(diag_dir, "05_headline_specificity_audit.csv"),
-  row.names = FALSE
-)
-
-utils::write.csv(
-  specificity_k5_repro_audit,
-  file.path(diag_dir, "05_specificity_k5_reproduction_audit.csv"),
-  row.names = FALSE
-)
-
-utils::write.csv(
-  spec_k5_summary,
-  file.path(diag_dir, "05_specificity_k5_by_scenario.csv"),
-  row.names = FALSE
-)
-
-utils::write.csv(
-  headline_localisation_audit,
-  file.path(diag_dir, "05_headline_localisation_audit.csv"),
-  row.names = FALSE
-)
-
-if (!all(!is.na(headline_reach_audit$pass) & headline_reach_audit$pass)) {
-  warning("Headline reach counts do not reproduce the established 2.5% values.")
-}
-
-if (!all(
-  !is.na(headline_specificity_audit$pass) &
-  headline_specificity_audit$pass
-)) {
-  warning(
-    "At the publication operating point k/n = 2.5%, at least one ",
-    "correct-model false-positive rate differs from 0.05 by more than 0.01."
-  )
-}
-
-if (!all(
-  !is.na(specificity_k5_repro_audit$pass) &
-  specificity_k5_repro_audit$pass
-)) {
-  warning(
-    "Historical 05c specificity at k/n = 5% does not reproduce ",
-    "the established 0.0498--0.0508 range."
-  )
-}
-
-if (!all(!is.na(headline_localisation_audit$pass) & headline_localisation_audit$pass)) {
-  warning("Localisation lifts do not reproduce threshold 2.43 / heterogeneous 1.10.")
-}
-if (anyDuplicated(.label_registry)) {
-  stop("Duplicate LaTeX labels survived table generation.")
-}
-
-# ==============================================================================
-# 14. DIAGNOSTICS, SESSION INFO, MANIFEST
-# ==============================================================================
-
-schema_check <- c(
-  paste0("Generated: ", Sys.time()),
-  paste0("Project root: ", project_root),
-  paste0("Primary k/n: ", PRIMARY_K),
-  paste0("Formal summary rows: ", nrow(S)),
-  paste0("Boundary rows: ", nrow(BD)),
-  paste0("Boundary includes k_fraction: ", "k_fraction" %in% names(BD)),
-  paste0(
-    "Renewed 05b exclusivity columns present: ",
-    all(renewed_05b_columns %in% names(S))
-  ),
-  paste0("05c specificity rows: ", nrow(SPEC)),
-  paste0("Frozen 05 available: ", HAS_FROZEN_05),
-  paste0("Boundary summary uses right-censoring: TRUE"),
-  paste0("Empirical-size visual is cell-level histogram: TRUE"),
-  paste0("Eight-scenario facet layout: 2 x 4"),
-  paste0(
-    "Primary boundary denominator: ",
-    nrow(BD_PRIMARY),
-    " (expected 768 if all 8 scenarios x 96 environments are present)"
-  )
-)
-
-writeLines(
-  schema_check,
-  file.path(diag_dir, "05_output_schema_check.txt"),
-  useBytes = TRUE
-)
 
 capture.output(
   sessionInfo(),
@@ -3981,7 +3695,7 @@ utils::write.csv(
 
 
 # ==============================================================================
-# 15. FINAL CONSOLE SUMMARY
+# 14. FINAL CONSOLE SUMMARY
 # ==============================================================================
 
 cat("\n", strrep("=", 88), "\n", sep = "")
@@ -3990,26 +3704,6 @@ cat(strrep("=", 88), "\n", sep = "")
 
 cat("Output root: ", output_root, "\n", sep = "")
 cat("Primary k/n: ", PRIMARY_K, "\n", sep = "")
-cat(
-  "Renewed 05b exclusivity columns: PASS\n",
-  "All-k boundary file: PASS\n",
-  "Headline reach audit: ",
-  if (all(!is.na(headline_reach_audit$pass) & headline_reach_audit$pass)) "PASS" else "CHECK",
-  "\nPrimary specificity audit (k = 2.5%): ",
-  if (all(
-    !is.na(headline_specificity_audit$pass) &
-    headline_specificity_audit$pass
-  )) "PASS" else "CHECK",
-  "\n05c reproduction audit (k = 5%): ",
-  if (all(
-    !is.na(specificity_k5_repro_audit$pass) &
-    specificity_k5_repro_audit$pass
-  )) "PASS" else "CHECK",
-  "\nLocalisation audit: ",
-  if (all(!is.na(headline_localisation_audit$pass) & headline_localisation_audit$pass)) "PASS" else "CHECK",
-  "\n",
-  sep = ""
-)
 
 cat("\nPrimary 80% reach:\n")
 print(
