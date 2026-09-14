@@ -292,7 +292,7 @@ exhibit_registry <- data.frame(
     "Wrong-versus-correct specification rejection.",
     "Invariance and blind-set summary.",
     "Algebraic fitted-span invariance argument.",
-    "Localisation precision/lift/recall efficiency.",
+    "Localisation precision and lift.",
     "Power by error distribution.",
     "Power by X distribution.",
     "Power by sample size.",
@@ -323,8 +323,8 @@ exhibit_registry <- bind_rows(
     ),
     destination = rep("supplement", 3L),
     description = c(
-      "Boundary censoring audit: reach, censored median, reacher mean and reacher median.",
-      "Deletion-budget censoring audit with reacher mean/median alongside the censored median.",
+      "Boundary censoring audit: reach, censoring-aware median, reacher mean and reacher median.",
+      "Deletion-budget censoring audit with reacher mean/median alongside the censoring-aware median.",
       "Frozen-05 cell-level RMSE mean and median side by side."
     ),
     stringsAsFactors = FALSE
@@ -2330,7 +2330,7 @@ write_tex_table(
 
 budget_note <- paste0(
   "Boundaries are right-censored at the maximum simulated severity, so the ",
-  "censored-sample median is reported; it is identified whenever fewer than ",
+  "censoring-aware median is reported; it is identified whenever fewer than ",
   "half of environments are censored. Reacher-only means and medians, together ",
   "with the censoring counts, are given in Table~\\ref{tab:05-budget-mean}."
 )
@@ -2704,12 +2704,7 @@ write_tex_table(
   label = "tab:05-invariance-blind-set",
   resize_width = TABLE_WIDTH_WIDE,
   align = "llrrr",
-  placement = "htbp",
-  note = paste0(
-    "A machine-scale maximum statistic deviation under linear endogeneity ",
-    "supports the fitted-span invariance result rather than merely indicating ",
-    "low power."
-  )
+  placement = "htbp"
 )
 
 
@@ -2817,9 +2812,8 @@ write_tex_table(
   align = "lrr",
   placement = "htbp",
   note = paste0(
-    "The affected fraction is 25 percent. Lift is precision relative to this ",
-    "chance benchmark. Because recall efficiency reduces algebraically to ",
-    "precision under the fixed affected-set design, it is not reported separately."
+    "The affected fraction is fixed at 25 percent. Lift is precision divided ",
+    "by the affected fraction, so a lift of 1 is the no-enrichment benchmark."
   )
 )
 
@@ -3449,7 +3443,8 @@ if (HAS_FROZEN_05) {
           x_type,
           levels = c("normal", "mixed_normal", "contaminated")
         )
-      )%>%
+      ) %>%
+      arrange(x_order, scenario, model_state) %>%
       transmute(
         `X distribution` = unname(x_labels[x_type]),
         Scenario = ifelse(
@@ -3467,8 +3462,7 @@ if (HAS_FROZEN_05) {
         Coverage = fmt_pct(coverage, 1),
         `SE ratio` = fmt_num(se_ratio, 3),
         `Predicted coverage` = fmt_pct(predicted_coverage, 1)
-      ) %>%
-      arrange(`X distribution`, Scenario, State),
+      ),
     exhibit_path("tabA01_mm_correct_wrong"),
     caption = paste0(
       "Frozen-05 full-MM estimation under wrong and correctly respecified ",
@@ -3578,6 +3572,13 @@ if (HAS_FROZEN_05) {
   
   write_tex_table(
     mm_win_counts %>%
+      mutate(
+        x_order = factor(
+          x_type,
+          levels = c("normal", "mixed_normal", "contaminated")
+        )
+      ) %>%
+      arrange(x_order) %>%
       transmute(
         `X distribution` = unname(x_labels[x_type]),
         `MM RMSE wins` = paste0(MM_RMSE_wins, "/", scenarios),
