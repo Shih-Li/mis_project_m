@@ -485,48 +485,51 @@ det_method_order <- c(
 det_method_labels <- c(
   "greedy_noref" = "Greedy",
   "greedy_ref" = "Greedy + refinement",
-  "exact_noref" = "Exact",
-  "exact_ref" = "Exact + refinement"
+  "exact_noref" = "Dinkelbach",
+  "exact_ref" = "Dinkelbach + refinement"
 )
 det_method_colors <- c(
   "Greedy" = COL_GREY,
   "Greedy + refinement" = COL_ORANGE,
-  "Exact" = COL_BLACK,
-  "Exact + refinement" = COL_BLUE
+  "Dinkelbach" = COL_BLACK,
+  "Dinkelbach + refinement" = COL_BLUE
 )
 det_method_linetypes <- c(
   "Greedy" = "dotted",
   "Greedy + refinement" = "dashed",
-  "Exact" = "dotdash",
-  "Exact + refinement" = "solid"
+  "Dinkelbach" = "dotdash",
+  "Dinkelbach + refinement" = "solid"
 )
+
 det_method_shapes <- c(
   "Greedy" = 1,
   "Greedy + refinement" = 17,
-  "Exact" = 4,
-  "Exact + refinement" = 16
+  "Dinkelbach" = 4,
+  "Dinkelbach + refinement" = 16
 )
 
 evt_method_order <- c("greedy_con", "exact_con", "exact_rob")
 evt_method_labels <- c(
   "greedy_con" = "Greedy + constrained GEV",
-  "exact_con" = "Exact + constrained GEV",
-  "exact_rob" = "Exact + robust GEV"
+  "exact_con" = "Dinkelbach + constrained GEV",
+  "exact_rob" = "Dinkelbach + robust GEV"
 )
 evt_method_colors <- c(
   "Greedy + constrained GEV" = COL_GREY,
-  "Exact + constrained GEV" = COL_ORANGE_DARK,
-  "Exact + robust GEV" = COL_BLUE
+  "Dinkelbach + constrained GEV" = COL_ORANGE_DARK,
+  "Dinkelbach + robust GEV" = COL_BLUE
 )
+
 evt_method_linetypes <- c(
   "Greedy + constrained GEV" = "dotted",
-  "Exact + constrained GEV" = "dashed",
-  "Exact + robust GEV" = "solid"
+  "Dinkelbach + constrained GEV" = "dashed",
+  "Dinkelbach + robust GEV" = "solid"
 )
+
 evt_method_shapes <- c(
   "Greedy + constrained GEV" = 1,
-  "Exact + constrained GEV" = 17,
-  "Exact + robust GEV" = 16
+  "Dinkelbach + constrained GEV" = 17,
+  "Dinkelbach + robust GEV" = 16
 )
 
 null_method_order <- c("constrained", "robust")
@@ -1351,7 +1354,7 @@ save_plot(
 )
 
 # ----------------------------------------------------------------------------
-# Figure A2: Exact-refined advantage over greedy-refined detection
+# Figure A2: Dinkelbach-refined advantage over greedy-refined detection
 # ----------------------------------------------------------------------------
 
 algorithm_gain <- det_cell %>%
@@ -1400,7 +1403,7 @@ p_figA2 <- ggplot(
     limits = c(-max_gain, max_gain),
     oob = scales::squish,
     labels = scales::label_number(accuracy = 1, scale = 100, suffix = " pp"),
-    name = "Exact-refined minus\ngreedy-refined overlap"
+    name = "Dinkelbach-refined minus\ngreedy-refined overlap"
   ) +
   scale_colour_identity() +
   labs(
@@ -1498,24 +1501,26 @@ save_plot(
 if (nrow(nested) > 0L) {
   nested_method_labels <- c(
     "greedy" = "Greedy",
-    "dinkelbach" = "Exact",
-    "dinkelbach_refined" = "Exact + refinement"
+    "dinkelbach" = "Dinkelbach",
+    "dinkelbach_refined" = "Dinkelbach + refinement"
   )
   nested_method_order <- c("greedy", "dinkelbach", "dinkelbach_refined")
   nested_colors <- c(
     "Greedy" = COL_GREY,
-    "Exact" = COL_BLACK,
-    "Exact + refinement" = COL_BLUE
+    "Dinkelbach" = COL_BLACK,
+    "Dinkelbach + refinement" = COL_BLUE
   )
+  
   nested_linetypes <- c(
     "Greedy" = "dotted",
-    "Exact" = "dotdash",
-    "Exact + refinement" = "solid"
+    "Dinkelbach" = "dotdash",
+    "Dinkelbach + refinement" = "solid"
   )
+  
   nested_shapes <- c(
     "Greedy" = 1,
-    "Exact" = 4,
-    "Exact + refinement" = 16
+    "Dinkelbach" = 4,
+    "Dinkelbach + refinement" = 16
   )
   
   nested_plot_data <- nested %>%
@@ -1653,7 +1658,7 @@ save_plot(
 
 # ----------------------------------------------------------------------------
 # Figure A6: Collinearity sensitivity
-# Exact-refined minus greedy-refined overlap across rho, k, and N.
+# Dinkelbach-refined minus greedy-refined overlap across rho, k, and N.
 # ----------------------------------------------------------------------------
 
 rho_gain <- det_cell %>%
@@ -1706,7 +1711,7 @@ if (nrow(rho_gain) > 0L) {
       limits = c(-max_rho_gain, max_rho_gain),
       oob = scales::squish,
       labels = scales::label_number(accuracy = 1, scale = 100, suffix = " pp"),
-      name = "Exact-refined minus\ngreedy-refined overlap"
+      name = "Dinkelbach-refined minus\ngreedy-refined overlap"
     ) +
     scale_colour_identity() +
     labs(
@@ -1826,20 +1831,20 @@ tabA1_display <- tabA1_raw %>%
   transmute(
     Architecture = as.character(architecture_label),
     `Greedy-refined overlap` = fmt_pct(overlap_greedy_ref),
-    `Exact-refined overlap` = fmt_pct(overlap_exact_ref),
-    `Exact advantage` = fmt_pp(overlap_gain),
+    `Dinkelbach-refined overlap` = fmt_pct(overlap_exact_ref),
+    `Dinkelbach advantage` = fmt_pp(overlap_gain),
     `Greedy-refined influence ratio` = fmt_num(ir_greedy_ref, 2),
-    `Exact-refined influence ratio` = fmt_num(ir_exact_ref, 2),
-    `Exact/greedy runtime` = fmt_num(runtime_ratio, 2)
+    `Dinkelbach-refined influence ratio` = fmt_num(ir_exact_ref, 2),
+    `Dinkelbach/greedy runtime` = fmt_num(runtime_ratio, 2)
   )
 
 write_tex_table(
   tabA1_display,
   tex_path = file.path(tab_supp_dir, "03_tabA1_architecture_comparison.tex"),
   caption = paste0(
-    "Architecture-level comparison of the refined greedy and refined exact ",
-    "detection methods."
-  ),
+    "Architecture-level comparison of the refined greedy and refined ",
+    "Dinkelbach detection methods."
+),
   label = "tab:03A-architecture-comparison",
   resize_width = TABLE_WIDTH_WIDE,
   align = "lrrrrrr",
@@ -2005,8 +2010,8 @@ write_tex_table(
 if (nrow(nested) > 0L) {
   nested_method_labels <- c(
     "greedy" = "Greedy",
-    "dinkelbach" = "Exact",
-    "dinkelbach_refined" = "Exact + refinement"
+    "dinkelbach" = "Dinkelbach",
+    "dinkelbach_refined" = "Dinkelbach + refinement"
   )
   
   tabA5_raw <- nested %>%

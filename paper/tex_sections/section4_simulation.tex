@@ -4,31 +4,55 @@
 \section{Simulation Results}
 \label{sec:simulation}
 
-This section evaluates the MIS framework using two complementary simulation exercises. The first exercise evaluates whether MIS and classical diagnostics recover observations deliberately injected into the sample. The second exercise evaluates whether deleting the observations selected by each method and refitting the model improves recovery of the true slope coefficient. Although related, the two exercises assess different outcomes: a method may successfully flag unusual observations yet produce an inaccurate post-deletion estimator. Throughout the section, the tables and figures use the shorter simulation labels ``vertical outliers'', ``good leverage'', and ``bad leverage''. The text interprets these labels as response outliers, on-model high-leverage observations, and slope-distorting high-leverage observations, respectively. The revised terminology emphasises the substantive role of each scenario while leaving the underlying simulation design unchanged.
+This section evaluates the MIS framework through three substantive simulation studies. The first examines influential-set recovery under distributional contamination and compares coefficient-targeted MIS with classical observation-level diagnostics. The second compares fixed-\(k\) MIS with diagnostic-removal and direct robust estimators, separating influential-set localisation from post-deletion coefficient accuracy. The third examines the diagnostic sensitivity of fixed-\(k\) MIS across qualitatively different forms of model misspecification.
 
-The simulation design uses controlled contamination scenarios to distinguish among different definitions of an outlier. Response outliers shift the outcome while leaving predictor values unchanged, producing unusually large residuals at ordinary covariate positions. On-model high-leverage observations lie far in predictor space but remain approximately aligned with the fitted regression relation, making them unusual yet internally consistent. Slope-distorting high-leverage observations lie far in predictor space and shift the outcome in a direction that can rotate the fitted slope. MIS targets the subset with the largest effect on the coefficient of interest, while classical diagnostics respond more directly to residual size, leverage, or single-observation coefficient changes. The detection results therefore compare coefficient-targeted outlier detection with broader residual- and leverage-based screening.
+Algorithmic and inferential validation is reported separately in \autoref{app:numerical}. That analysis evaluates the Dinkelbach-based optimisation, alternative search procedures, computational scaling, set stability, GEV fitting, numerical convergence, and null behaviour. It supports the computational choices used in the substantive simulations rather than constituting a fourth substantive simulation study.
 
-\subsection{Outlier Detection}
+\subsection{Influential-Set Recovery under Distributional Contamination}
 \label{subsec:detection-performance}
 
-MIS can be used as an outlier detection tool when an outlier is defined by its effect on the target coefficient. Cook's distance measures changes in the fitted model after single-observation deletion; leverage identifies unusual predictor values; and DFBETAS measures coefficient sensitivity to individual observations. MIS identifies the set whose removal produces the largest change in the coefficient of interest. The comparison therefore evaluates recovery of injected observations that threaten the slope, while recognising that classical diagnostics target broader forms of unusualness.
+The first simulation study evaluates how fixed-\(k\) MIS recovers injected observations under contamination mechanisms with different implications for the target slope coefficient. Cook's distance, leverage, and DFBETAS provide observation-level comparators that respond to changes in fitted values, covariate extremeness, and single-observation coefficient sensitivity. MIS instead selects a size-\(k\) subset that maximises the change in the target coefficient. Recovery against the injected set therefore measures how closely each diagnostic objective aligns with the mechanism generating the contaminated observations. The comparison is most informative when interpreted separately across contamination mechanisms.
 
-The detection design varies sample size \(n \in \{500,1000,2500,5000\}\) and contamination proportion \(c \in \{0.005,0.01,0.025,0.05,0.10\}\); the injected set size is \(k=\max\{\lfloor cn\rfloor,2\}\). All methods are evaluated against the same injected set in each design cell.
+The design varies sample size \(n \in \{500,1000,2500,5000\}\) and contamination proportion \(c \in \{0.005,0.01,0.025,0.05,0.10\}\). The injected set size is \(k=\max\{\lfloor cn\rfloor,2\}\). This choice fixes the deletion budget at the known contamination size. The recovery benchmark therefore uses oracle \(k\) and conditions on the oracle direction of the injected coefficient perturbation. Conditional on this direction, the Dinkelbach-based search identifies a size-\(k\) set according to the coefficient-influence objective. Response outliers shift the outcome at ordinary covariate positions, good-leverage observations lie far in predictor space while remaining approximately aligned with the regression relation, and bad-leverage observations combine high leverage with a response shift that distorts the slope. All methods are evaluated against the same injected set under a common top-\(k\) recovery criterion.
 
-MIS performed best when the injected observations jointly distorted the coefficient of interest. Under slope-distorting high-leverage contamination, labelled as bad leverage in the tables and figures, MIS recovered an average of \(92.9\%\) of the injected observations, versus \(76.0\%\) for the strongest classical diagnostic, a \(16.9\)-percentage-point advantage (\autoref{tab:02-detection-power-summary}). This advantage remained positive throughout the grid of sample sizes and contamination proportions, ranging from approximately \(8.0\) to \(14.9\) percentage points in \autoref{fig:02-mis-advantage}. MIS therefore achieved its clearest detection gain when influence on the target coefficient was most relevant.
-
-For response outliers and on-model high-leverage observations, the strongest classical diagnostic performed better. MIS recovered \(26.6\%\) of response outliers and \(36.9\%\) of on-model high-leverage observations, falling \(21.2\) and \(33.2\) percentage points below the best classical diagnostic, respectively. The heatmap confirms that this weaker recovery was systematic: the MIS advantage ranged from \(-36.0\) to \(-12.8\) percentage points for vertical outliers and from \(-45.2\) to \(-21.9\) percentage points for good leverage. These lower recovery rates follow from the MIS objective. Large response shocks and high-leverage observations aligned with the empirical regression relation can be outlying in residual or covariate terms while exerting little influence on the target coefficient. MIS should therefore be interpreted as a coefficient-targeted detector with a narrower purpose than general outlier screening. MIS is most effective for observations that jointly alter the coefficient of interest, as under slope-distorting high-leverage contamination.
+Bad leverage produced the clearest alignment between the MIS objective and the injected mechanism. In the equal-weight design-cell summary, MIS recovered \(92.9\%\) of the injected observations, while the highest-recovery classical diagnostic within each design cell averaged \(86.5\%\) (\autoref{tab:02-detection-power-summary}). In the sample-size--contamination summaries displayed in \autoref{fig:02-mis-advantage}, the target-aware recovery difference was positive in every bad-leverage cell, ranging from \(8.0\) to \(16.0\) percentage points. These summaries use different levels of aggregation and therefore need not yield the same numerical difference. The pattern is consistent with the construction of bad leverage, because the injected observations jointly rotate the fitted slope and align closely with the coefficient-targeted MIS criterion.
 
 \input{../../output/02_distributional/tables/main/02_tab1_detection_power_summary.tex}
 
-\begin{figure}[H]
+\begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\linewidth]{../../output/02_distributional/figures/main/02_fig1_mis_advantage_heatmap.pdf}
-	\caption{Difference in top-\(k\) recovery between MIS and the best classical diagnostic across sample sizes, contamination proportions, and contamination mechanisms. Positive values indicate an MIS advantage.}
+	\caption{Target-aware recovery difference between MIS and classical diagnostics across sample sizes, contamination proportions, and contamination mechanisms. For bad leverage, the benchmark is the highest-recovery classical diagnostic and positive values indicate greater recovery by MIS. For response outliers and good leverage, the benchmark is the lowest-recovery classical diagnostic and positive values indicate lower unnecessary recovery by MIS. The cell label identifies the classical diagnostic defining the benchmark.}
 	\label{fig:02-mis-advantage}
 \end{figure}
 
-The near-uniform EVT convergence rate of \(99.7\%\) across contaminated scenarios makes numerical fitting failures an unlikely explanation for the observed selection pattern. The pattern is consistent with substantive differences between coefficient-targeted MIS selection and the broader notions of outlyingness measured by classical diagnostics. Complete distribution-specific comparisons and the diagnostic analysis of the good-leverage mechanism are reported in \autoref{app:simulation}.
+Response outliers reverse the recovery comparison because residual abnormality need not coincide with target-coefficient influence. Classical diagnostics that respond directly to residual magnitude or single-observation perturbations recover more of the injected response-outlier set than MIS (\autoref{tab:02-detection-power-summary}). This is consistent with the narrower MIS objective: a response outlier can have a large residual without belonging to the size-\(k\) coalition whose joint deletion most strongly changes the target slope. Lower MIS recovery is therefore expected when the injected mechanism is unusual primarily in the response dimension rather than through concentrated coefficient influence.
+
+Good leverage provides a sharper distinction between covariate extremeness and coefficient influence. MIS recovers fewer injected good-leverage observations than the highest-recovery classical diagnostic because these observations are deliberately extreme in predictor space while remaining approximately aligned with the regression relation (\autoref{tab:02-detection-power-summary}). A separate mechanism diagnostic, using \(n=1000\), \(k=10\), normal predictors, contamination magnitude \(10\), and \(200\) Monte Carlo iterations per error distribution, examines this distinction in greater detail. Because \(k=10\), iteration-level injected-set recovery changes in increments of ten percentage points. The diagnostic shows that MIS frequently selects observations with lower leverage but substantially larger residual magnitudes and absolute DFBETA values than the injected good-leverage set (\autoref{fig:02-good-leverage-mechanism} and \autoref{tab:02-good-leverage-mechanism}). Under normal errors, for example, the median leverage ratio of the MIS-selected set to the injected set was \(0.07\), while the corresponding absolute DFBETA and residual ratios were \(19.19\) and \(131.91\). MIS therefore often replaced covariate-extreme observations that remained close to the regression relation with observations exerting greater influence on the target coefficient.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.92\linewidth]{../../output/02_distributional/figures/main/02_fig3_good_leverage_mechanism.pdf}
+	\caption{Good-leverage mechanism diagnostics by error distribution. The MIS recovery panel reports injected-set top-\(k\) recovery. The remaining panels compare absolute DFBETA, leverage, and residual magnitude between the MIS-selected and injected sets on a base-two logarithmic ratio scale; zero denotes equality.}
+	\label{fig:02-good-leverage-mechanism}
+\end{figure}
+
+\input{../../output/02_distributional/tables/main/02_tab3_good_leverage_mechanism.tex}
+
+The distributional results preserve this mechanism-dependent interpretation while identifying conditions in which the separation weakens. Under bad leverage, MIS recovery exceeded \(97\%\) for normal, Beta\((2,5)\), mixed-normal, skewed-\(t\), and Pareto errors, but fell to \(78.5\%\) under GPD errors (\autoref{fig:02-distributional-robustness}). The GPD condition is an extreme stress design rather than a regular finite-moment sampling regime: the simulated shape parameters are \(\xi\in\{1.5,3,5,10\}\), for which the GPD has no finite population mean. The weaker separation under this condition is therefore interpreted separately from the finite-moment designs.
+
+The EVT component is treated as an auxiliary inferential diagnostic rather than as the primary object of the simulation study. Under the uncontaminated design, the mean empirical MIS-EVT rejection rate across the recorded design cells was \(4.5\%\) at the nominal \(5\%\) level (\autoref{tab:02-empirical-size-summary}). This result describes the recorded simulation grid and is not interpreted as establishing general nominal calibration of the EVT approximation. Numerical convergence concerns availability of the EVT rejection calculation and is reported separately in \autoref{app:detection-results}; it does not determine injected-set recovery.
+
+Overall, fixed-\(k\) MIS is most closely aligned with the injected set when the contamination mechanism creates concentrated joint influence on the target coefficient. Lower recovery under response-outlier and good-leverage contamination does not imply weaker generic outlier detection, because those mechanisms need not make the injected coalition the set that most strongly perturbs the target slope. The next simulation asks a separate question: whether successful localisation of coefficient-relevant observations translates into improved post-deletion coefficient estimation.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{../../output/02_distributional/figures/main/02_fig2_distributional_robustness.pdf}
+	\caption{Distributional robustness of injected-set top-\(k\) recovery for MIS and the highest-recovery classical diagnostic. Points report mean recovery across the recorded design cells, and intervals report the corresponding 10th--90th percentile range.}
+	\label{fig:02-distributional-robustness}
+\end{figure}
+
+\input{../../output/02_distributional/tables/main/02_tab2_empirical_size_summary.tex}
 
 
 
@@ -38,44 +62,156 @@ The near-uniform EVT convergence rate of \(99.7\%\) across contaminated scenario
 
 
 
-\subsection{Coefficient Estimation after Diagnostic Removal}% 04
+\subsection{Robust Estimation and Influential-Set Recovery}
 \label{subsec:estimation-performance}
 
-In the estimation exercise, most detection methods serve as diagnostic-removal procedures. First, OLS is fitted to the contaminated sample. Cook's distance, leverage, DFBETAS, and the MIS-based procedures then select observations for removal, and OLS is refitted on the retained sample. The resulting coefficient is a post-diagnostic OLS estimate. The MM-estimator and LTS use a different construction: they modify the estimating criterion directly, while the diagnostic-removal procedures delete a selected set and refit OLS. The MIS-based estimates should consequently be interpreted as hybrid deletion estimators: their performance depends not only on the MIS objective, but also on the rule used to choose the set size, the direction of coefficient movement, the stopping rule, and the final OLS refit.
+The second simulation study compares coefficient recovery across full-sample OLS, diagnostic-removal estimators, and direct robust estimators. Cook's distance and DFBETAS select observations for deletion before OLS refitting, and fixed-\(k\) MIS uses the same refitting construction after selecting the maximally influential size-\(k\) set. MM regression and LTS modify estimation directly and therefore provide a separate robustness benchmark. These procedures answer related but distinct questions. The renewed summaries give equal weight to each recorded sample-size, contamination-proportion, predictor-distribution, and error-distribution design cell.
 
-The MIS procedures differ mainly in how they determine the deletion set size. Adaptive \(k\) estimates the set size from robust residuals before applying MIS. Iterative peeling removes observations in small batches and refits the model until a stopping rule is reached. MIS-SAP searches across candidate values of \(k\) and accepts a set only if the global selection-adjusted permutation test rejects. Oracle \(k\) fixes the set size at the known number of injected observations and serves only as a simulation benchmark. Accordingly, the comparison assesses alternative rules for selecting the MIS deletion set under a common definition of influence.
+The MIS benchmark uses oracle information only about deletion-set size. In contaminated designs, the simulation supplies the injected coalition size \(k_0\) and sets \(k=k_0\); the identities of the injected observations remain unknown. This design isolates influential-set recovery from the problem of choosing \(k\). The oracle specification is therefore a simulation benchmark for fixed-\(k\) MIS. The renewed output also treats the legacy GPD specification separately: the primary finite-moment summaries exclude this condition, while the condition-specific large-error diagnostic retains it.
 
-The estimation comparison is therefore best read as a fixed stress test of post-diagnostic removal rules. In this exercise, the sample size is held at \(n=5000\), the injected set size is fixed at \(k=50\), and the contamination magnitude is fixed at \(10\). These settings create a demanding environment in which the deletion rule can materially affect the refitted slope. The comparison does not cover all possible MIS-based estimators. Alternative deletion directions, stopping rules, and refitting targets could produce different finite-sample behaviour. The current MIS-SAP specification is a single-step SAP-gated deletion rule because it permits one accepted SAP removal step before the final OLS refit. The results below therefore characterise the implemented deletion estimators; they do not establish an intrinsic point-estimation property of MIS.
+Direct robust estimators produced the smallest aggregate coefficient errors in the renewed comparison. LTS recorded mean absolute bias of \(0.004\), \(0.004\), \(0.009\), and \(0.004\) under no contamination, vertical outliers, good leverage, and bad leverage, respectively; the corresponding MM values were \(0.004\), \(0.004\), \(0.013\), and \(0.004\). Their RMSEs were also small. Under bad leverage, OLS deteriorated sharply, with mean absolute bias \(1.421\) and RMSE \(1.876\), whereas MIS with oracle \(k\), Cook's distance, and DFBETAS recorded mean absolute biases of \(0.035\), \(0.035\), and \(0.037\). The MIS benchmark was less accurate under vertical-outlier and good-leverage contamination, where its mean absolute biases were \(0.108\) and \(0.053\). Mean coefficient estimates alone conceal part of this variation, since most pooled means remain close to \(\beta_0=1\) despite substantial differences in absolute error and dispersion (\autoref{tab:robust-mean-coefficients}--\ref{tab:robust-rmse}).
 
-Among the considered simulation designs, LTS produced the most accurate and stable point estimates. Its mean absolute bias ranged from \(0.004\) to \(0.009\) across the four contamination mechanisms, with RMSE between \(0.008\) and \(0.020\). The MM-estimator was the next most stable procedure, with mean absolute bias between \(0.009\) and \(0.020\) and RMSE between \(0.137\) and \(0.342\), substantially higher than the RMSE of LTS (\autoref{tab:robust-mean-absolute-bias} and~\ref{tab:robust-rmse}). \autoref{fig:04-coefficient-errors} visualises the same pattern: the coefficient errors of LTS and the MM-estimator remained concentrated near zero under each contamination mechanism. Thus, direct robust estimation provided the most reliable point estimates in this stress-test comparison.
+\input{../../output/04_robust/tables/main/04_tab1_mean_coefficients.tex}
 
-The diagnostic-removal estimators were less stable because their performance depended on the selected deletion set. The MIS-based estimators, OLS, and classical-diagnostic deletion estimators exhibited substantially longer error tails in \autoref{fig:04-coefficient-errors}. For several MIS procedures, the medians remained close to zero while the arithmetic means were displaced by a small number of extremely large estimates. This pattern indicates that rare tail failures primarily drove the pooled errors, with little evidence of persistent central bias. The key distinction lies between central performance, where many deletion estimators remained close to the true coefficient, and tail reliability, where direct robust estimators were more stable.
+\input{../../output/04_robust/tables/main/04_tab2a_mean_absolute_bias.tex}
 
-\begin{figure}[H]
+\input{../../output/04_robust/tables/main/04_tab2b_rmse.tex}
+
+\begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\linewidth]{../../output/04_robust/figures/main/04_fig1_coefficient_error_distributions.pdf}
-	\caption{Empirical distributions of signed coefficient error across estimators and contamination mechanisms. Faint points show individual Monte Carlo estimates, filled circles show arithmetic means, open diamonds show medians, and the thick and thin intervals show the 25th--75th and 5th--95th percentiles, respectively. The signed pseudo-logarithmic scale retains the direction of the error while displaying extreme estimates.}
+	\caption{Empirical distributions of signed coefficient error across estimators and contamination mechanisms. Monte Carlo draws are shown on a signed pseudo-logarithmic scale; filled circles denote arithmetic means and open diamonds denote medians.}
 	\label{fig:04-coefficient-errors}
 \end{figure}
 
-No rule for selecting \(k\) dominated across all outcomes among the MIS variants. Under bad leverage, adaptive \(k\) generally removed the fewest observations, whereas iterative peeling recovered more of the injected set and achieved better coverage than the other data-adaptive MIS procedures. MIS-SAP selected larger sets without increasing overlap. Oracle \(k\) achieved the highest recovery; however, its coefficient estimates still exhibited severe tail failures. Thus, knowing the correct set size did not ensure selection of the correct observations or reliable coefficient recovery. Complete comparisons of coefficient accuracy, selected set size, overlap, stopping behaviour, and runtime are reported in \autoref{app:estimation-comparisons}, \autoref{app:estimation-selection}, \autoref{app:mis-sap-diagnostics}, and \autoref{app:estimation-computation}.
+The coefficient-error distributions show that aggregate accuracy and tail behaviour differ across estimators. MM and LTS remain tightly concentrated around zero in the primary comparison, whereas MIS with oracle \(k\) has wider error distributions under vertical-outlier and good-leverage contamination (\autoref{fig:04-coefficient-errors}). OLS exhibits the largest dispersion under bad leverage. The condition-specific diagnostic further isolates the extreme-tail behaviour of MIS with oracle \(k\) (\autoref{fig:04-mis-oracle-large-errors}). The legacy GPD condition produces an absolute-error exceedance probability of \(100\%\) across the displayed predictor distributions and contamination mechanisms. Most non-GPD cells have much lower exceedance probabilities, although isolated high-risk cells remain under particular error and predictor combinations. These results localise the tail instability that broad arithmetic summaries would otherwise obscure.
 
-Overall, direct robust estimators were the most reliable point-estimation procedures in the stress-test design, whereas post-diagnostic deletion estimators were more vulnerable to rare but severe tail failures. The next subsection examines where those tail failures occurred and whether they reflected statistical instability or numerical non-completion.
-
-\subsection{Failure Modes and Numerical Availability}
-\label{subsec:failure-modes}
-
-MIS-SAP's large errors clustered in a small number of identifiable data-generating conditions. Outside the GPD designs and contaminated-predictor scenarios with slope-distorting high-leverage contamination, labelled as bad leverage in the tables and figures, the probability that \(\lvert\widehat{\beta}-\beta_0\rvert>0.5\) was generally zero and never exceeded \(10\%\). In contrast, this probability reached \(100\%\) under GPD errors for every predictor distribution and contamination mechanism. Under slope-distorting high-leverage contamination with contaminated predictors, it ranged from \(50\%\) to \(59\%\) across the non-GPD error distributions (\autoref{fig:04-mis-sap-large-errors}). \autoref{fig:04-mis-sap-large-errors} therefore shows that the long tails in \autoref{fig:04-coefficient-errors} were concentrated in extreme-tail errors and contaminated-predictor leverage designs.
-
-
-\begin{figure}[H]
+\begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\linewidth]{../../output/04_robust/figures/main/04_fig2_mis_sap_large_error_dgp_heatmap.pdf}
-	\caption{Probability that the absolute MIS-SAP coefficient error exceeds \(0.5\) across predictor distributions, error distributions, and contamination mechanisms. Darker tiles denote a higher probability of a large estimation error.}
-	\label{fig:04-mis-sap-large-errors}
+	\includegraphics[width=\linewidth]{../../output/04_robust/figures/main/04_fig2_mis_oracle_large_error_dgp_heatmap.pdf}
+	\caption{Probability that the absolute coefficient error of MIS with oracle \(k\) exceeds \(0.5\), by predictor distribution, error distribution, and contamination mechanism. The GPD condition is retained here as a condition-specific tail diagnostic.}
+	\label{fig:04-mis-oracle-large-errors}
 \end{figure}
 
-These failure modes arose from statistical instability while the numerical procedure completed successfully. The recorded MIS-SAP error rate of \(0.0\%\) across all contamination mechanisms confirms procedural completion; coefficient accuracy must be assessed using the bias and coverage results. Under slope-distorting high-leverage contamination and non-GPD errors, the mean absolute bias ranged from \(0.183\) to \(0.341\), while empirical coverage fell to between \(58.3\%\) and \(62.3\%\). Under GPD errors, the mean absolute bias became extremely large across all contamination mechanisms. The deterioration reflects sensitivity to extreme tails and structurally influential contamination, while the numerical implementation remained available. Complete MIS-SAP selection, stopping, and computational diagnostics are reported in \autoref{app:simulation}.
+Coverage provides a separate criterion from point-estimation accuracy. Under bad leverage, empirical coverage was \(95.3\%\) for MM and \(92.0\%\) for LTS, compared with \(75.2\%\) for MIS with oracle \(k\), \(75.1\%\) for DFBETAS, \(70.0\%\) for Cook's distance, and \(0.2\%\) for OLS (\autoref{tab:robust-coverage}). Good leverage gives a different pattern. MM and LTS retained relatively small point-estimation errors, yet their coverage rates fell to \(70.2\%\) and \(65.1\%\), while DFBETAS achieved \(92.0\%\). MIS with oracle \(k\) reached only \(21.4\%\) coverage in this mechanism. Point accuracy and interval performance therefore need to be interpreted jointly.
+
+\input{../../output/04_robust/tables/main/04_tab2c_coverage.tex}
+
+Influential-set recovery reveals the diagnostic information provided by fixed-\(k\) MIS. In the detection comparison with \(n=5000\), an injected coalition of \(k=50\), and \(1\%\) contamination, MIS with oracle \(k\) achieved \(97.6\%\) recall and \(97.6\%\) precision under bad leverage (\autoref{tab:robust-detection-efficiency}). Cook's distance recovered \(100.0\%\) of the injected coalition but selected an average of \(167.5\) observations, giving \(37.5\%\) precision; DFBETAS achieved \(99.7\%\) recall with an average selected set of \(185.6\) observations and \(32.7\%\) precision. MIS therefore recovered nearly the full bad-leverage coalition within the prespecified 50-observation deletion budget. Recovery was much lower under vertical-outlier and good-leverage contamination, consistent with the coefficient-targeted MIS objective (\autoref{fig:04-detection-quality}). The recovery results describe localisation of coefficient-relevant observations and should be interpreted separately from the accuracy of the post-deletion OLS estimate.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{../../output/04_robust/figures/main/04_fig3_detection_quality_distributions.pdf}
+	\caption{Empirical distributions of recall and precision for Cook's distance, DFBETAS, and MIS with oracle \(k\) across the three contamination mechanisms. Recall measures recovery of the injected coalition, and precision measures the fraction of selected observations belonging to that coalition.}
+	\label{fig:04-detection-quality}
+\end{figure}
+
+\input{../../output/04_robust/tables/main/04_tab3_detection_efficiency.tex}
+
+Direct robust estimators provide the most stable point estimates in this study when stable coefficient estimation is the sole objective. Fixed-\(k\) MIS serves a diagnostic role by identifying the size-\(k\) coalition jointly responsible for target-coefficient sensitivity, with particularly high precision under slope-distorting bad leverage. High influential-set recovery does not guarantee the smallest post-deletion estimation error in every data-generating process. The supplementary results document this distinction across predictor and error distributions and report the corresponding runtime and numerical-health diagnostics (\autoref{app:estimation-results}).
+
+
+
+\subsection{Model Misspecification and Diagnostic Sensitivity}
+\label{subsec:misspecification}
+
+\subsubsection{Design and Calibration}
+\label{subsubsec:misspec-design}
+
+The third simulation study asks how coefficient-targeted set sensitivity responds across qualitatively different departures from a reference regression specification. MIS is not treated as an omnibus specification test. Instead, the objective is to characterise the detection profile of the maximum fixed-\(k\) influence statistic and to compare that profile with observation-level diagnostics and mechanism-specific specification tests. A useful procedure in this setting need not reject every misspecified model; its substantive role depends on whether the misspecification creates a concentrated subset whose deletion materially changes the target coefficient.
+
+The formal detection experiment considers eight mechanisms: linear endogeneity, nonlinear confounding, heterogeneous slopes, heteroskedasticity, a missing interaction, nonlinear functional form, an omitted variable, and threshold behaviour. Each mechanism is evaluated across sample sizes \(n\in\{500,1000,2500,5000\}\), three predictor environments, and eight error distributions, producing \(96\) environments per scenario. Misspecification severity varies along a scenario-specific grid, with common random numbers used across severity levels where appropriate. The broader frozen-estimation exercise reported in the Appendix contains additional estimation cases, including a structural-break design, but it is distinct from the formal detection experiment reported here.
+
+The comparison includes MIS, Cook's distance, DFBETAS, leverage, Ramsey's RESET, and the Breusch--Pagan test. The principal MIS operating point is \(k/n=0.025\); deletion fractions \(0.01\), \(0.05\), and \(0.10\) provide sensitivity checks. These values are analyst-specified deletion budgets rather than oracle contamination fractions or estimates of a true influential-set size. Detector cutoffs are obtained from an independent calibration stream so that power comparisons are made after establishing approximately common null rejection rates.
+
+\subsubsection{Calibration and Detection Breadth}
+\label{subsubsec:misspec-breadth}
+
+The calibrated procedures achieve rejection rates close to the nominal \(5\%\) level under the reference model. Across the four deletion budgets, MIS rejection ranges from \(5.04\%\) to \(5.07\%\), while Cook's distance, DFBETAS, and leverage are similarly close to \(5\%\). Calibrated RESET and Breusch--Pagan rejection rates are \(4.97\%\) and \(5.04\%\), respectively (\autoref{tab:05-size-by-k}). Establishing this null behaviour is important because differences in rejection under positive severity can then be interpreted as differences in diagnostic sensitivity rather than differences in baseline size.
+
+\input{../../output/05_misspecification/tables/main/05_tab01_size_by_k.tex}
+
+At the principal deletion budget \(k/n=0.025\), MIS reached \(80\%\) power in \(551\) of \(768\) scenario--environment combinations, or \(71.7\%\) (\autoref{fig:05-detection-reach} and \autoref{tab:05-detection-reach}). The corresponding reach rates were \(68.4\%\) for Breusch--Pagan, \(50.0\%\) for RESET, \(18.9\%\) for DFBETAS, \(18.2\%\) for Cook's distance, and \(3.8\%\) for leverage. These aggregate counts describe breadth across the simulated environments rather than a universal ranking of specification tests. MIS responds strongly to several departures that create concentrated target-coefficient sensitivity, while its reach is weak for mechanisms that do not create that form of localised influence.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.78\linewidth]{../../output/05_misspecification/figures/main/05_fig01_detection_reach.pdf}
+	\caption{Number of scenario--environment combinations in which each diagnostic attains at least \(80\%\) empirical power at the principal MIS deletion budget \(k/n=0.025\).}
+	\label{fig:05-detection-reach}
+\end{figure}
+
+\input{../../output/05_misspecification/tables/main/05_tab03_detection_reach.tex}
+
+The comparison with RESET and Breusch--Pagan shows that the procedures respond to different forms of misspecification. Relative to Breusch--Pagan, MIS-only rejection is more common than Breusch--Pagan-only rejection in most mechanisms, including heterogeneous slopes, nonlinear confounding, heteroskedasticity, nonlinearity, and threshold behaviour. The comparison with RESET is more specialised: RESET-only rejection is substantial for nonlinear confounding, missing interactions, nonlinearity, and thresholds, whereas MIS-only rejection is especially pronounced for heterogeneous slopes and heteroskedasticity (\autoref{fig:05-generalist-specialist} and \autoref{tab:05-exclusive-specialists}). These differences are consistent with different diagnostic targets rather than one procedure uniformly subsuming the others.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{../../output/05_misspecification/figures/main/05_fig02_generalist_specialist.pdf}
+	\caption{Exclusive rejection probabilities for MIS relative to Breusch--Pagan and RESET at \(k/n=0.025\). Bars to the right report MIS-only rejection and bars to the left report rival-only rejection.}
+	\label{fig:05-generalist-specialist}
+\end{figure}
+
+\input{../../output/05_misspecification/tables/main/05_tab04_exclusive_specialists.tex}
+
+\subsubsection{Detection Boundary and the Role of \(k\)}
+\label{subsubsec:misspec-boundary}
+
+The severity required for reliable MIS detection varies substantially across misspecification mechanisms. At \(k/n=0.025\), nonlinear confounding, heterogeneous slopes, nonlinearity, and threshold behaviour reached \(80\%\) power in all \(96\) recorded environments, with censoring-aware median boundaries of \(0.200\), \(0.273\), \(0.209\), and \(0.307\), respectively (\autoref{tab:05-boundary-summary}). Missing interactions reached the criterion in \(94.8\%\) of environments, whereas heteroskedasticity reached it in \(70.8\%\). Linear endogeneity never reached \(80\%\) power within the simulated severity range, and the omitted-variable design reached it in only \(8.3\%\) of environments. The boundary is therefore mechanism dependent and is right-censored when the simulated severity range is insufficient to attain the target power.
+
+\input{../../output/05_misspecification/tables/main/05_tab_boundary_summary.tex}
+
+Increasing sample size generally lowers the severity required for detection in the mechanisms for which the boundary is identified (\autoref{fig:05-boundary-by-n}). The decline is visible for nonlinear confounding, heterogeneous slopes, missing interactions, nonlinearity, threshold behaviour, and, after the smallest design, heteroskedasticity. Linear endogeneity and omitted-variable contamination remain qualitatively different: neither attains the \(80\%\) criterion at any displayed sample size in the pooled boundary comparison. Larger samples therefore sharpen sensitivity where the MIS statistic responds to the structural departure, but they do not eliminate an invariance or near-blindness in the diagnostic target.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.82\linewidth]{../../output/05_misspecification/figures/main/05_fig03_boundary_by_n.pdf}
+	\caption{Censoring-aware median misspecification severity required for MIS to attain \(80\%\) power, by sample size. Scenarios that do not attain the criterion within the simulated severity range are treated as right-censored.}
+	\label{fig:05-boundary-by-n}
+\end{figure}
+
+The deletion budget changes the operating characteristics but does not identify a unique true \(k\). Pooled MIS reach is \(66.9\%\), \(71.7\%\), \(70.7\%\), and \(52.2\%\) for deletion fractions of \(1\%\), \(2.5\%\), \(5\%\), and \(10\%\), respectively, while the corresponding normalized censoring-aware boundaries are \(0.409\), \(0.307\), \(0.414\), and \(0.935\) (\autoref{fig:05-budget-reach} and \autoref{tab:05-budget-summary}). The \(2.5\%\) operating point therefore provides a useful central benchmark in this design, but scenario-specific responses differ and no deletion fraction dominates every mechanism. These comparisons are sensitivity analyses over fixed deletion budgets; they are not estimates of contamination size and do not constitute an effective-\(k\) or MIS-SEK procedure.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{../../output/05_misspecification/figures/main/05_fig04_budget_reach.pdf}
+	\caption{MIS detection reach across fixed deletion fractions and misspecification scenarios. Each deletion fraction is an analyst-specified sensitivity budget rather than an estimated influential-set size.}
+	\label{fig:05-budget-reach}
+\end{figure}
+
+\input{../../output/05_misspecification/tables/main/05_tab05_budget_summary.tex}
+
+\subsubsection{Specificity, Invariance, and Localisation}
+\label{subsubsec:misspec-specificity}
+
+The corrected-model experiments distinguish sensitivity to misspecification from indiscriminate rejection. At \(k/n=0.025\), wrong-model rejection was \(74.2\%\) for heterogeneous slopes, \(74.3\%\) for missing interactions, \(81.9\%\) for nonlinearity, \(62.9\%\) for threshold behaviour, and \(11.1\%\) for the omitted-variable design. After the missing structure was explicitly included in the fitted model, rejection returned to approximately \(5\%\) in every case (\autoref{fig:05-specificity} and \autoref{tab:05-specificity}). The coefficient-targeted statistic therefore responds to particular consequences of the wrong specification rather than mechanically rejecting the corresponding data-generating environments.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.82\linewidth]{../../output/05_misspecification/figures/main/05_fig05_specificity.pdf}
+	\caption{MIS rejection rates under the wrong reference model and the corresponding correctly respecified model at \(k/n=0.025\).}
+	\label{fig:05-specificity}
+\end{figure}
+
+\input{../../output/05_misspecification/tables/main/05_tab06_specificity.tex}
+
+The weak cases are also informative about what the MIS statistic does not detect. Linear endogeneity is an exact fitted-span and residual-scale invariance in this design: mean and maximum-severity rejection are both \(4.95\%\), and the maximum recorded change in the standardized statistic is \(1.87\times10^{-13}\) (\autoref{tab:05-invariance-blind-set}). The omitted-variable design is a near-blind case rather than an exact invariance, with mean rejection of \(8.96\%\) and maximum-severity rejection of \(21.02\%\). These results show that coefficient misspecification need not generate concentrated deletion sensitivity. Diffuse departures, changes lying within the fitted span, or mechanisms weakly connected to the deletion contrast can remain difficult for fixed-\(k\) MIS.
+
+\input{../../output/05_misspecification/tables/main/05_tab07_invariance_blind_set.tex}
+
+\input{../../output/05_misspecification/tables/main/05_invariance_argument.tex}
+
+Localisation provides a further distinction between detecting misspecification and identifying observations associated with the structural disturbance. At \(k/n=0.025\), threshold misspecification produces precision \(0.606\) and lift \(2.43\) relative to the \(25\%\) affected fraction, indicating substantial enrichment of the affected observations among the MIS-selected set (\autoref{tab:05-localisation}). Heterogeneous slopes produce precision \(0.274\) and lift \(1.10\), only modestly above the no-enrichment benchmark. The upper panels of \autoref{fig:05-targeting-localisation} therefore show that localisation can be strong for one detectable mechanism and weak for another.
+
+\input{../../output/05_misspecification/tables/main/05_tab08_localisation.tex}
+
+Identifying observations associated with misspecification does not imply that deleting them restores a correctly specified model. The lower panels of \autoref{fig:05-targeting-localisation} show that MIS deletion can increase coefficient RMSE as the deletion budget grows, even when the diagnostic itself detects or localises a structural disturbance. Deletion changes the estimating sample; it does not add omitted structure, restore orthogonality, or correct an incorrect functional form. The detailed frozen-05 estimation and deletion-arm results are therefore reported in the Appendix rather than interpreted as evidence that diagnostic deletion repairs misspecification.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{../../output/05_misspecification/figures/main/05_fig06_targeting_localisation.pdf}
+	\caption{Localisation and deletion consequences. The upper panels report localisation lift and precision for heterogeneous-slope and threshold designs, with diamonds marking the chance/reference level. The lower panels report mean cell-level RMSE for the full-sample and diagnostic-deletion estimators across predictor environments and fixed deletion fractions.}
+	\label{fig:05-targeting-localisation}
+\end{figure}
 
 
 \end{document}

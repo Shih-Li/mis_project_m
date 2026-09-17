@@ -458,7 +458,7 @@ cat(sprintf("Loaded Script 02b data: %s rows\n", format(nrow(diag_02b), big.mark
 outlier_levels <- c("none", "vertical_outlier", "good_leverage", "bad_leverage")
 outlier_labels <- c(
   "none" = "No contamination",
-  "vertical_outlier" = "Vertical outliers",
+  "vertical_outlier" = "Response outliers",
   "good_leverage" = "Good leverage",
   "bad_leverage" = "Bad leverage"
 )
@@ -469,7 +469,7 @@ error_levels <- c(
 )
 error_labels <- c(
   "normal" = "Normal",
-  "beta_logistic" = "Beta-logistic",
+  "beta_logistic" = "Beta(2,5)",
   "mixed_normal" = "Mixed normal",
   "skewed_t" = "Skewed t",
   "contaminated" = "Contaminated",
@@ -733,7 +733,7 @@ p_fig1 <- ggplot(
     limits = c(-max_heat, max_heat),
     oob = scales::squish,
     labels = scales::label_number(accuracy = 1, scale = 100, suffix = " pp"),
-    name = "Target-aware MIS advantage\nover classical diagnostics"
+    name = "Target-aware recovery difference\nrelative to classical diagnostics"
   ) +
   scale_colour_identity() +
   labs(
@@ -824,7 +824,7 @@ p_fig2 <- ggplot(
   ) +
   labs(
     x = NULL,
-    y = "MIS top-k recovery with injected set"
+    y = "Injected-set top-k recovery"
   ) +
   theme_paper(base_size = 10.5) +
   theme(
@@ -993,7 +993,7 @@ p_figA1 <- ggplot(
     limits = c(0, 1),
     oob = scales::squish,
     labels = scales::label_percent(accuracy = 1),
-    name = "MIS top-k recovery"
+    name = "Injected-set\ntop-k recovery"
   ) +
   scale_colour_identity() +
   labs(
@@ -1308,30 +1308,15 @@ save_plot(
 # Table 1: Detection and rejection summary under contamination
 # ----------------------------------------------------------------------------
 
-tab1_raw <- sim %>%
-  filter(as.character(outlier_method) != "none") %>%
+tab1_raw <- det_cell %>%
   group_by(outlier_label) %>%
   summarise(
-    mis_overlap = safe_mean(overlap_mis),
-    cooks_overlap = safe_mean(overlap_cooks),
-    leverage_overlap = safe_mean(overlap_lev),
-    dfbetas_overlap = safe_mean(overlap_dfbetas),
-    mis_power = safe_mean(cover_evd),
-    cooks_power = safe_mean(cover_cooks),
-    leverage_power = safe_mean(cover_lev),
-    dfbetas_power = safe_mean(cover_dfbetas),
-    convergence = safe_mean(converged),
-    n = n(),
+    mis_recovery = safe_mean(overlap_mis),
+    highest_classical_recovery = safe_mean(best_classical_overlap),
+    mis_evt_rejection = safe_mean(power_mis),
+    convergence = safe_mean(convergence),
+    n_cells = n(),
     .groups = "drop"
-  ) %>%
-  mutate(
-    best_classical_overlap = row_max_na(
-      cooks_overlap, leverage_overlap, dfbetas_overlap
-    ),
-    best_classical_power = row_max_na(
-      cooks_power, leverage_power, dfbetas_power
-    ),
-    mis_advantage = mis_overlap - best_classical_overlap
   )
 
 utils::write.csv(
@@ -1343,12 +1328,10 @@ utils::write.csv(
 
 tab1_display <- tab1_raw %>%
   transmute(
-    `Outlier mechanism` = as.character(outlier_label),
-    `MIS overlap` = fmt_pct(mis_overlap),
-    `Best classical overlap` = fmt_pct(best_classical_overlap),
-    `MIS advantage` = fmt_pp(mis_advantage),
-    `MIS rejection` = fmt_pct(mis_power),
-    `Best classical rejection` = fmt_pct(best_classical_power),
+    `Contamination mechanism` = as.character(outlier_label),
+    `MIS recovery` = fmt_pct(mis_recovery),
+    `Highest classical recovery` = fmt_pct(highest_classical_recovery),
+    `MIS-EVT rejection` = fmt_pct(mis_evt_rejection),
     `EVT convergence` = fmt_pct(convergence)
   )
 
@@ -1356,41 +1339,34 @@ write_tex_table(
   tab1_display,
   tex_path = file.path(tab_main_dir, "02_tab1_detection_power_summary.tex"),
   caption = paste0(
-    "Detection overlap and rejection rates across contaminated scenarios. ",
-    "The best classical value is the largest aggregate value among Cook's D, ",
-    "leverage, and DFBETAS."
+    "Injected-set recovery and MIS-EVT rejection across contaminated designs. ",
+    "Each entry gives equal weight to the recorded design-cell summaries. ",
+    "The classical recovery benchmark is the highest recovery among Cook's D, ",
+    "leverage, and DFBETAS within each design cell before averaging."
   ),
   label = "tab:02-detection-power-summary",
   resize_width = TABLE_WIDTH_WIDE,
-  align = "lrrrrrr"
+  align = "lrrrr"
 )
 
 # ----------------------------------------------------------------------------
 # Table 2: Empirical size under no contamination
 # ----------------------------------------------------------------------------
 
-size_long <- sim %>%
+size_cell <- sim %>%
   filter(as.character(outlier_method) == "none") %>%
-  select(all_of(coverage_metric_levels)) %>%
-  pivot_longer(
-    cols = everything(),
-    names_to = "metric",
-    values_to = "reject"
-  ) %>%
-  mutate(
-    method = factor(
-      metric,
-      levels = coverage_metric_levels,
-      labels = coverage_method_levels
-    )
+  group_by(across(all_of(scenario_keys))) %>%
+  summarise(
+    mis_evt_rejection = safe_mean(cover_evd),
+    convergence = safe_mean(converged),
+    .groups = "drop"
   )
 
-size_summary <- size_long %>%
-  group_by(method) %>%
+size_summary <- size_cell %>%
   summarise(
-    empirical_size = safe_mean(reject),
-    deviation_from_05 = empirical_size - 0.05,
-    usable_draws = sum(!is.na(reject)),
+    empirical_rejection = safe_mean(mis_evt_rejection),
+    convergence = safe_mean(convergence),
+    n_cells = n(),
     .groups = "drop"
   )
 
@@ -1403,16 +1379,19 @@ utils::write.csv(
 
 tab2_display <- size_summary %>%
   transmute(
-    Method = as.character(method),
-    `Empirical rejection` = fmt_pct(empirical_size),
-    `Difference from 5%` = fmt_pp(deviation_from_05),
-    `Usable draws` = format(usable_draws, big.mark = ",", scientific = FALSE)
+    `Method` = "MIS-EVT",
+    `Empirical rejection` = fmt_pct(empirical_rejection),
+    `EVT convergence` = fmt_pct(convergence),
+    `Design cells` = as.character(n_cells)
   )
 
 write_tex_table(
   tab2_display,
   tex_path = file.path(tab_main_dir, "02_tab2_empirical_size_summary.tex"),
-  caption = "Empirical rejection rates under no contamination.",
+  caption = paste0(
+    "Uncontaminated MIS-EVT rejection and numerical convergence. ",
+    "Results are averaged with equal weight across the recorded design-cell summaries."
+  ),
   label = "tab:02-empirical-size-summary",
   resize_width = TABLE_WIDTH_COMPACT,
   align = "lrrr"
@@ -1451,7 +1430,7 @@ utils::write.csv(
 tab3_display <- diag_table_raw %>%
   transmute(
     `Error distribution` = as.character(error_label),
-    `MIS overlap` = fmt_pct_interval(
+    `MIS recovery` = fmt_pct_interval(
       overlap_median, overlap_q10, overlap_q90, digits = 1
     ),
     `Absolute DFBETA ratio` = fmt_interval(
@@ -1528,8 +1507,8 @@ write_tex_table(
   tabA1_display,
   tex_path = file.path(tab_supp_dir, "02_tabA1_mis_advantage_grid.tex"),
   caption = paste0(
-    "Target-aware MIS advantage, in percentage points, by sample size and ",
-    "contamination proportion. For bad leverage, positive values indicate ",
+    "Target-aware recovery difference, in percentage points, by sample size ",
+    "and contamination proportion. For bad leverage, positive values indicate ",
     "greater recovery by MIS than the highest-recovery classical diagnostic. ",
     "For vertical outliers and good leverage, positive values indicate lower ",
     "unnecessary recovery by MIS than the lowest-recovery classical diagnostic."
@@ -1613,16 +1592,16 @@ tabA3_display <- tabA3_raw %>%
   transmute(
     `Error distribution` = as.character(error_label),
     `Outlier mechanism` = as.character(outlier_label),
-    `MIS overlap` = fmt_pct(mis_overlap),
-    `Best classical overlap` = fmt_pct(best_classical_overlap),
-    `MIS advantage` = fmt_pp(mis_advantage),
+    `MIS recovery` = fmt_pct(mis_overlap),
+    `Highest classical recovery` = fmt_pct(best_classical_overlap),
+    `Recovery difference` = fmt_pp(mis_advantage),
     `EVT convergence` = fmt_pct(convergence)
   )
 
 write_tex_table(
   tabA3_display,
   tex_path = file.path(tab_supp_dir, "02_tabA3_detection_by_error.tex"),
-  caption = "Detection overlap and EVT convergence by error distribution and contamination mechanism.",
+  caption = "Injected-set recovery and EVT convergence by error distribution and contamination mechanism.",
   label = "tab:02A-detection-by-error",
   resize_width = TABLE_WIDTH_WIDE,
   align = "llrrrr"
