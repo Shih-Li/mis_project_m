@@ -29,8 +29,15 @@ List dinkelbach_topk_cpp(NumericVector x, NumericVector r, int k, int sgn,
     for (int i = 0; i < n; ++i) w[i] = nval[i] - lambda * dval[i];
     
     std::iota(ids.begin(), ids.end(), 0);
-    std::partial_sort(ids.begin(), ids.begin() + k, ids.end(),
-                      [&](int a, int b) { return w[a] > w[b]; });
+    std::partial_sort(
+      ids.begin(),
+      ids.begin() + k,
+      ids.end(),
+      [&](int a, int b) {
+        if (w[a] == w[b]) return a < b;
+        return w[a] > w[b];
+      }
+    );
     
     double num = 0.0, den = sum_x2;
     for (int j = 0; j < k; ++j) {

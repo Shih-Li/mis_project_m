@@ -36,6 +36,71 @@
 # Called by: /R/sim_robust_engine.R, /script/04_compare_robust.R
 # ==============================================================================
 
+# ==============================================================================
+# Optional C++ Dinkelbach kernel
+# ==============================================================================
+
+load_dinkelbach_cpp <- function(quiet = TRUE) {
+  
+  # Already loaded in this R process.
+  cpp_fun <- get0(
+    "dinkelbach_topk_cpp",
+    envir = .GlobalEnv,
+    mode = "function",
+    inherits = FALSE
+  )
+  
+  if (!is.null(cpp_fun)) {
+    return(TRUE)
+  }
+  
+  if (!requireNamespace("Rcpp", quietly = TRUE)) {
+    return(FALSE)
+  }
+  
+  candidates <- c(
+    "src/dinkelbach_topk_cpp.cpp",
+    "../src/dinkelbach_topk_cpp.cpp"
+  )
+  
+  cpp_file <- candidates[file.exists(candidates)][1L]
+  
+  if (length(cpp_file) == 0L || is.na(cpp_file)) {
+    return(FALSE)
+  }
+  
+  ok <- tryCatch(
+    {
+      Rcpp::sourceCpp(
+        file = cpp_file,
+        env = .GlobalEnv,
+        rebuild = FALSE,
+        showOutput = !quiet,
+        verbose = FALSE
+      )
+      
+      !is.null(
+        get0(
+          "dinkelbach_topk_cpp",
+          envir = .GlobalEnv,
+          mode = "function",
+          inherits = FALSE
+        )
+      )
+    },
+    error = function(e) {
+      if (!quiet) {
+        warning(
+          "C++ Dinkelbach kernel could not be loaded: ",
+          conditionMessage(e)
+        )
+      }
+      FALSE
+    }
+  )
+  
+  isTRUE(ok)
+}
 
 #' Exact MIS Detection via Dinkelbach's Method (Low-Level)
 #'
@@ -56,7 +121,11 @@
 #' @param r       Numeric vector; OLS residuals for the candidate
 #'                observations (same length as x).
 #' @param k       Integer; size of the influential set to find.
-#' @param sgn     Integer; +1 or -1, the direction of influence to maximise.
+#' @param sign    Integer; +1 or -1 direction for influence maximisation.
+#'                +1 maximises beta_full - beta_deleted, so it favors sets
+#'                whose removal decreases the target coefficient.
+#'                -1 maximises beta_deleted - beta_full, so it favors sets
+#'                whose removal increases the target coefficient.
 #' @param sum_x2  Numeric; total sum of x^2 over ALL observations (not just
 #'                candidates). This is the denominator anchor. If NULL
 #'                (default), computed as sum(x^2) — correct when candidates
@@ -176,7 +245,13 @@ dinkelbach_topk <- function(x, r, k, sgn = 1L,
 #'         most influential observations. Same return type as
 #'         \code{fast_sens_topk} for drop-in compatibility.
 #' @export
-dinkelbach_topk_lm <- function(mod, pos = 2L, sign = 1L, k = 1L) {
+dinkelbach_topk_lm <- function(
+    mod,
+    pos = 2L,
+    sign = 1L,
+    k = 1L,
+    use_cpp = FALSE
+) {
 
   X <- stats::model.matrix(mod)
   y <- stats::model.response(stats::model.frame(mod))
@@ -224,16 +299,45 @@ dinkelbach_topk_lm <- function(mod, pos = 2L, sign = 1L, k = 1L) {
   # Total sum of squares of x_fwl (full sample — the denominator anchor)
   sum_x2_full <- sum(x_fwl^2)
 
-  # --- Call the core Dinkelbach solver ---
-  result <- dinkelbach_topk(
-    x      = x_fwl,
-    r      = r_fwl,
-    k      = k,
-    sgn    = as.integer(sign),
-    sum_x2 = sum_x2_full
+  # --- Prefer the C++ Dinkelbach kernel ---
+  cpp_available <- (
+    isTRUE(use_cpp) &&
+      load_dinkelbach_cpp()
   )
-
-  return(result$indices)
+  
+  if (cpp_available) {
+    
+    cpp_fun <- get0(
+      "dinkelbach_topk_cpp",
+      envir = .GlobalEnv,
+      mode = "function",
+      inherits = FALSE
+    )
+    
+    result <- cpp_fun(
+      x = as.numeric(x_fwl),
+      r = as.numeric(r_fwl),
+      k = as.integer(k),
+      sgn = as.integer(sign),
+      sum_x2 = as.numeric(sum_x2_full),
+      max_iter = 50L,
+      tol = 1e-9
+    )
+    
+  } else {
+    
+    result <- dinkelbach_topk(
+      x = x_fwl,
+      r = r_fwl,
+      k = k,
+      sgn = as.integer(sign),
+      sum_x2 = sum_x2_full,
+      max_iter = 50L,
+      tol = 1e-9
+    )
+  }
+  
+  as.integer(result$indices)
 }
 
 #' Exact MIS Detection with Iterative Refinement (Dinkelbach + Refit)
