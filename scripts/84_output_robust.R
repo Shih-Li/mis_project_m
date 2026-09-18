@@ -7,11 +7,7 @@
 #   under bad-leverage contamination.
 #
 # Primary input:
-#   output/04sap_robust_comparison_results.rds
-#
-# Optional validation inputs:
-#   output/04sap_summary_tables.rds
-#   output/04sap_bias_distributional.rds
+#   output/04_robust_comparison_results.rds
 #
 # Output structure:
 #   output/04_robust/
@@ -30,7 +26,8 @@
 #   - Arithmetic means are the primary summaries.
 #   - No median-based headline results are produced.
 #   - Mean coefficient, mean absolute bias, RMSE, empirical coverage,
-#     mean selected k, mean overlap, and mean runtime are reported.
+#     selection-size ratio, injected-set recovery, precision, and mean runtime
+#     are reported.
 #   - Monte Carlo standard errors are calculated whenever appropriate.
 #   - Main broad comparisons give equal weight to each simulation design cell.
 #
@@ -107,13 +104,7 @@ resolve_project_root <- function() {
 project_root <- resolve_project_root()
 
 input_main <- file.path(
-  project_root, "output", "04sap_robust_comparison_results.rds"
-)
-input_summary_optional <- file.path(
-  project_root, "output", "04sap_summary_tables.rds"
-)
-input_bias_optional <- file.path(
-  project_root, "output", "04sap_bias_distributional.rds"
+  project_root, "output", "04_robust_comparison_results.rds"
 )
 
 output_root <- file.path(project_root, "output", "04_robust")
@@ -572,31 +563,6 @@ make_metric_wide_table <- function(
 
 sim <- readRDS(input_main)
 
-
-# ==============================================================================
-# Legacy Script 04 compatibility
-# ==============================================================================
-
-# The legacy Script 04 simulation used n = 5000 and stored set_size,
-# but did not store n_obs, design_k, or contam_prop explicitly.
-
-if (!"n_obs" %in% names(sim)) {
-  sim$n_obs <- 5000L
-}
-
-if (!"design_k" %in% names(sim)) {
-  sim$design_k <- as.integer(sim$set_size)
-}
-
-if (!"contam_prop" %in% names(sim)) {
-  sim$contam_prop <- ifelse(
-    sim$outlier_method == "none",
-    0,
-    sim$design_k / sim$n_obs
-  )
-}
-
-
 # ==============================================================================
 # GPD handling
 # ==============================================================================
@@ -604,7 +570,7 @@ if (!"contam_prop" %in% names(sim)) {
 # Retain all Script 04 conditions for condition-specific diagnostics.
 sim_all <- sim
 
-# Primary finite-moment comparison excludes the legacy GPD specification.
+# Primary finite-moment comparison excludes the infinite-mean GPD stress condition.
 sim_primary <- sim %>%
   filter(error_type != "gpd")
 
@@ -620,105 +586,211 @@ cat(sprintf(
 
 required_columns <- c(
   "iter",
+  "design_id",
   "n_obs",
   "design_k",
   "contam_prop",
+  "realized_contam_prop",
   "x_type",
   "error_type",
   "outlier_method",
   "set_size",
   
-  "k_cd", "k_lev", "k_dfb", "k_alpha", "k_oracle",
-  "k_peel_v2", "k_peel_sap",
+  "k_lev",
+  "k_cd",
+  "k_dfb",
+  "k_oracle",
   
-  "overlap_cd", "overlap_lev", "overlap_dfb",
-  "overlap_mis_alpha", "overlap_mis_oracle",
-  "overlap_peel_v2", "overlap_peel_sap",
+  "overlap_lev",
+  "overlap_cd",
+  "overlap_dfb",
+  "overlap_mis_oracle",
   
-  "peel_v2_stop", "peel_v2_iters",
-  "peel_sap_stop", "peel_sap_iters",
-  "peel_sap_final_p", "peel_sap_min_p",
-  "peel_sap_direction", "peel_sap_peak_excess",
+  "oracle_direction",
+  "oracle_dfbeta_delta",
+  "deletion_interval_type",
   
-  "mm_converged", "mm_valid", "mm_zero_scale", "mm_scale",
+  "coef_full",
+  "coef_lev",
+  "coef_cd",
+  "coef_dfb",
+  "coef_mis_oracle",
+  "coef_mm",
+  "coef_lts",
   
-  "coef_full", "coef_cd", "coef_lev", "coef_dfb",
-  "coef_mis_alpha", "coef_mis_oracle",
-  "coef_mis_peel", "coef_mis_sap",
-  "coef_mm", "coef_lts",
+  "se_full",
+  "se_lev",
+  "se_cd",
+  "se_dfb",
+  "se_mis_oracle",
+  "se_mm",
+  "se_lts",
   
-  "se_full", "se_cd", "se_lev", "se_dfb",
-  "se_mis_alpha", "se_mis_oracle",
-  "se_mis_peel", "se_mis_sap",
-  "se_mm", "se_lts",
+  "bias_full",
+  "bias_lev",
+  "bias_cd",
+  "bias_dfb",
+  "bias_mis_oracle",
+  "bias_mm",
+  "bias_lts",
   
-  "bias_full", "bias_cd", "bias_lev", "bias_dfb",
-  "bias_mis_alpha", "bias_mis_oracle",
-  "bias_mis_peel", "bias_mis_sap",
-  "bias_mm", "bias_lts",
+  "cov_full",
+  "cov_lev",
+  "cov_cd",
+  "cov_dfb",
+  "cov_mis_oracle",
+  "cov_mm",
+  "cov_lts",
   
-  "cov_full", "cov_cd", "cov_lev", "cov_dfb",
-  "cov_mis_alpha", "cov_mis_oracle",
-  "cov_mis_peel", "cov_mis_sap",
-  "cov_mm", "cov_lts",
-  
-  "cpu_full", "cpu_cd", "cpu_lev", "cpu_dfb",
-  "cpu_mis_alpha", "cpu_mis_oracle",
-  "cpu_peel_v2", "cpu_peel_sap",
-  "cpu_mm", "cpu_lts"
+  "cpu_full",
+  "cpu_lev",
+  "cpu_cd",
+  "cpu_dfb",
+  "cpu_mis_oracle",
+  "cpu_mm",
+  "cpu_lts"
 )
 
 missing_columns <- setdiff(required_columns, names(sim))
 
 if (length(missing_columns) > 0L) {
   stop(
-    "04sap_robust_comparison_results.rds is missing required column(s): ",
+    "04_robust_comparison_results.rds is missing required column(s): ",
     paste(missing_columns, collapse = ", ")
   )
 }
 
-n_obs_levels <- sim %>%
-  distinct(n_obs) %>%
-  arrange(n_obs) %>%
-  pull(n_obs)
-
-contam_prop_levels <- sim %>%
-  filter(outlier_method != "none") %>%
-  distinct(contam_prop) %>%
-  arrange(contam_prop) %>%
-  pull(contam_prop)
-
-expected_n_obs_levels <- c(
-  500L,
-  1000L,
-  2500L,
-  5000L
+expected_n <- c(
+  500L, 1000L, 2500L, 5000L
 )
 
-expected_contam_prop_levels <- c(
-  0.005,
-  0.010,
-  0.025,
-  0.050
+expected_c <- c(
+  0.005, 0.010, 0.025, 0.050
 )
 
-if (!all(
-  as.integer(n_obs_levels) %in%
-  expected_n_obs_levels
-)) {
-  warning(
-    "Unexpected sample-size grid. Found: ",
-    paste(n_obs_levels, collapse = ", ")
+expected_x <- c(
+  "normal",
+  "mixed_normal",
+  "contaminated"
+)
+
+expected_error <- c(
+  "normal",
+  "mixed_normal",
+  "skewed_t",
+  "golm",
+  "beta_logistic",
+  "gpd",
+  "contaminated",
+  "pareto"
+)
+
+expected_mechanism <- c(
+  "vertical_outlier",
+  "good_leverage",
+  "bad_leverage"
+)
+
+expected_clean <- expand.grid(
+  n_obs = expected_n,
+  x_type = expected_x,
+  error_type = expected_error,
+  stringsAsFactors = FALSE
+) %>%
+  mutate(
+    design_k = 0L,
+    contam_prop = 0,
+    outlier_method = "none"
+  )
+
+expected_contaminated <- expand.grid(
+  n_obs = expected_n,
+  contam_prop = expected_c,
+  x_type = expected_x,
+  error_type = expected_error,
+  outlier_method = expected_mechanism,
+  stringsAsFactors = FALSE
+) %>%
+  mutate(
+    design_k = pmax(
+      floor(n_obs * contam_prop),
+      2L
+    )
+  )
+
+expected_grid <- bind_rows(
+  expected_clean,
+  expected_contaminated
+) %>%
+  mutate(
+    contam_prop = round(
+      contam_prop,
+      6
+    )
+  ) %>%
+  select(
+    n_obs,
+    design_k,
+    contam_prop,
+    x_type,
+    error_type,
+    outlier_method
+  )
+
+observed_grid <- sim %>%
+  mutate(
+    contam_prop = round(
+      contam_prop,
+      6
+    )
+  ) %>%
+  distinct(
+    n_obs,
+    design_k,
+    contam_prop,
+    x_type,
+    error_type,
+    outlier_method
+  )
+
+grid_keys <- names(expected_grid)
+
+missing_cells <- anti_join(
+  expected_grid,
+  observed_grid,
+  by = grid_keys
+)
+
+unexpected_cells <- anti_join(
+  observed_grid,
+  expected_grid,
+  by = grid_keys
+)
+
+if (
+  nrow(missing_cells) > 0L ||
+  nrow(unexpected_cells) > 0L
+) {
+  stop(
+    "Script 04 design grid is incomplete or contains unexpected cells."
   )
 }
 
-if (!all(
-  as.numeric(contam_prop_levels) %in%
-  expected_contam_prop_levels
-)) {
-  warning(
-    "Unexpected contamination-proportion grid. Found: ",
-    paste(contam_prop_levels, collapse = ", ")
+iteration_audit <- sim %>%
+  count(
+    across(all_of(grid_keys)),
+    name = "n_iter"
+  )
+
+if (
+  nrow(iteration_audit) != 1248L ||
+  any(iteration_audit$n_iter != 100L) ||
+  nrow(sim) != 124800L
+) {
+  stop(
+    "Formal Script 04 output must contain ",
+    "1,248 design cells, 100 iterations per cell, ",
+    "and 124,800 rows."
   )
 }
 
@@ -726,17 +798,6 @@ cat(sprintf(
   "Loaded Script 04 results: %s rows\n",
   format(nrow(sim), big.mark = ",")
 ))
-
-cat(sprintf(
-  "Optional summary RDS present: %s\n",
-  ifelse(file.exists(input_summary_optional), "yes", "no")
-))
-
-cat(sprintf(
-  "Optional bias-summary RDS present: %s\n",
-  ifelse(file.exists(input_bias_optional), "yes", "no")
-))
-
 
 # ==============================================================================
 # 3. Labels, ordering, and method mappings
@@ -751,14 +812,14 @@ outlier_order <- c(
 
 outlier_labels_plot <- c(
   "none" = "No contamination",
-  "vertical_outlier" = "Vertical outliers",
+  "vertical_outlier" = "Response outliers",
   "good_leverage" = "Good leverage",
   "bad_leverage" = "Bad leverage"
 )
 
 outlier_labels_table <- c(
   "none" = "None",
-  "vertical_outlier" = "Vertical",
+  "vertical_outlier" = "Response outliers",
   "good_leverage" = "Good leverage",
   "bad_leverage" = "Bad leverage"
 )
@@ -776,10 +837,10 @@ error_order <- c(
 
 error_labels_plot <- c(
   "normal" = "Normal",
-  "mixed_normal" = "Mixed\nnormal",
-  "beta_logistic" = "Beta-\nlogistic",
-  "skewed_t" = "Skewed-t",
-  "contaminated" = "Contaminated",
+  "mixed_normal" = "Normal\nmixture",
+  "beta_logistic" = "Beta(2,5)",
+  "skewed_t" = "Skewed t",
+  "contaminated" = "Contaminated\nnormal",
   "golm" = "GOLM",
   "pareto" = "Pareto",
   "gpd" = "GPD"
@@ -787,10 +848,10 @@ error_labels_plot <- c(
 
 error_labels_table <- c(
   "normal" = "Normal",
-  "mixed_normal" = "Mixed normal",
-  "beta_logistic" = "Beta-logistic",
-  "skewed_t" = "Skewed-t",
-  "contaminated" = "Contaminated",
+  "mixed_normal" = "Normal mixture",
+  "beta_logistic" = "Beta(2,5)",
+  "skewed_t" = "Skewed t",
+  "contaminated" = "Contaminated normal",
   "golm" = "GOLM",
   "pareto" = "Pareto",
   "gpd" = "GPD"
@@ -800,206 +861,82 @@ x_order <- c("normal", "mixed_normal", "contaminated")
 
 x_labels_plot <- c(
   "normal" = "Normal",
-  "mixed_normal" = "Mixed normal",
-  "contaminated" = "Contaminated"
+  "mixed_normal" = "Normal mixture",
+  "contaminated" = "Contaminated normal"
 )
 
 x_labels_table <- c(
   "normal" = "Normal",
-  "mixed_normal" = "Mixed normal",
-  "contaminated" = "Contaminated"
+  "mixed_normal" = "Normal mixture",
+  "contaminated" = "Contaminated normal"
 )
 
 
 estimator_meta <- data.frame(
   estimator_id = c(
     "full",
-    "cd",
     "lev",
+    "cd",
     "dfb",
-    "mis_alpha",
-    "mis_peel",
-    "mis_sap",
     "mis_oracle",
     "mm",
     "lts"
   ),
   estimator_label = c(
     "OLS",
-    "Cook's D",
     "Leverage",
+    "Cook's distance",
     "DFBETAS",
-    "MIS, adaptive k",
-    "MIS, iterative peel",
-    "MIS-SAP",
-    "MIS, oracle k",
-    "MM-estimator",
+    "MIS with oracle k",
+    "MM",
     "LTS"
   ),
   estimator_short = c(
     "OLS",
-    "CD",
     "LEV",
+    "Cook",
     "DFB",
-    "MIS-a",
-    "Peel",
-    "SAP",
-    "Oracle",
+    "MIS",
     "MM",
     "LTS"
   ),
   estimator_family = c(
-    "OLS",
+    "Full-sample OLS",
     "Classical deletion",
     "Classical deletion",
     "Classical deletion",
-    "Data-driven MIS",
-    "Data-driven MIS",
-    "Data-driven MIS",
-    "Oracle benchmark",
-    "Robust regression",
-    "Robust regression"
+    "Oracle fixed-k benchmark",
+    "Direct robust estimator",
+    "Direct robust estimator"
   ),
-  estimator_order = seq_len(10L),
+  estimator_order = seq_len(7L),
   stringsAsFactors = FALSE
 )
 
-
 selection_meta <- estimator_meta %>%
-  filter(estimator_id %in% c(
-    "cd", "lev", "dfb",
-    "mis_alpha", "mis_peel", "mis_sap", "mis_oracle"
-  )) %>%
+  filter(
+    estimator_id %in% c(
+      "lev",
+      "cd",
+      "dfb",
+      "mis_oracle"
+    )
+  ) %>%
   mutate(
     selection_order = match(
       estimator_id,
       c(
-        "cd", "lev", "dfb",
-        "mis_alpha", "mis_peel", "mis_sap", "mis_oracle"
+        "lev",
+        "cd",
+        "dfb",
+        "mis_oracle"
       )
     )
   )
 
-
-method_colors <- c(
-  "full" = COL_BLACK,
-  "cd" = "#969696",
-  "lev" = "#BDBDBD",
-  "dfb" = "#636363",
-  "mis_alpha" = COL_BLUE_LIGHT,
-  "mis_peel" = COL_BLUE,
-  "mis_sap" = COL_BLUE_DARK,
-  "mis_oracle" = COL_PURPLE,
-  "mm" = COL_ORANGE,
-  "lts" = COL_ORANGE_DARK
-)
-
-method_shapes <- c(
-  "full" = 16,
-  "cd" = 0,
-  "lev" = 1,
-  "dfb" = 2,
-  "mis_alpha" = 15,
-  "mis_peel" = 17,
-  "mis_sap" = 18,
-  "mis_oracle" = 8,
-  "mm" = 3,
-  "lts" = 4
-)
-
-method_linetypes <- c(
-  "full" = "solid",
-  "cd" = "dotted",
-  "lev" = "dotdash",
-  "dfb" = "longdash",
-  "mis_alpha" = "dashed",
-  "mis_peel" = "solid",
-  "mis_sap" = "twodash",
-  "mis_oracle" = "longdash",
-  "mm" = "dashed",
-  "lts" = "dotdash"
-)
-
-
-coef_mapping <- c(
-  "full" = "coef_full",
-  "cd" = "coef_cd",
-  "lev" = "coef_lev",
-  "dfb" = "coef_dfb",
-  "mis_alpha" = "coef_mis_alpha",
-  "mis_peel" = "coef_mis_peel",
-  "mis_sap" = "coef_mis_sap",
-  "mis_oracle" = "coef_mis_oracle",
-  "mm" = "coef_mm",
-  "lts" = "coef_lts"
-)
-
-bias_mapping <- c(
-  "full" = "bias_full",
-  "cd" = "bias_cd",
-  "lev" = "bias_lev",
-  "dfb" = "bias_dfb",
-  "mis_alpha" = "bias_mis_alpha",
-  "mis_peel" = "bias_mis_peel",
-  "mis_sap" = "bias_mis_sap",
-  "mis_oracle" = "bias_mis_oracle",
-  "mm" = "bias_mm",
-  "lts" = "bias_lts"
-)
-
-coverage_mapping <- c(
-  "full" = "cov_full",
-  "cd" = "cov_cd",
-  "lev" = "cov_lev",
-  "dfb" = "cov_dfb",
-  "mis_alpha" = "cov_mis_alpha",
-  "mis_peel" = "cov_mis_peel",
-  "mis_sap" = "cov_mis_sap",
-  "mis_oracle" = "cov_mis_oracle",
-  "mm" = "cov_mm",
-  "lts" = "cov_lts"
-)
-
-runtime_mapping <- c(
-  "full" = "cpu_full",
-  "cd" = "cpu_cd",
-  "lev" = "cpu_lev",
-  "dfb" = "cpu_dfb",
-  "mis_alpha" = "cpu_mis_alpha",
-  "mis_peel" = "cpu_peel_v2",
-  "mis_sap" = "cpu_peel_sap",
-  "mis_oracle" = "cpu_mis_oracle",
-  "mm" = "cpu_mm",
-  "lts" = "cpu_lts"
-)
-
-k_mapping <- c(
-  "cd" = "k_cd",
-  "lev" = "k_lev",
-  "dfb" = "k_dfb",
-  "mis_alpha" = "k_alpha",
-  "mis_peel" = "k_peel_v2",
-  "mis_sap" = "k_peel_sap",
-  "mis_oracle" = "k_oracle"
-)
-
-overlap_mapping <- c(
-  "cd" = "overlap_cd",
-  "lev" = "overlap_lev",
-  "dfb" = "overlap_dfb",
-  "mis_alpha" = "overlap_mis_alpha",
-  "mis_peel" = "overlap_peel_v2",
-  "mis_sap" = "overlap_peel_sap",
-  "mis_oracle" = "overlap_mis_oracle"
-)
-
-# ==============================================================================
-# Main-paper exhibition sets
-# ==============================================================================
-
-# Estimation comparison shown in the main figures and tables.
 MAIN_ESTIMATORS <- c(
   "full",
+  "lev",
   "cd",
   "dfb",
   "mis_oracle",
@@ -1007,11 +944,104 @@ MAIN_ESTIMATORS <- c(
   "lts"
 )
 
-# Detection methods shown in the main selected-k and overlap figures/tables.
 MAIN_SELECTION_METHODS <- c(
+  "lev",
   "cd",
   "dfb",
   "mis_oracle"
+)
+
+# ==============================================================================
+# Estimator aesthetics
+# ==============================================================================
+
+method_colors <- c(
+  "full" = COL_BLACK,
+  "lev" = "#BDBDBD",
+  "cd" = "#969696",
+  "dfb" = "#636363",
+  "mis_oracle" = COL_PURPLE,
+  "mm" = COL_ORANGE,
+  "lts" = COL_ORANGE_DARK
+)
+
+method_shapes <- c(
+  "full" = 16,
+  "lev" = 1,
+  "cd" = 0,
+  "dfb" = 2,
+  "mis_oracle" = 8,
+  "mm" = 3,
+  "lts" = 4
+)
+
+method_linetypes <- c(
+  "full" = "solid",
+  "lev" = "dotdash",
+  "cd" = "dotted",
+  "dfb" = "longdash",
+  "mis_oracle" = "dashed",
+  "mm" = "twodash",
+  "lts" = "solid"
+)
+
+
+# ==============================================================================
+# Estimator-column mappings
+# ==============================================================================
+
+coef_mapping <- c(
+  "full" = "coef_full",
+  "lev" = "coef_lev",
+  "cd" = "coef_cd",
+  "dfb" = "coef_dfb",
+  "mis_oracle" = "coef_mis_oracle",
+  "mm" = "coef_mm",
+  "lts" = "coef_lts"
+)
+
+bias_mapping <- c(
+  "full" = "bias_full",
+  "lev" = "bias_lev",
+  "cd" = "bias_cd",
+  "dfb" = "bias_dfb",
+  "mis_oracle" = "bias_mis_oracle",
+  "mm" = "bias_mm",
+  "lts" = "bias_lts"
+)
+
+coverage_mapping <- c(
+  "full" = "cov_full",
+  "lev" = "cov_lev",
+  "cd" = "cov_cd",
+  "dfb" = "cov_dfb",
+  "mis_oracle" = "cov_mis_oracle",
+  "mm" = "cov_mm",
+  "lts" = "cov_lts"
+)
+
+runtime_mapping <- c(
+  "full" = "cpu_full",
+  "lev" = "cpu_lev",
+  "cd" = "cpu_cd",
+  "dfb" = "cpu_dfb",
+  "mis_oracle" = "cpu_mis_oracle",
+  "mm" = "cpu_mm",
+  "lts" = "cpu_lts"
+)
+
+k_mapping <- c(
+  "lev" = "k_lev",
+  "cd" = "k_cd",
+  "dfb" = "k_dfb",
+  "mis_oracle" = "k_oracle"
+)
+
+overlap_mapping <- c(
+  "lev" = "overlap_lev",
+  "cd" = "overlap_cd",
+  "dfb" = "overlap_dfb",
+  "mis_oracle" = "overlap_mis_oracle"
 )
 
 # ==============================================================================
@@ -1397,144 +1427,6 @@ runtime_broad <- runtime_cell %>%
   )
 
 
-sap_cell <- sim_primary %>%
-  group_by(
-    n_obs,
-    design_k,
-    contam_prop,
-    x_type,
-    error_type,
-    outlier_method
-  ) %>%
-  summarise(
-    n_iter = n(),
-    
-    detection_rate = safe_mean(as.numeric(k_peel_sap > 0L)),
-    mcse_detection = safe_prop_mcse(as.numeric(k_peel_sap > 0L)),
-    
-    mean_selected_prop = safe_mean( k_peel_sap / n_obs ),
-    mcse_selected_prop = safe_mcse( k_peel_sap / n_obs ),
-    
-    mean_selected_k = safe_mean(k_peel_sap),
-    mcse_selected_k = safe_mcse(k_peel_sap),
-    
-    exact_k_rate = safe_mean(as.numeric(k_peel_sap == set_size)),
-    mcse_exact_k = safe_prop_mcse(as.numeric(k_peel_sap == set_size)),
-    
-    mean_overlap = safe_mean(overlap_peel_sap),
-    mcse_overlap = safe_mcse(overlap_peel_sap),
-    
-    mean_iterations = safe_mean(peel_sap_iters),
-    mcse_iterations = safe_mcse(peel_sap_iters),
-    
-    mean_final_p = safe_mean(peel_sap_final_p),
-    mcse_final_p = safe_mcse(peel_sap_final_p),
-    
-    mean_min_p = safe_mean(peel_sap_min_p),
-    mcse_min_p = safe_mcse(peel_sap_min_p),
-    
-    mean_peak_excess = safe_mean(peel_sap_peak_excess),
-    mcse_peak_excess = safe_mcse(peel_sap_peak_excess),
-    
-    error_rate = safe_mean(as.numeric(peel_sap_stop == "error")),
-    mcse_error = safe_prop_mcse(
-      as.numeric(peel_sap_stop == "error")
-    ),
-    
-    mean_abs_bias_sap = safe_mean(bias_mis_sap),
-    mcse_abs_bias_sap = safe_mcse(bias_mis_sap),
-    
-    coverage_sap = safe_mean(cov_mis_sap),
-    mcse_coverage_sap = safe_prop_mcse(cov_mis_sap),
-    
-    .groups = "drop"
-  )
-
-
-sap_broad <- sap_cell %>%
-  group_by(outlier_method) %>%
-  summarise(
-    n_design_cells = n(),
-    
-    detection_rate = safe_mean(detection_rate),
-    mcse_detection = combined_cell_mcse(
-      mcse_detection,
-      detection_rate
-    ),
-    
-    mean_selected_prop = safe_mean(
-      mean_selected_prop
-    ),
-    
-    mcse_selected_prop = combined_cell_mcse(
-      mcse_selected_prop,
-      mean_selected_prop
-    ),
-    
-    mean_selected_k = safe_mean(mean_selected_k),
-    mcse_selected_k = combined_cell_mcse(
-      mcse_selected_k,
-      mean_selected_k
-    ),
-    
-    exact_k_rate = safe_mean(exact_k_rate),
-    mcse_exact_k = combined_cell_mcse(
-      mcse_exact_k,
-      exact_k_rate
-    ),
-    
-    mean_overlap = safe_mean(mean_overlap),
-    mcse_overlap = combined_cell_mcse(
-      mcse_overlap,
-      mean_overlap
-    ),
-    
-    mean_iterations = safe_mean(mean_iterations),
-    mcse_iterations = combined_cell_mcse(
-      mcse_iterations,
-      mean_iterations
-    ),
-    
-    mean_final_p = safe_mean(mean_final_p),
-    mcse_final_p = combined_cell_mcse(
-      mcse_final_p,
-      mean_final_p
-    ),
-    
-    mean_min_p = safe_mean(mean_min_p),
-    mcse_min_p = combined_cell_mcse(
-      mcse_min_p,
-      mean_min_p
-    ),
-    
-    mean_peak_excess = safe_mean(mean_peak_excess),
-    mcse_peak_excess = combined_cell_mcse(
-      mcse_peak_excess,
-      mean_peak_excess
-    ),
-    
-    error_rate = safe_mean(error_rate),
-    mcse_error = combined_cell_mcse(
-      mcse_error,
-      error_rate
-    ),
-    
-    mean_abs_bias_sap = safe_mean(mean_abs_bias_sap),
-    mcse_abs_bias_sap = combined_cell_mcse(
-      mcse_abs_bias_sap,
-      mean_abs_bias_sap
-    ),
-    
-    coverage_sap = safe_mean(coverage_sap),
-    mcse_coverage_sap = combined_cell_mcse(
-      mcse_coverage_sap,
-      coverage_sap
-    ),
-    
-    .groups = "drop"
-  )
-
-
 # Save principal summaries before plotting.
 utils::write.csv(
   estimation_cell,
@@ -1583,19 +1475,6 @@ utils::write.csv(
   file.path(data_dir, "04_runtime_summary_equal_cell.csv"),
   row.names = FALSE
 )
-
-utils::write.csv(
-  sap_cell,
-  file.path(data_dir, "04_sap_summary_by_cell.csv"),
-  row.names = FALSE
-)
-
-utils::write.csv(
-  sap_broad,
-  file.path(data_dir, "04_sap_summary_equal_cell.csv"),
-  row.names = FALSE
-)
-
 
 # ==============================================================================
 # 6. Main Figure 1: coefficient-error distributions and heavy tails
@@ -1950,7 +1829,7 @@ if (length(obsolete_fig2_files) > 0L) {
 # ------------------------------------------------------------------------------
 
 coefficient_long_all <- reshape_mapped_columns(
-  data = sim_all,
+  data = sim_primary,
   mapping = coef_mapping,
   value_name = "coefficient",
   metadata = estimator_meta,
@@ -2503,9 +2382,37 @@ detection_quality_iteration <- selection_long %>%
         )
       ),
       NA_real_
+    ),
+    
+    selection_ratio = ifelse(
+      design_k > 0,
+      selected_k / design_k,
+      NA_real_
     )
   )
 
+mis_identity_audit <-
+  detection_quality_iteration %>%
+  filter(
+    estimator_id == "mis_oracle"
+  ) %>%
+  summarise(
+    max_abs_precision_recall_difference =
+      max(
+        abs(recall - precision),
+        na.rm = TRUE
+      )
+  )
+
+if (
+  mis_identity_audit$
+  max_abs_precision_recall_difference >
+  1e-12
+) {
+  stop(
+    "MIS precision-recall identity failed."
+  )
+}
 
 # DGP-cell summaries.
 detection_quality_cell <- detection_quality_iteration %>%
@@ -2531,8 +2438,20 @@ detection_quality_cell <- detection_quality_iteration %>%
     n_valid_precision =
       sum(is.finite(precision)),
     
+    n_valid_selection_ratio =
+      sum(is.finite(selection_ratio)),
+    
     mean_selected_k =
       safe_mean(selected_k),
+    
+    mean_selection_ratio =
+      safe_mean(selection_ratio),
+    
+    sd_selection_ratio =
+      safe_sd(selection_ratio),
+    
+    mcse_selection_ratio =
+      safe_mcse(selection_ratio),
     
     sd_selected_k =
       safe_sd(selected_k),
@@ -2584,6 +2503,15 @@ detection_quality_broad <- detection_quality_cell %>%
         mean_selected_k
       ),
     
+    broad_mean_selection_ratio =
+      safe_mean(mean_selection_ratio),
+    
+    broad_mcse_selection_ratio =
+      combined_cell_mcse(
+        mcse_selection_ratio,
+        mean_selection_ratio
+      ),
+    
     broad_mean_recall =
       safe_mean(mean_recall),
     
@@ -2628,7 +2556,13 @@ detection_quality_broad <- detection_quality_cell %>%
       broad_mean_precision,
     
     mcse_precision =
-      broad_mcse_precision
+      broad_mcse_precision,
+    
+    mean_selection_ratio =
+      broad_mean_selection_ratio,
+    
+    mcse_selection_ratio =
+      broad_mcse_selection_ratio
   )
 
 
@@ -2868,8 +2802,9 @@ write_tex_table(
     "Arithmetic mean coefficient estimates by estimator and contamination ",
     "mechanism. The true coefficient is beta0 = 1. Results give equal ",
     "weight to each sample-size, contamination-proportion, ",
-    "predictor-distribution, and error-distribution design cell. ",
-    "Monte Carlo standard errors are in parentheses."
+    "predictor-distribution, and finite-moment error-distribution design cell. ",
+    "Under no contamination, oracle k = 0, so MIS coincides with OLS by ",
+    "construction. Monte Carlo standard errors are in parentheses."
   ),
   label = "tab:robust-mean-coefficients",
   resize_width = TABLE_WIDTH_MEDIUM,
@@ -2895,9 +2830,10 @@ write_tex_table(
   caption = paste0(
     "Mean absolute coefficient bias by estimator and contamination mechanism. ",
     "Results give equal weight to each sample-size, ",
-    "contamination-proportion, predictor-distribution, and ",
-    "error-distribution design cell. Monte Carlo standard errors are ",
-    "in parentheses."
+    "contamination-proportion, predictor-distribution, and finite-moment ",
+    "error-distribution design cell. Under no contamination, oracle k = 0, ",
+    "so MIS coincides with OLS by construction. Monte Carlo standard errors ",
+    "are in parentheses."
   ),
   label = "tab:robust-mean-absolute-bias",
   resize_width = TABLE_WIDTH_MEDIUM,
@@ -2923,9 +2859,10 @@ write_tex_table(
   caption = paste0(
     "Root mean squared error by estimator and contamination mechanism. ",
     "Results give equal weight to each sample-size, ",
-    "contamination-proportion, predictor-distribution, and ",
-    "error-distribution design cell. Delta-method Monte Carlo standard ",
-    "errors are in parentheses."
+    "contamination-proportion, predictor-distribution, and finite-moment ",
+    "error-distribution design cell. Under no contamination, oracle k = 0, ",
+    "so MIS coincides with OLS by construction. Delta-method Monte Carlo ",
+    "standard errors are in parentheses."
   ),
   label = "tab:robust-rmse",
   resize_width = TABLE_WIDTH_MEDIUM,
@@ -2949,11 +2886,13 @@ write_tex_table(
     "04_tab2c_coverage.tex"
   ),
   caption = paste0(
-    "Empirical coverage of nominal 95 percent confidence intervals. ",
-    "Results give equal weight to each sample-size, ",
-    "contamination-proportion, predictor-distribution, and ",
-    "error-distribution design cell. Monte Carlo standard errors in ",
-    "percentage points are in parentheses."
+    "Empirical coverage of nominal 95 percent intervals. Results give equal ",
+    "weight to the recorded sample-size, contamination-proportion, ",
+    "predictor-distribution, and finite-moment error-distribution design cells. ",
+    "For Leverage, Cook's distance, DFBETAS, and MIS, intervals are naive OLS ",
+    "intervals computed after data-dependent deletion and do not account for ",
+    "the selection step. Monte Carlo standard errors in percentage points are ",
+    "in parentheses."
   ),
   label = "tab:robust-coverage",
   resize_width = TABLE_WIDTH_MEDIUM,
@@ -2975,11 +2914,11 @@ tab3_detection_efficiency <- detection_quality_broad %>%
     Method =
       as.character(estimator_label),
     
-    `Mean selected k` =
+    `Selection-size ratio` =
       fmt_mean_mcse(
-        mean_selected_k,
-        mcse_selected_k,
-        digits = 1L
+        mean_selection_ratio,
+        mcse_selection_ratio,
+        digits = 2L
       ),
     
     Recall =
@@ -3005,17 +2944,16 @@ write_tex_table(
     "04_tab3_detection_efficiency.tex"
   ),
   caption = paste0(
-    "Detection-set efficiency by contamination mechanism. ",
-    "Mean selected k is the mean number of observations removed; ",
-    "recall is the fraction of the injected coalition recovered, and ",
-    "precision is the fraction of selected observations belonging to the ",
-    "injected coalition. The contaminated designs use N = 5000 and true ",
-    "coalition size k = 50 (1 percent contamination). MIS with oracle k is ",
-    "supplied the true coalition size, so its selected-k entry represents ",
-    "the fixed deletion budget rather than an estimated coalition size. ",
-    "Results give equal weight to predictor-distribution and ",
-    "error-distribution design cells. Monte Carlo standard errors are ",
-    "in parentheses."
+    "Injected-set localisation by contamination mechanism. ",
+    "The selection-size ratio is the number of observations selected divided ",
+    "by the injected-set size. Recall is the fraction of injected observations ",
+    "recovered, and precision is the fraction of selected observations that ",
+    "belong to the injected set. MIS is supplied oracle k and therefore has ",
+    "selection-size ratio 1; because its selected and injected sets have equal ",
+    "size, its precision equals its recall. Results give equal weight to the ",
+    "recorded sample-size, contamination-proportion, predictor-distribution, ",
+    "and finite-moment error-distribution design cells. Monte Carlo standard ",
+    "errors are in parentheses."
   ),
   label = "tab:robust-detection-efficiency",
   resize_width = TABLE_WIDTH_MEDIUM,
@@ -3681,12 +3619,16 @@ oracle_advantage_heatmap <- estimation_cell %>%
     is.finite(mean_abs_bias),
     mean_abs_bias > 0
   ) %>%
-  select(
+  group_by(
     x_type,
     error_type,
     outlier_method,
-    estimator_id,
-    mean_abs_bias
+    estimator_id
+  ) %>%
+  summarise(
+    mean_abs_bias =
+      safe_mean(mean_abs_bias),
+    .groups = "drop"
   ) %>%
   pivot_wider(
     names_from = estimator_id,
@@ -3869,6 +3811,7 @@ classical_advantage_heatmap <- estimation_cell %>%
   filter(
     outlier_method == "bad_leverage",
     estimator_id %in% c(
+      "lev",
       "cd",
       "dfb",
       "mis_oracle"
@@ -3896,9 +3839,11 @@ classical_advantage_heatmap <- estimation_cell %>%
   ) %>%
   
   filter(
+    is.finite(lev),
     is.finite(cd),
     is.finite(dfb),
     is.finite(mis_oracle),
+    lev > 0,
     cd > 0,
     dfb > 0,
     mis_oracle > 0
@@ -3908,7 +3853,12 @@ classical_advantage_heatmap <- estimation_cell %>%
     x_type,
     error_type,
     
-    `Cook's D` =
+    Leverage =
+      log2(
+        lev / mis_oracle
+      ),
+    
+    `Cook's distance` =
       log2(
         cd / mis_oracle
       ),
@@ -3922,7 +3872,8 @@ classical_advantage_heatmap <- estimation_cell %>%
   pivot_longer(
     cols = all_of(
       c(
-        "Cook's D",
+        "Leverage",
+        "Cook's distance",
         "DFBETAS"
       )
     ),
@@ -3934,7 +3885,8 @@ classical_advantage_heatmap <- estimation_cell %>%
     benchmark_label = factor(
       benchmark_label,
       levels = c(
-        "Cook's D",
+        "Leverage",
+        "Cook's distance",
         "DFBETAS"
       )
     ),
@@ -4016,7 +3968,7 @@ figA6_classical_advantage <- ggplot(
   
   facet_wrap(
     ~ benchmark_label,
-    ncol = 2
+    ncol = 3
   ) +
   
   scale_fill_gradient2(
@@ -4211,9 +4163,9 @@ write_tex_table(
   align = "lrrrr"
 )
 
-# A3: bad-leverage DGP-level estimation and detection detail.
+# A3: bad-leverage performance by predictor distribution.
 
-bad_leverage_mae <- estimation_cell %>%
+bad_leverage_predictor <- estimation_cell %>%
   filter(
     outlier_method == "bad_leverage",
     estimator_id %in% MAIN_ESTIMATORS,
@@ -4221,280 +4173,214 @@ bad_leverage_mae <- estimation_cell %>%
   ) %>%
   group_by(
     x_type,
-    error_type,
-    estimator_id
+    estimator_id,
+    estimator_label,
+    estimator_order
   ) %>%
   summarise(
-    MAE =
+    mean_abs_bias =
       safe_mean(mean_abs_bias),
     .groups = "drop"
   ) %>%
-  pivot_wider(
-    names_from = estimator_id,
-    values_from = MAE
-  )
-
-
-bad_leverage_precision <- detection_quality_cell %>%
-  filter(
-    outlier_method == "bad_leverage",
-    estimator_id %in% MAIN_SELECTION_METHODS,
-    is.finite(mean_precision)
-  ) %>%
-  group_by(
-    x_type,
-    error_type,
-    estimator_id
-  ) %>%
-  summarise(
-    precision =
-      safe_mean(mean_precision),
-    .groups = "drop"
-  ) %>%
-  pivot_wider(
-    names_from = estimator_id,
-    values_from = precision,
-    names_prefix = "precision_"
-  )
-
-
-bad_leverage_detail <- bad_leverage_mae %>%
-  left_join(
-    bad_leverage_precision,
-    by = c(
-      "x_type",
-      "error_type"
-    )
-  ) %>%
   mutate(
-    predictor_label = factor(
-      unname(
-        x_labels_table[
-          as.character(x_type)
-        ]
-      ),
-      levels = unname(
-        x_labels_table[x_order]
-      )
-    ),
-    
-    error_label = factor(
-      unname(
-        error_labels_table[
-          as.character(error_type)
-        ]
-      ),
-      levels = unname(
-        error_labels_table[
-          error_order[
-            error_order != "gpd"
-          ]
-        ]
-      )
+    Predictor = unname(
+      x_labels_table[
+        as.character(x_type)
+      ]
     )
   ) %>%
   arrange(
-    predictor_label,
-    error_label
+    factor(
+      x_type,
+      levels = x_order
+    ),
+    estimator_order
+  ) %>%
+  select(
+    Predictor,
+    Estimator = estimator_label,
+    mean_abs_bias
   )
 
-
-tabA3_bad_leverage <- bad_leverage_detail %>%
+tabA3_bad_leverage <- bad_leverage_predictor %>%
   transmute(
-    Predictor =
-      as.character(predictor_label),
-    
-    Error =
-      as.character(error_label),
-    
-    `OLS MAE` =
+    Predictor,
+    Estimator,
+    `Mean absolute bias` =
       fmt_num(
-        full,
-        digits = 5L
-      ),
-    
-    `Cook MAE` =
-      fmt_num(
-        cd,
-        digits = 5L
-      ),
-    
-    `DFBETAS MAE` =
-      fmt_num(
-        dfb,
-        digits = 5L
-      ),
-    
-    `MIS-oracle MAE` =
-      fmt_num(
-        mis_oracle,
-        digits = 5L
-      ),
-    
-    `MM MAE` =
-      fmt_num(
-        mm,
-        digits = 5L
-      ),
-    
-    `LTS MAE` =
-      fmt_num(
-        lts,
-        digits = 5L
-      ),
-    
-    `Cook precision` =
-      fmt_pct(
-        precision_cd,
-        digits = 1L
-      ),
-    
-    `DFBETAS precision` =
-      fmt_pct(
-        precision_dfb,
-        digits = 1L
-      ),
-    
-    `MIS-oracle precision` =
-      fmt_pct(
-        precision_mis_oracle,
-        digits = 1L
+        mean_abs_bias,
+        digits = 3L
       )
   )
-
 
 write_tex_table(
   data = tabA3_bad_leverage,
   tex_path = file.path(
     tab_supp_dir,
-    "04_tabA3_bad_leverage_dgp_detail.tex"
+    "04_tabA3_bad_leverage_by_predictor.tex"
   ),
   caption = paste0(
-    "Bad-leverage performance by predictor and error distribution. ",
-    "All cells use N = 5000, true coalition size k = 50, and a ",
-    "1 percent injected coalition. MAE is mean absolute coefficient error. ",
-    "Precision is the fraction of selected observations belonging to the ",
-    "injected coalition. Because MIS with oracle k selects exactly 50 ",
-    "observations when the true coalition also contains 50 observations, ",
-    "its precision equals its recall. The legacy GPD condition is excluded ",
-    "from this finite-moment comparison."
+    "Bad-leverage mean absolute coefficient bias by predictor distribution. ",
+    "Results give equal weight to the recorded sample-size, contamination-",
+    "proportion, and finite-moment error-distribution design cells."
   ),
-  label = "tab:robust-bad-leverage-dgp-detail",
-  resize_width = TABLE_WIDTH_WIDE,
-  align = "llrrrrrrrrr",
-  font_command = "\\scriptsize"
+  label = "tab:robust-bad-leverage-by-predictor",
+  resize_width = TABLE_WIDTH_COMPACT,
+  align = "llr"
 )
 
-
 utils::write.csv(
-  bad_leverage_detail,
+  bad_leverage_predictor,
   file.path(
     data_dir,
-    "04_tabA3_bad_leverage_dgp_detail.csv"
+    "04_tabA3_bad_leverage_by_predictor.csv"
   ),
   row.names = FALSE
 )
 
 # ==============================================================================
-# 20. Additional machine-readable full results
+# 20. Supplementary design and oracle audits
 # ==============================================================================
 
-# Complete estimator-cell table.
-complete_cell_table <- estimation_cell %>%
-  arrange(
-    outlier_method,
-    n_obs,
-    contam_prop,
-    x_type,
-    error_type,
-    estimator_order
+design_audit <- data.frame(
+  Item = c(
+    "Total design cells",
+    "Iterations per cell",
+    "Total rows",
+    "Finite-moment primary cells",
+    "Finite-moment primary rows",
+    "GPD stress cells",
+    "GPD stress rows",
+    "Sample sizes",
+    "Contamination proportions",
+    "Predictor families",
+    "Error families",
+    "Contamination mechanisms"
+  ),
+  
+  Value = c(
+    "1,248",
+    "100",
+    "124,800",
+    "1,092",
+    "109,200",
+    "156",
+    "15,600",
+    "500, 1000, 2500, 5000",
+    "0.5%, 1%, 2.5%, 5%",
+    "3",
+    "8",
+    "3 + clean"
+  ),
+  
+  stringsAsFactors = FALSE
+)
+
+write_tex_table(
+  data = design_audit,
+  tex_path = file.path(
+    tab_supp_dir,
+    "04_tab_design_audit.tex"
+  ),
+  caption = paste0(
+    "Design audit for the formal Script 04 simulation. The primary analysis ",
+    "uses the seven finite-moment error distributions; GPD is retained ",
+    "separately as an infinite-mean stress condition."
+  ),
+  label = "tab:robust-design-audit",
+  resize_width = TABLE_WIDTH_COMPACT,
+  align = "lr"
+)
+
+
+oracle_audit <- sim_primary %>%
+  filter(
+    outlier_method != "none"
+  ) %>%
+  group_by(
+    outlier_method
+  ) %>%
+  summarise(
+    draws = n(),
+    
+    oracle_k_match =
+      mean(k_oracle == set_size),
+    
+    positive_direction =
+      mean(oracle_direction == 1L),
+    
+    negative_direction =
+      mean(oracle_direction == -1L),
+    
+    mean_abs_oracle_shift =
+      safe_mean(
+        abs(oracle_dfbeta_delta)
+      ),
+    
+    .groups = "drop"
+  ) %>%
+  add_outlier_display()
+
+
+oracle_audit_table <- oracle_audit %>%
+  transmute(
+    Scenario =
+      as.character(outlier_label_table),
+    
+    Draws =
+      draws,
+    
+    `Oracle k match` =
+      fmt_pct(
+        oracle_k_match,
+        digits = 1L
+      ),
+    
+    `Positive direction` =
+      fmt_pct(
+        positive_direction,
+        digits = 1L
+      ),
+    
+    `Negative direction` =
+      fmt_pct(
+        negative_direction,
+        digits = 1L
+      ),
+    
+    `Mean absolute oracle shift` =
+      fmt_num(
+        mean_abs_oracle_shift,
+        digits = 3L
+      )
   )
 
+
+write_tex_table(
+  data = oracle_audit_table,
+  tex_path = file.path(
+    tab_supp_dir,
+    "04_tab_oracle_audit.tex"
+  ),
+  caption = paste0(
+    "Oracle benchmark audit. MIS is supplied the injected-set size and the ",
+    "oracle coefficient direction. Observation identities are then selected ",
+    "by the Dinkelbach-based search."
+  ),
+  label = "tab:robust-oracle-audit",
+  resize_width = TABLE_WIDTH_MEDIUM,
+  align = "lrrrrr"
+)
+
+
 utils::write.csv(
-  complete_cell_table,
+  oracle_audit,
   file.path(
     data_dir,
-    "04_complete_estimation_results_by_cell.csv"
+    "04_oracle_audit.csv"
   ),
   row.names = FALSE
 )
-
-
-# Complete selected-k and overlap table.
-complete_detection_cell_table <- full_join(
-  selection_cell,
-  overlap_cell,
-  by = c(
-    "n_obs",
-    "design_k",
-    "contam_prop",
-    "x_type",
-    "error_type",
-    "outlier_method",
-    "estimator_id",
-    "estimator_label",
-    "estimator_order",
-    "selection_order"
-  )
-) %>%
-  arrange(
-    outlier_method,
-    n_obs,
-    contam_prop,
-    x_type,
-    error_type,
-    selection_order
-  )
-
-utils::write.csv(
-  complete_detection_cell_table,
-  file.path(
-    data_dir,
-    "04_complete_selection_overlap_by_cell.csv"
-  ),
-  row.names = FALSE
-)
-
-
-# Save all publication summaries in one reusable RDS.
-publication_summaries <- list(
-  estimation_cell = estimation_cell,
-  estimation_broad = estimation_broad,
-  
-  overlap_cell = overlap_cell,
-  overlap_broad = overlap_broad,
-  
-  runtime_cell = runtime_cell,
-  runtime_broad = runtime_broad,
-  
-  method_health = method_health,
-  
-  figure1_summary = coef_distribution_summary,
-  
-  figure2_data = tail_mis_oracle_data,
-  figure2_mis_oracle_data = tail_mis_oracle_data,
-  figure2_full_tail_summary = tail_cell_summary,
-  figure2_problem_dgp_cells = problem_dgp_cells,
-  
-  figure3_summary = detection_quality_distribution_summary,
-  
-  figure3_cell = detection_quality_cell,
-  
-  figure3_broad = detection_quality_broad,
-  
-  figureA4_runtime_summary = runtime_distribution_summary,
-  
-  figureA5_oracle_advantage_data = oracle_advantage_heatmap,
-  
-  figureA6_classical_advantage_data = classical_advantage_heatmap,
-  
-  tableA3_bad_leverage_detail = bad_leverage_detail
-)
-
-saveRDS( publication_summaries,
-  file.path(data_dir, "04_publication_summaries.rds")
-)
-
 
 # ==============================================================================
 # 21. Diagnostics, clipping audit, and manifest
@@ -4517,29 +4403,77 @@ n_coef_nonfinite_excluded <- coefficient_long %>%
 
 input_audit <- data.frame(
   item = c(
-    "Rows in primary RDS",
+    "Rows in formal RDS",
+    "Formal design cells",
+    "Primary finite-moment rows",
+    "Primary finite-moment design cells",
+    "GPD stress rows",
+    "GPD stress design cells",
+    "Unique sample sizes",
     "Unique x distributions",
     "Unique error distributions",
     "Unique contamination mechanisms",
     "Unique Monte Carlo iteration IDs",
     "Maximum recorded-versus-recomputed bias difference",
     "Finite iteration-level coefficient errors displayed in Figure 1",
-    "Non-finite iteration-level coefficient errors excluded from Figure 1",
-    "Optional summary RDS present",
-    "Optional bias-summary RDS present"
+    "Non-finite iteration-level coefficient errors excluded from Figure 1"
   ),
+  
   value = c(
     as.character(nrow(sim)),
-    as.character(length(unique(sim$x_type))),
-    as.character(length(unique(sim$error_type))),
-    as.character(length(unique(sim$outlier_method))),
-    as.character(length(unique(sim$iter))),
+    
+    as.character(
+      sim %>%
+        distinct(design_id) %>%
+        nrow()
+    ),
+    
+    as.character(nrow(sim_primary)),
+    
+    as.character(
+      sim_primary %>%
+        distinct(design_id) %>%
+        nrow()
+    ),
+    
+    as.character(
+      sum(sim$error_type == "gpd")
+    ),
+    
+    as.character(
+      sim %>%
+        filter(error_type == "gpd") %>%
+        distinct(design_id) %>%
+        nrow()
+    ),
+    
+    as.character(
+      length(unique(sim$n_obs))
+    ),
+    
+    as.character(
+      length(unique(sim$x_type))
+    ),
+    
+    as.character(
+      length(unique(sim$error_type))
+    ),
+    
+    as.character(
+      length(unique(sim$outlier_method))
+    ),
+    
+    as.character(
+      length(unique(sim$iter))
+    ),
+    
     as.character(max_bias_difference),
+    
     as.character(n_coef_finite_displayed),
-    as.character(n_coef_nonfinite_excluded),
-    ifelse(file.exists(input_summary_optional), "yes", "no"),
-    ifelse(file.exists(input_bias_optional), "yes", "no")
+    
+    as.character(n_coef_nonfinite_excluded)
   ),
+  
   stringsAsFactors = FALSE
 )
 
@@ -4611,5 +4545,115 @@ cat(sprintf(
 cat(
   "Arithmetic means remain the primary summaries; ",
   "medians in Figure 1 are secondary markers of distributional skewness.\n",
+  sep = ""
+)
+
+
+# ==============================================================================
+# 22. Final console summary
+# ==============================================================================
+
+cat(
+  "\n",
+  "============================================================\n",
+  "SCRIPT 84 — ROBUST COMPARISON OUTPUT COMPLETE\n",
+  "============================================================\n\n",
+  sep = ""
+)
+
+cat(sprintf(
+  "Rows:                    %s\n",
+  format(
+    nrow(sim),
+    big.mark = ","
+  )
+))
+
+cat(sprintf(
+  "Design cells:            %s\n",
+  format(
+    dplyr::n_distinct(sim$design_id),
+    big.mark = ","
+  )
+))
+
+cat(sprintf(
+  "Primary finite cells:    %s\n",
+  format(
+    dplyr::n_distinct(sim_primary$design_id),
+    big.mark = ","
+  )
+))
+
+cat(sprintf(
+  "Primary finite rows:     %s\n",
+  format(
+    nrow(sim_primary),
+    big.mark = ","
+  )
+))
+
+cat(
+  "Iterations/cell:         100\n\n"
+)
+
+cat(
+  "Method order:\n",
+  "  OLS\n",
+  "  Leverage\n",
+  "  Cook's distance\n",
+  "  DFBETAS\n",
+  "  MIS with oracle k\n",
+  "  MM\n",
+  "  LTS\n\n",
+  sep = ""
+)
+
+cat(sprintf(
+  "Oracle k match:          %.1f%%\n",
+  100 * mean(
+    sim$k_oracle[
+      sim$outlier_method != "none"
+    ] ==
+      sim$set_size[
+        sim$outlier_method != "none"
+      ]
+  )
+))
+
+cat(
+  "Clean MIS = OLS:         ",
+  ifelse(
+    all(
+      sim$coef_mis_oracle[
+        sim$outlier_method == "none"
+      ] ==
+        sim$coef_full[
+          sim$outlier_method == "none"
+        ]
+    ),
+    "yes",
+    "no"
+  ),
+  "\n",
+  sep = ""
+)
+
+cat(
+  "MIS precision = recall:  ",
+  ifelse(
+    mis_identity_audit$
+      max_abs_precision_recall_difference <= 1e-12,
+    "yes",
+    "no"
+  ),
+  "\n",
+  sep = ""
+)
+
+cat(
+  "\nOutput root:\n  ",
+  output_root,
+  "\n",
   sep = ""
 )
