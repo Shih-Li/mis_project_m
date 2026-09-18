@@ -2095,7 +2095,8 @@ main_large_error_fill_scale <- function(legend_title) {
 
 tail_mis_oracle_data <- tail_equal_grid_summary %>%
   filter(
-    estimator_id == "mis_oracle"
+    estimator_id == "mis_oracle",
+    error_type != "gpd"
   ) %>%
   add_outlier_display() %>%
   mutate(
@@ -2119,7 +2120,11 @@ tail_mis_oracle_data <- tail_equal_grid_summary %>%
         ]
       ),
       levels = unname(
-        error_labels_table[error_order]
+        error_labels_table[
+          error_order[
+            error_order != "gpd"
+          ]
+        ]
       )
     )
   ) %>%
@@ -2168,7 +2173,7 @@ fig2_mis_oracle_tail <- ggplot(
   
   main_large_error_fill_scale(
     paste0(
-      "MIS-oracle probability that absolute\n",
+      "MIS with oracle k: probability that absolute\n",
       "coefficient error exceeds ",
       TAIL_ERROR_THRESHOLD
     )
