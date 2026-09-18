@@ -47,6 +47,8 @@ The summary mechanism comparison is reported in \autoref{fig:02-good-leverage-me
 \subsubsection{EVT Convergence and Computational Diagnostics}
 \label{app:detection-evt-diagnostics}
 
+\input{../../output/02_distributional/tables/main/02_tab2_empirical_size_summary.tex}
+
 The uncontaminated MIS-EVT result reported in \autoref{tab:02-empirical-size-summary} is accompanied by high numerical convergence in the marginal sample-size and contamination summaries (\autoref{fig:02A-evt-convergence} and \autoref{tab:02A-evt-convergence-grid}). Distribution-specific convergence is somewhat lower in the GPD stress condition, so the marginal convergence range should not be read as a minimum over every recorded distributional cell. More importantly, convergence concerns only the numerical availability of the EVT rejection calculation. Injected-set recovery is computed before GEV fitting and therefore does not depend on EVT convergence.
 
 \begin{figure}[htbp]
@@ -200,13 +202,21 @@ The null p-value quantile plots make the direction of the distortion explicit (\
 	\label{fig:03A-null-pvalue-qq}
 \end{figure}
 
-\subsection{Supplementary Script 04 Results}
+\subsection{Supplementary Robust-Estimation Results}
 \label{app:estimation-results}
+
+The formal robustness study contains \(1{,}248\) design cells and \(124{,}800\) Monte Carlo draws. Primary estimator summaries use the \(1{,}092\) finite-moment cells, while the GPD design is retained separately as an infinite-mean stress condition (\autoref{tab:robust-design-audit}).
+
+\input{../../output/04_robust/tables/supplement/04_tab_design_audit.tex}
+
+MIS is evaluated as an oracle benchmark for both the injected-set size and the direction of the induced target-coefficient perturbation. Observation identities are not supplied to the search. The oracle audit confirms that \(k\) matches the injected-set size in every contaminated draw and shows that the mean absolute oracle coefficient shift is \(1.902\) under bad leverage, compared with \(0.020\) under response-outlier contamination and \(0.003\) under good leverage (\autoref{tab:robust-oracle-audit}).
+
+\input{../../output/04_robust/tables/supplement/04_tab_oracle_audit.tex}
 
 \subsubsection{Distributional and Data-Generating-Process Variation}
 \label{app:estimation-dgp}
 
-The full absolute-bias distributions provide additional detail on the aggregate results reported in Section~\ref{subsec:estimation-performance}. MM and LTS remain concentrated near zero across the principal contamination mechanisms, while the diagnostic-removal estimators exhibit wider distributions in mechanism-specific settings (\autoref{fig:04A-absolute-bias}). MIS with oracle \(k\) shows particularly wide absolute-error distributions under vertical-outlier and good-leverage contamination. Under bad leverage, its distribution contracts substantially relative to OLS, consistent with the stronger alignment between the injected coalition and the target-coefficient objective.
+The full absolute-bias distributions provide additional detail on the aggregate results reported in Section~\ref{subsec:estimation-performance}. MM and LTS remain concentrated near zero across the principal finite-moment contamination mechanisms, while the diagnostic-removal estimators exhibit wider distributions in mechanism-specific settings (\autoref{fig:04A-absolute-bias}). MIS with oracle \(k\) shows wider absolute-error distributions under response-outlier and good-leverage contamination. Under bad leverage, its distribution contracts substantially relative to OLS, consistent with the much larger target-coefficient perturbation induced by the injected set.
 
 \begin{figure}[htbp]
 	\centering
@@ -231,7 +241,7 @@ Error distributions generate substantial heterogeneity in coefficient accuracy (
 	\label{fig:04A-bias-x}
 \end{figure}
 
-\subsubsection{Oracle-\(k\) MIS under Bad Leverage}
+\subsubsection{Oracle-Benchmark MIS under Bad Leverage}
 \label{app:oracle-k-detail}
 
 The relative-error comparisons emphasise the mechanism specificity of the oracle-\(k\) benchmark. Relative to OLS, MIS with oracle \(k\) has lower mean absolute bias throughout the displayed bad-leverage finite-moment designs, often by a large margin (\autoref{fig:04A-mis-oracle-bias-advantage}). The corresponding differences are negative under vertical-outlier and good-leverage contamination. This pattern reflects the stronger alignment between bad leverage and the coefficient-targeted MIS objective.
@@ -243,23 +253,23 @@ The relative-error comparisons emphasise the mechanism specificity of the oracle
 	\label{fig:04A-mis-oracle-bias-advantage}
 \end{figure}
 
-Comparison with the classical deletion procedures is more heterogeneous. Under bad leverage with a normal predictor, MIS with oracle \(k\) often has lower mean absolute error than Cook's distance and DFBETAS, whereas contaminated-predictor designs frequently favour the classical deletion estimators (\autoref{fig:04A-mis-oracle-vs-classical}). This variation is important because influential-set localisation and post-deletion coefficient accuracy are different outcomes. Accurate recovery of the injected coalition need not minimise the error of the subsequent OLS refit.
+Comparison with the classical deletion procedures is more heterogeneous. Under bad leverage, MIS with oracle \(k\) compares favourably with leverage, Cook's distance, and DFBETAS in several normal and normal-mixture predictor environments, whereas the contaminated-normal predictor design changes the ordering substantially (\autoref{fig:04A-mis-oracle-vs-classical}). In that environment, extreme leverage can arise from the background predictor distribution as well as from the deliberately injected set. Deleting the injected observations therefore does not uniquely determine the geometry of the refitted sample. Cook's distance and DFBETAS can consequently produce a smaller post-deletion coefficient error despite recovering the injected set less selectively. This variation separates localisation accuracy from post-deletion estimation accuracy.
 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\textwidth]{../../output/04_robust/figures/supplement/04_figA6_mis_oracle_vs_classical_bad_leverage_heatmap.pdf}
-	\caption{Relative mean absolute error of classical diagnostic deletion and MIS with oracle \(k\) under bad-leverage contamination. Values report \(\log_2(\mathrm{MAE}_{\mathrm{classical}}/\mathrm{MAE}_{\mathrm{MIS}})\); positive values indicate lower mean absolute error for MIS with oracle \(k\).}
+	\caption{Relative mean absolute error of leverage, Cook's distance, and DFBETAS deletion compared with MIS with oracle \(k\) under bad-leverage contamination. Values report \(\log_2(\mathrm{MAE}_{\mathrm{classical}}/\mathrm{MAE}_{\mathrm{MIS}})\); positive values indicate lower mean absolute error for MIS with oracle \(k\).}
 	\label{fig:04A-mis-oracle-vs-classical}
 \end{figure}
 
-The detailed bad-leverage results illustrate this distinction directly (\autoref{tab:robust-bad-leverage-dgp-detail}). With normal predictors and normal errors, MIS with oracle \(k\) achieved \(100.0\%\) precision and mean absolute error \(0.00995\), compared with \(0.03610\) for Cook's distance and \(0.04415\) for DFBETAS. With contaminated predictors and normal errors, MIS precision remained high at \(95.9\%\), yet its mean absolute error was \(0.02231\), compared with \(0.00086\) for Cook's distance and \(0.00124\) for DFBETAS. High coalition recovery therefore establishes localisation accuracy without establishing optimal post-deletion estimation. The legacy GPD condition is excluded from this finite-moment table and is retained in the large-error diagnostic in \autoref{fig:04-mis-oracle-large-errors}.
+The predictor-level summary makes this reversal explicit (\autoref{tab:robust-bad-leverage-by-predictor}). With normal predictors, mean absolute bias is \(0.108\) for MIS, compared with \(0.771\) for Cook's distance and \(0.607\) for DFBETAS. Under the normal-mixture design, the corresponding values are \(0.045\), \(0.111\), and \(0.108\). Under contaminated-normal predictors, however, Cook's distance and DFBETAS fall to \(0.006\) and \(0.012\), while MIS records \(0.074\). The pooled bad-leverage comparison therefore does not imply uniform estimator ordering across predictor environments.
 
-\input{../../output/04_robust/tables/supplement/04_tabA3_bad_leverage_dgp_detail.tex}
+\input{../../output/04_robust/tables/supplement/04_tabA3_bad_leverage_by_predictor.tex}
 
 \subsubsection{Runtime and Numerical Availability}
 \label{app:estimation-computation}
 
-The computational comparison shows that fixed-\(k\) MIS requires more time than the classical diagnostic-removal procedures but remains comparable with MM regression in these simulations. Mean MIS runtime ranges from \(1.469\) to \(1.655\) seconds across the four mechanisms, while MM ranges from \(1.506\) to \(1.845\) seconds (\autoref{tab:robust-runtime}). LTS requires approximately \(0.11\) seconds per draw, and the OLS and classical diagnostic procedures are substantially faster. The complete runtime distributions are shown in \autoref{fig:04A-runtime}.
+The computational comparison shows that fixed-\(k\) MIS is slower than the classical diagnostic-removal procedures but substantially faster than the direct robust estimators in the revised implementation. Under contaminated designs, mean MIS runtime is approximately \(0.006\) seconds per draw, compared with roughly \(0.002\)--\(0.003\) seconds for the classical diagnostics, \(0.052\) seconds for LTS, and \(0.50\) seconds for MM (\autoref{tab:robust-runtime}). Under no contamination, MIS performs no deletion search because oracle \(k=0\). The complete runtime distributions are shown in \autoref{fig:04A-runtime}.
 
 \begin{figure}[htbp]
 	\centering
@@ -270,7 +280,7 @@ The computational comparison shows that fixed-\(k\) MIS requires more time than 
 
 \input{../../output/04_robust/tables/supplement/04_tabA1_mean_runtime.tex}
 
-Numerical availability was complete for every estimator in the renewed Script 04 output. All \(8400\) recorded rows for each method produced finite coefficient estimates, coverage indicators, and runtimes (\autoref{tab:robust-method-health}). The estimation differences reported in the main text therefore reflect statistical performance in the recorded designs rather than differential numerical non-completion.
+Numerical availability was complete for every estimator in the primary finite-moment analysis. All \(109{,}200\) recorded rows for each method produced finite coefficient estimates, coverage indicators, and runtimes (\autoref{tab:robust-method-health}). The reported differences therefore reflect statistical performance across the simulation grid rather than differential numerical non-completion.
 
 \input{../../output/04_robust/tables/supplement/04_tabA2_method_health.tex}
 
@@ -281,13 +291,76 @@ Numerical availability was complete for every estimator in the renewed Script 04
 
 
 
-\subsection{Supplementary Script 05 Results}
+\subsection{Supplementary Misspecification Results}
 \label{app:misspecification-results}
+
+\subsubsection{Misspecification Severity and Operating-Characteristic Definitions}
+\label{app:misspec-definitions}
+
+The detector experiment uses the baseline model
+\[
+Y_i=\beta_0+\beta_1X_i+m_i+\varepsilon_i,
+\qquad
+\beta_0=0,
+\qquad
+\beta_1=1.
+\]
+For the additive misspecification mechanisms, a raw component \(h_i\) is scaled according to
+\[
+a_\lambda
+=
+\lambda
+\frac{\operatorname{sd}(\varepsilon_0)}
+{\operatorname{sd}(h)},
+\qquad
+m_i=a_\lambda h_i,
+\]
+so that
+\[
+\frac{\operatorname{sd}(m)}
+{\operatorname{sd}(\varepsilon_0)}
+=
+\lambda.
+\]
+Thus \(\lambda\) has a common signal-to-noise interpretation for nonlinearity, threshold behaviour, omitted-variable misspecification, heterogeneous slopes, and missing interactions. Equality of this signal-to-noise ratio makes the additive severity scale comparable in construction, although the substantive form of the imposed departure still differs across mechanisms. Heteroskedasticity instead uses an exponential spread-gradient parameter, while linear endogeneity and nonlinear confounding use mechanism-specific confounding-strength parameters. Detection boundaries are therefore interpreted within the corresponding severity scale.
+
+The MIS comparison index is
+\[
+T_k
+=
+\frac{
+	\left|
+	\widehat{\beta}_{-S_k}-\widehat{\beta}
+	\right|
+}{
+	\widehat{\operatorname{se}}(\widehat{\beta})
+}.
+\]
+The denominator is the standard error from the original fitted model and is held fixed as the reference scale. Although \(T_k\) is measured in standard-error units, it is not treated as a Wald statistic. The full-sample and post-deletion estimates are dependent, the deletion set is selected adaptively, and the reported statistic is extremal over candidate deletions. A standard-normal reference distribution is therefore neither assumed nor used.
+
+For an independently calibrated rejection indicator \(R_b(\lambda)\) in Monte Carlo draw \(b\), empirical power is
+\[
+\widehat{\pi}(\lambda)
+=
+\frac{1}{B}
+\sum_{b=1}^{B}R_b(\lambda),
+\]
+and empirical size is \(\widehat{\pi}(0)\). The 80\% detection reach is the proportion of environments whose isotonic fitted power curve reaches \(0.80\) within the simulated severity range. For environments that cross this level, the detection boundary is the interpolated severity at which fitted power first reaches \(0.80\). Non-crossing environments are right-censored and are retained in the reach calculation.
+
+For paired diagnostic comparisons, the MIS-only rejection probability is
+\[
+P(R_{\mathrm{MIS}}=1,R_{\mathrm{rival}}=0),
+\]
+and the rival-only probability is
+\[
+P(R_{\mathrm{MIS}}=0,R_{\mathrm{rival}}=1).
+\]
+These discordant-rejection probabilities are reported separately because they measure complementarity between diagnostics. Their difference may be summarised descriptively as a paired rejection difference, but the two component probabilities carry the substantive interpretation.
 
 \subsubsection{Null Calibration and Scaling}
 \label{app:misspec-calibration}
 
-The detailed null results support the calibration used for the power comparisons in Section~\ref{subsec:misspecification}. Across error distributions, MIS empirical size at \(k/n=0.025\) remains close to \(5\%\), ranging from \(4.75\%\) to \(5.33\%\) (\autoref{tab:05-size-by-error}). The same stability appears across predictor distributions and sample sizes, where empirical rejection ranges from \(4.79\%\) to \(5.28\%\) (\autoref{tab:05-size-by-x-n}). The distribution of environment-level null rejection rates is shown in \autoref{fig:05S-size-calibration}.
+The standard-error normalisation does not make \(T_k\) pivotal. Its null distribution changes systematically with sample size and fitted model class, which is why calibration is performed within the relevant null environment. In particular, the null mean of the standardised statistic increases approximately with \(\sqrt{n}\), and correctly specified models containing additional regressors require their own null cutoffs. The calibration analysis therefore evaluates empirical size and cutoff stability directly rather than relying on Gaussian critical values. The detailed null results support the calibration used for the power comparisons in Section~\ref{subsec:misspecification}. Across error distributions, MIS empirical size at \(k/n=0.025\) remains close to \(5\%\), ranging from \(4.75\%\) to \(5.33\%\) (\autoref{tab:05-size-by-error}). The same stability appears across predictor distributions and sample sizes, where empirical rejection ranges from \(4.79\%\) to \(5.28\%\) (\autoref{tab:05-size-by-x-n}). The distribution of environment-level null rejection rates is shown in \autoref{fig:05S-size-calibration}.
 
 \begin{figure}[htbp]
 	\centering
@@ -371,7 +444,7 @@ The detailed deletion-budget results show that the pooled operating characterist
 
 \input{../../output/05_misspecification/tables/supplement/05_tabA05_budget_mean.tex}
 
-\subsubsection{Correct-Model Calibration and Frozen Estimation}
+\subsubsection{Correct-Model Calibration and Supplementary Estimation}
 \label{app:misspec-estimation}
 
 The corrected-model cutoff audit confirms that the respecified-model analysis uses finite independently calibrated cutoffs in every recorded model class (\autoref{tab:05-correct-cutoff-audit}). Together with the approximately \(5\%\) corrected-model rejection rates in the main text, this supports the interpretation of the specificity exercise as a calibrated comparison rather than a mechanical consequence of reusing wrong-model thresholds.
@@ -382,7 +455,7 @@ The frozen-05 estimation results address a different question from the formal de
 
 \input{../../output/05_misspecification/tables/supplement/05_tabA01_mm_correct_vs_wrong.tex}
 
-The comparison of full OLS and full MM similarly shows that lower RMSE does not imply improved interval calibration in every environment. MM has lower RMSE in all eight frozen scenarios within each predictor-distribution stratum, but coverage is closer to \(95\%\) in none of the normal-\(X\) cases and in only four of eight cases under each of the mixed-normal and contaminated predictor designs (\autoref{tab:05-frozen-mm-win-counts}).
+The comparison of full OLS and full MM similarly shows that lower RMSE does not imply improved interval calibration in every environment. MM has lower RMSE in all eight recorded scenarios within each predictor-distribution stratum, but coverage is closer to \(95\%\) in none of the normal-\(X\) cases and in only four of eight cases under each of the mixed-normal and contaminated predictor designs (\autoref{tab:05-frozen-mm-win-counts}).
 
 \input{../../output/05_misspecification/tables/supplement/05_tabA02_ols_vs_mm.tex}
 
