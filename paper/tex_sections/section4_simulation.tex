@@ -9,13 +9,13 @@ This section evaluates the MIS framework through three substantive simulation st
 \subsection{Influential-Set Recovery under Distributional Contamination}
 \label{subsec:detection-performance}
 
-The first simulation study evaluates how fixed-\(k\) MIS recovers injected observations under contamination mechanisms with different implications for the target slope coefficient. Cook's distance, leverage, and DFBETAS provide observation-level comparators that respond to changes in fitted values, covariate extremeness, and single-observation coefficient sensitivity. MIS instead selects a size-\(k\) subset that maximises the change in the target coefficient. Recovery against the injected set therefore measures how closely each diagnostic objective aligns with the mechanism generating the contaminated observations. The comparison is most informative when interpreted separately across contamination mechanisms.
+The first simulation study evaluates how fixed-\(k\) MIS recovers injected observations under contamination mechanisms with different implications for the target slope coefficient. Cook's distance, leverage, and DFBETAS provide observation-level comparators that respond to changes in fitted values, covariate extremeness, and single-observation coefficient sensitivity. MIS instead selects a size-\(k\) subset that maximises the change in the target coefficient. Recovery against the injected set therefore measures how closely each diagnostic objective aligns with the mechanism generating the contaminated observations.
 
 The design varies sample size \(n\in\{500,1000,2500,5000\}\) and contamination proportion \(c\in\{0.005,0.01,0.025,0.05,0.10\}\). The injected-set size is
 \[
 k=\max\{\lfloor cn\rfloor,2\}.
 \]
-The simulation therefore supplies oracle \(k\) and the oracle direction of the injected coefficient perturbation. Conditional on those quantities, the Dinkelbach-based search selects the observation identities. For brevity, this benchmark is referred to as fixed-\(k\) MIS with oracle \(k\).
+The simulation therefore supplies oracle \(k\). For contaminated samples, the known injected set is also used to resolve the directional ambiguity of the fixed-\(k\) search. Observation identities are not supplied to the subsequent search itself. The resulting procedure is therefore an oracle-assisted localisation benchmark for both set size and direction. It is referred to below as MIS with oracle \(k\) and oracle direction.
 
 The three contamination mechanisms differ in how they affect the target slope. Response outliers shift the outcome at ordinary covariate positions, while good-leverage observations move far into predictor space but remain approximately aligned with the regression relation. Bad leverage combines both features: high leverage is paired with a response shift that rotates the fitted slope. All methods are evaluated against the same injected set.
 
@@ -108,7 +108,7 @@ Coverage requires separate interpretation for direct estimators and deletion-bas
 
 \input{../../output/04_robust/tables/main/04_tab2c_coverage.tex}
 
-Influential-set localisation reveals the diagnostic information provided by fixed-\(k\) MIS. Under bad leverage, MIS recovered \(96.0\%\) of the injected set while selecting exactly the oracle deletion budget (\autoref{tab:robust-detection-efficiency}). Cook's distance and DFBETAS achieved slightly higher recall, at \(98.2\%\) and \(98.4\%\), but their mean selection-size ratios were \(3.19\) and \(3.32\). Their corresponding precisions were \(43.9\%\) and \(42.3\%\), compared with \(96.0\%\) for MIS. Leverage selected almost five times the injected-set size while recovering \(67.7\%\) of it.
+Influential-set localisation reveals the diagnostic information provided by fixed-\(k\) MIS. Under bad leverage, MIS recovered \(96.0\%\) of the injected set while selecting exactly the oracle set size (\autoref{tab:robust-detection-efficiency}). Cook's distance and DFBETAS achieved slightly higher recall, at \(98.2\%\) and \(98.4\%\), but their mean selection-size ratios were \(3.19\) and \(3.32\). Their corresponding precisions were \(43.9\%\) and \(42.3\%\), compared with \(96.0\%\) for MIS. Leverage selected almost five times the injected-set size while recovering \(67.7\%\) of it.
 
 Because MIS selects exactly \(k\) observations when the injected set also has size \(k\), its precision and recall coincide; both represent injected-set recovery. Recovery is much lower under response-outlier and good-leverage contamination, consistent with the narrower coefficient-targeted objective. The oracle audit helps explain this contrast: the mean absolute coefficient shift produced by deleting the true injected set is \(1.902\) under bad leverage, compared with \(0.020\) for response outliers and \(0.003\) for good leverage.
 
@@ -146,7 +146,7 @@ T_k
 	\widehat{\operatorname{se}}(\widehat{\beta})
 },
 \]
-where \(S_k\) is the size-\(k\) set producing the larger absolute target-coefficient movement across the two directional searches. The denominator places coefficient movement on the uncertainty scale of the original fit. Its role is scale normalisation. Inference uses the empirical null calibration, with no Gaussian or \(t\) reference distribution assumed. Larger values indicate greater target-coefficient sensitivity, and rejection occurs when \(T_k\) exceeds the corresponding empirically calibrated null cutoff.
+where \(\widehat{\beta}\) is the full-sample estimate of the target coefficient, \(\widehat{\beta}_{-S_k}\) is the corresponding estimate after deleting \(S_k\), and \(S_k\) is the size-\(k\) set producing the larger absolute target-coefficient movement across the two directional searches. The denominator places coefficient movement on the uncertainty scale of the original fit. Its role is scale normalisation. Inference uses the empirical null calibration, with no Gaussian or \(t\) reference distribution assumed. Larger values indicate greater target-coefficient sensitivity, and rejection occurs when \(T_k\) exceeds the corresponding empirically calibrated null cutoff.
 
 For the five additive mechanisms, \(\lambda\) measures the standard-deviation ratio of the imposed misspecification component to the baseline error. Heteroskedasticity and the two confounding designs use mechanism-specific severity scales. Empirical size is rejection at zero severity; detection reach records whether the fitted monotone power curve reaches \(80\%\), and the detection boundary records the corresponding severity when it does. Detailed calibration and environment-level results are reported in \autoref{app:misspecification-results}.
 
