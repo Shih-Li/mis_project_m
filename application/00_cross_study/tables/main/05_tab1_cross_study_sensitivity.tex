@@ -1,0 +1,28 @@
+\begin{table}[htbp]
+\centering
+\caption{Cross-study observation-sensitivity thresholds.}
+\label{tab:application-sensitivity}
+\small
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{lrrrrrr}
+\toprule
+Study & $N$ & $p$ & $\hat{\beta}_0$ & 50\% attenuation & 50\% amplification & Cross zero \\
+\midrule
+01  Mobile money & 2,639 & 430 & 69.21 & 0.53\% (14) & 0.49\% (13) & 1.55\% (41) \\
+02  Vaccine delivery & 12,096 & 52 & 0.2935 & 4.17\% (505) & Not reached & Not reached \\
+03  Self-esteem & 634 & 52 & 0.2317 & 2.52\% (16) & 2.84\% (18) & Not reached \\
+04  HIV information & 2,332 & 9 & -0.1566 & 0.39\% (9) & 0.21\% (5) & 0.73\% (17) \\
+05  Cash vs in-kind & 10,985 & 6 & -0.8861 & 0.009\% (1) & 0.009\% (1) & 0.009\% (1) \\
+06  Workforce grant & 1,770 & 124 & 0.0231 & 0.28\% (5) & 0.23\% (4) & 0.56\% (10) \\
+07  Sanitation spillovers & 3,757 & 14 & -0.00976 & 0.43\% (16) & 0.40\% (15) & 0.88\% (33) \\
+08  Access to finance & 8,612 & 3,176 & -0.0855 & 0.058\% (5) & 0.093\% (8) & 0.23\% (20) \\
+09  Immunization nudge & 7,370 & 8 & 0.00402 & 1.42\% (105) & 0.75\% (55) & 2.90\% (214) \\
+10  Electricity information & 1,819 & 4 & -0.1168 & 1.87\% (34) & 1.76\% (32) & 3.46\% (63) \\
+\bottomrule
+\end{tabular}%
+}
+\begin{minipage}{0.98\textwidth}
+\footnotesize
+\textit{Notes:} Threshold entries report the fraction of the estimation sample removed, with the corresponding number of deleted observations in parentheses. The normalized coefficient is $R_k=\hat{\beta}_{(-S_k)}/\hat{\beta}_0$. A 50\% attenuation is first reached when $R_k\leq0.5$; a 50\% amplification is first reached when $R_k\geq1.5$; and the coefficient crosses zero when $R_k\leq0$. ``Not reached'' indicates that the threshold is not attained within the study's prespecified deletion budget of at most approximately 5\% of the estimation sample.
+\end{minipage}
+\end{table}
