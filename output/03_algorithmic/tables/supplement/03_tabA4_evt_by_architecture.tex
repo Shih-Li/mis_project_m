@@ -1,0 +1,47 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{EVT performance by architecture and fitting configuration.}
+\label{tab:03A-evt-by-architecture}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+Architecture & EVT configuration & Convergence & Rejection at 5\% & Median shape & Median runtime (s) \\
+\midrule
+Simple linear & Greedy + constrained GEV & 94.1\% & 100.0\% & 0.000 & 0.0140 \\
+Simple linear & Dinkelbach + constrained GEV & 95.2\% & 100.0\% & 0.000 & 0.0070 \\
+Simple linear & Dinkelbach + robust GEV & 100.0\% & 99.6\% & -0.000 & 0.0070 \\
+Complex linear & Greedy + constrained GEV & 93.2\% & 96.5\% & 0.000 & 0.0170 \\
+Complex linear & Dinkelbach + constrained GEV & 94.8\% & 99.6\% & 0.000 & 0.0090 \\
+Complex linear & Dinkelbach + robust GEV & 100.0\% & 99.5\% & -0.000 & 0.0070 \\
+Interaction & Greedy + constrained GEV & 94.1\% & 74.2\% & 0.000 & 0.0145 \\
+Interaction & Dinkelbach + constrained GEV & 95.7\% & 83.9\% & 0.000 & 0.0070 \\
+Interaction & Dinkelbach + robust GEV & 100.0\% & 83.4\% & -0.000 & 0.0080 \\
+Triple interaction & Greedy + constrained GEV & 97.9\% & 79.9\% & 0.000 & 0.0150 \\
+Triple interaction & Dinkelbach + constrained GEV & 97.8\% & 91.9\% & 0.000 & 0.0080 \\
+Triple interaction & Dinkelbach + robust GEV & 100.0\% & 92.1\% & 0.000 & 0.0080 \\
+Sparse binary interaction & Greedy + constrained GEV & 90.5\% & 92.5\% & 0.000 & 0.0150 \\
+Sparse binary interaction & Dinkelbach + constrained GEV & 91.4\% & 96.5\% & 0.000 & 0.0080 \\
+Sparse binary interaction & Dinkelbach + robust GEV & 100.0\% & 96.7\% & -0.000 & 0.0060 \\
+Polynomial interaction & Greedy + constrained GEV & 93.4\% & 73.6\% & 0.000 & 0.0145 \\
+Polynomial interaction & Dinkelbach + constrained GEV & 95.6\% & 84.0\% & 0.000 & 0.0070 \\
+Polynomial interaction & Dinkelbach + robust GEV & 100.0\% & 83.5\% & -0.000 & 0.0080 \\
+High-k interaction & Greedy + constrained GEV & 95.2\% & 78.7\% & 0.000 & 0.0190 \\
+High-k interaction & Dinkelbach + constrained GEV & 90.3\% & 88.3\% & 0.000 & 0.0070 \\
+High-k interaction & Dinkelbach + robust GEV & 93.3\% & 87.4\% & -0.000 & 0.0080 \\
+Nonlinear nuisance & Greedy + constrained GEV & 95.4\% & 100.0\% & 0.000 & 0.0140 \\
+Nonlinear nuisance & Dinkelbach + constrained GEV & 96.3\% & 100.0\% & 0.000 & 0.0070 \\
+Nonlinear nuisance & Dinkelbach + robust GEV & 100.0\% & 99.7\% & 0.002 & 0.0050 \\
+Collinear interaction & Greedy + constrained GEV & 95.4\% & 80.0\% & 0.000 & 0.0140 \\
+Collinear interaction & Dinkelbach + constrained GEV & 95.9\% & 88.2\% & 0.000 & 0.0070 \\
+Collinear interaction & Dinkelbach + robust GEV & 100.0\% & 87.0\% & -0.000 & 0.0080 \\
+PLM: confounded & Greedy + constrained GEV & 93.3\% & 91.5\% & 0.000 & 0.0153 \\
+PLM: confounded & Dinkelbach + constrained GEV & 94.8\% & 98.1\% & 0.000 & 0.0080 \\
+PLM: confounded & Dinkelbach + robust GEV & 100.0\% & 98.2\% & -0.000 & 0.0060 \\
+PLM: nonlinear & Greedy + constrained GEV & 91.4\% & 94.7\% & 0.000 & 0.0145 \\
+PLM: nonlinear & Dinkelbach + constrained GEV & 92.8\% & 98.6\% & 0.000 & 0.0080 \\
+PLM: nonlinear & Dinkelbach + robust GEV & 100.0\% & 98.7\% & -0.000 & 0.0060 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

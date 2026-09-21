@@ -1,0 +1,20 @@
+\begin{table}[htbp]
+\centering
+\caption{Mean complete runtime in seconds by estimator and contamination mechanism. Monte Carlo standard errors are in parentheses.}
+\label{tab:robust-runtime}
+\resizebox{0.85\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Estimator & None & Response outliers & Good leverage & Bad leverage \\
+\midrule
+OLS & 0.002 (0.000) & 0.002 (0.000) & 0.001 (0.000) & 0.002 (0.000) \\
+Leverage & 0.002 (0.000) & 0.002 (0.000) & 0.002 (0.000) & 0.002 (0.000) \\
+Cook's distance & 0.002 (0.000) & 0.002 (0.000) & 0.002 (0.000) & 0.002 (0.000) \\
+DFBETAS & 0.003 (0.000) & 0.003 (0.000) & 0.003 (0.000) & 0.003 (0.000) \\
+MIS with oracle k & 0.000 (0.000) & 0.006 (0.000) & 0.006 (0.000) & 0.006 (0.000) \\
+MM & 0.499 (0.003) & 0.501 (0.002) & 0.499 (0.002) & 0.500 (0.002) \\
+LTS & 0.053 (0.000) & 0.052 (0.000) & 0.052 (0.000) & 0.052 (0.000) \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

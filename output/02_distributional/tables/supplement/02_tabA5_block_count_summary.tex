@@ -1,0 +1,33 @@
+\begin{table}[htbp]
+\centering
+\caption{Block-maxima configuration by sample size and contamination proportion. Block size is computed after removing the size-k reference set, and the final column reports the ratio of the deletion budget to block size.}
+\label{tab:02A-block-count-summary}
+\resizebox{0.85\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrrr@{}}
+\toprule
+Sample size & Contamination & Set size & Blocks & Block size & k / block size \\
+\midrule
+500 & 0.5\% & 2 & 50 & 9 & 0.22 \\
+500 & 1.0\% & 5 & 50 & 9 & 0.56 \\
+500 & 2.5\% & 12 & 40 & 12 & 1.00 \\
+500 & 5.0\% & 25 & 19 & 25 & 1.00 \\
+500 & 10.0\% & 50 & 9 & 50 & 1.00 \\
+1000 & 0.5\% & 5 & 50 & 19 & 0.26 \\
+1000 & 1.0\% & 10 & 50 & 19 & 0.53 \\
+1000 & 2.5\% & 25 & 39 & 25 & 1.00 \\
+1000 & 5.0\% & 50 & 19 & 50 & 1.00 \\
+1000 & 10.0\% & 100 & 9 & 100 & 1.00 \\
+2500 & 0.5\% & 12 & 50 & 49 & 0.24 \\
+2500 & 1.0\% & 25 & 50 & 49 & 0.51 \\
+2500 & 2.5\% & 62 & 39 & 62 & 1.00 \\
+2500 & 5.0\% & 125 & 19 & 125 & 1.00 \\
+2500 & 10.0\% & 250 & 9 & 250 & 1.00 \\
+5000 & 0.5\% & 25 & 50 & 99 & 0.25 \\
+5000 & 1.0\% & 50 & 50 & 99 & 0.51 \\
+5000 & 2.5\% & 125 & 39 & 125 & 1.00 \\
+5000 & 5.0\% & 250 & 19 & 250 & 1.00 \\
+5000 & 10.0\% & 500 & 9 & 500 & 1.00 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

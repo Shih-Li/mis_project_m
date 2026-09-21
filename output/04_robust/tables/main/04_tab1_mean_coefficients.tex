@@ -1,0 +1,20 @@
+\begin{table}[htbp]
+\centering
+\caption{Arithmetic mean coefficient estimates by estimator and contamination mechanism. The true coefficient is beta0 = 1. Results give equal weight to each sample-size, contamination-proportion, predictor-distribution, and finite-moment error-distribution design cell. Under no contamination, oracle k = 0, so MIS coincides with OLS by construction. Monte Carlo standard errors are in parentheses.}
+\label{tab:robust-mean-coefficients}
+\resizebox{0.85\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Estimator & None & Response outliers & Good leverage & Bad leverage \\
+\midrule
+OLS & 1.000 (0.002) & 1.001 (0.001) & 1.000 (0.001) & 1.002 (0.014) \\
+Leverage & 1.001 (0.002) & 1.002 (0.001) & 1.001 (0.001) & 1.011 (0.025) \\
+Cook's distance & 1.001 (0.000) & 1.000 (0.000) & 1.000 (0.001) & 1.001 (0.005) \\
+DFBETAS & 1.001 (0.000) & 1.000 (0.000) & 1.000 (0.001) & 1.001 (0.004) \\
+MIS with oracle k & 1.000 (0.002) & 1.001 (0.002) & 1.002 (0.001) & 1.000 (0.001) \\
+MM & 1.000 (0.000) & 1.000 (0.000) & 1.000 (0.000) & 1.000 (0.000) \\
+LTS & 1.000 (0.000) & 1.000 (0.000) & 1.000 (0.000) & 1.000 (0.000) \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

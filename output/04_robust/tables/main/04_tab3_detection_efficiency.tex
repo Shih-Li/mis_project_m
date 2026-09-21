@@ -1,0 +1,25 @@
+\begin{table}[htbp]
+\centering
+\caption{Injected-set localisation by contamination mechanism. The selection-size ratio is the number of observations selected divided by the injected-set size. Recall is the fraction of injected observations recovered, and precision is the fraction of selected observations that belong to the injected set. MIS is supplied oracle k and therefore has selection-size ratio 1; because its selected and injected sets have equal size, its precision equals its recall. Results give equal weight to the recorded sample-size, contamination-proportion, predictor-distribution, and finite-moment error-distribution design cells. Monte Carlo standard errors are in parentheses.}
+\label{tab:robust-detection-efficiency}
+\resizebox{0.85\columnwidth}{!}{%
+\begin{tabular}{@{}llrrr@{}}
+\toprule
+Scenario & Method & Selection-size ratio & Recall & Precision \\
+\midrule
+Response outliers & Leverage & 6.21 (0.00) & 6.6\% (0.0) & 2.2\% (0.0) \\
+Response outliers & Cook's distance & 2.63 (0.00) & 73.3\% (0.0) & 46.7\% (0.0) \\
+Response outliers & DFBETAS & 1.58 (0.00) & 30.5\% (0.1) & 32.4\% (0.1) \\
+Response outliers & MIS with oracle k & 1.00 (0.00) & 20.7\% (0.0) & 20.7\% (0.0) \\
+Good leverage & Leverage & 4.96 (0.00) & 67.7\% (0.0) & 30.2\% (0.0) \\
+Good leverage & Cook's distance & 2.98 (0.00) & 0.0\% (0.0) & 0.0\% (0.0) \\
+Good leverage & DFBETAS & 1.96 (0.00) & 0.0\% (0.0) & 0.0\% (0.0) \\
+Good leverage & MIS with oracle k & 1.00 (0.00) & 15.1\% (0.0) & 15.1\% (0.0) \\
+Bad leverage & Leverage & 4.95 (0.00) & 67.7\% (0.0) & 30.2\% (0.0) \\
+Bad leverage & Cook's distance & 3.19 (0.00) & 98.2\% (0.0) & 43.9\% (0.0) \\
+Bad leverage & DFBETAS & 3.32 (0.00) & 98.4\% (0.0) & 42.3\% (0.0) \\
+Bad leverage & MIS with oracle k & 1.00 (0.00) & 96.0\% (0.0) & 96.0\% (0.0) \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

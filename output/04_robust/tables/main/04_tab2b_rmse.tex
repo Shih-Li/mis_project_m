@@ -1,0 +1,20 @@
+\begin{table}[htbp]
+\centering
+\caption{Root mean squared error by estimator and contamination mechanism. Results give equal weight to each sample-size, contamination-proportion, predictor-distribution, and finite-moment error-distribution design cell. Under no contamination, oracle k = 0, so MIS coincides with OLS by construction. Delta-method Monte Carlo standard errors are in parentheses.}
+\label{tab:robust-rmse}
+\resizebox{0.85\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Estimator & None & Response outliers & Good leverage & Bad leverage \\
+\midrule
+OLS & 0.147 (0.006) & 0.150 (0.003) & 0.152 (0.006) & 2.594 (0.003) \\
+Leverage & 0.226 (0.009) & 0.223 (0.004) & 0.197 (0.006) & 4.558 (0.022) \\
+Cook's distance & 0.036 (0.001) & 0.041 (0.001) & 0.102 (0.005) & 0.892 (0.003) \\
+DFBETAS & 0.039 (0.001) & 0.046 (0.001) & 0.105 (0.004) & 0.718 (0.003) \\
+MIS with oracle k & 0.147 (0.006) & 0.416 (0.002) & 0.221 (0.005) & 0.168 (0.002) \\
+MM & 0.015 (0.000) & 0.015 (0.000) & 0.059 (0.001) & 0.015 (0.000) \\
+LTS & 0.016 (0.000) & 0.016 (0.000) & 0.043 (0.001) & 0.016 (0.000) \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

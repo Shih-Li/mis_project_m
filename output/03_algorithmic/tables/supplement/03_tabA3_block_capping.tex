@@ -1,0 +1,29 @@
+\begin{table}[htbp]
+\centering
+\caption{Adaptive block-count capping by sample size and requested block rule.}
+\label{tab:03A-block-capping}
+\resizebox{0.85\columnwidth}{!}{%
+\begin{tabular}{@{}llrrrrr@{}}
+\toprule
+Sample size & Requested block rule & Scenarios & Capping rate & Median requested & Median actual & Minimum actual \\
+\midrule
+500 & 100 & 84 & 100.0\% & 100 & 16 & 16 \\
+500 & 20 & 84 & 100.0\% & 20 & 16 & 16 \\
+500 & 50 & 84 & 100.0\% & 50 & 16 & 16 \\
+500 & sqrt & 84 & 100.0\% & 22 & 16 & 16 \\
+1000 & 100 & 86 & 100.0\% & 100 & 33 & 31 \\
+1000 & 20 & 86 & 0.0\% & 20 & 20 & 20 \\
+1000 & 50 & 86 & 100.0\% & 50 & 33 & 31 \\
+1000 & sqrt & 86 & 0.0\% & 31 & 31 & 31 \\
+2000 & 100 & 86 & 100.0\% & 100 & 66 & 65 \\
+2000 & 20 & 86 & 0.0\% & 20 & 20 & 20 \\
+2000 & 50 & 86 & 0.0\% & 50 & 50 & 50 \\
+2000 & sqrt & 86 & 0.0\% & 44 & 44 & 44 \\
+5000 & 100 & 86 & 0.0\% & 100 & 100 & 100 \\
+5000 & 20 & 86 & 0.0\% & 20 & 20 & 20 \\
+5000 & 50 & 86 & 0.0\% & 50 & 50 & 50 \\
+5000 & sqrt & 86 & 0.0\% & 70 & 70 & 70 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

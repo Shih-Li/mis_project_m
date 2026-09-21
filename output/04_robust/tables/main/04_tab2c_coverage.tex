@@ -1,0 +1,20 @@
+\begin{table}[htbp]
+\centering
+\caption{Empirical coverage of nominal 95 percent intervals. Results give equal weight to the recorded sample-size, contamination-proportion, predictor-distribution, and finite-moment error-distribution design cells. For Leverage, Cook's distance, DFBETAS, and MIS, intervals are naive OLS intervals computed after data-dependent deletion and do not account for the selection step. Monte Carlo standard errors in percentage points are in parentheses.}
+\label{tab:robust-coverage}
+\resizebox{0.85\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Estimator & None & Response outliers & Good leverage & Bad leverage \\
+\midrule
+OLS & 94.7\% (0.2) & 94.6\% (0.1) & 86.9\% (0.2) & 9.6\% (0.1) \\
+Leverage & 95.0\% (0.2) & 94.9\% (0.1) & 95.1\% (0.1) & 56.4\% (0.1) \\
+Cook's distance & 96.1\% (0.2) & 96.4\% (0.1) & 81.0\% (0.2) & 75.2\% (0.2) \\
+DFBETAS & 98.0\% (0.1) & 99.5\% (0.0) & 88.7\% (0.1) & 79.0\% (0.2) \\
+MIS with oracle k & 94.7\% (0.2) & 44.9\% (0.2) & 43.8\% (0.2) & 78.1\% (0.2) \\
+MM & 94.7\% (0.2) & 94.9\% (0.1) & 69.5\% (0.2) & 95.0\% (0.1) \\
+LTS & 90.7\% (0.3) & 91.6\% (0.1) & 65.5\% (0.2) & 92.0\% (0.1) \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

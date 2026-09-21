@@ -1,0 +1,20 @@
+\begin{table}[htbp]
+\centering
+\caption{Method-level availability and numerical health checks.}
+\label{tab:robust-method-health}
+\resizebox{0.7\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Estimator & Total rows & Finite coefficient & Finite coverage & Finite runtime \\
+\midrule
+OLS & 109200 & 100.0\% & 100.0\% & 100.0\% \\
+Leverage & 109200 & 100.0\% & 100.0\% & 100.0\% \\
+Cook's distance & 109200 & 100.0\% & 100.0\% & 100.0\% \\
+DFBETAS & 109200 & 100.0\% & 100.0\% & 100.0\% \\
+MIS with oracle k & 109200 & 100.0\% & 100.0\% & 100.0\% \\
+MM & 109200 & 100.0\% & 100.0\% & 100.0\% \\
+LTS & 109200 & 100.0\% & 100.0\% & 100.0\% \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

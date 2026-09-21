@@ -1,0 +1,56 @@
+\begin{table}[htbp]
+\centering
+\caption{Frozen-05 full-MM estimation under wrong and correctly respecified models, reported separately by X distribution.}
+\label{tab:05-frozen-mm-correct-wrong}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lllrrrrr@{}}
+\toprule
+X distribution & Scenario & State & Abs. bias & RMSE & Coverage & SE ratio & Predicted coverage \\
+\midrule
+Normal X & Heterogeneous slope & Correct & 0.019 & 0.024 & 94.9\% & 1.012 & 95.0\% \\
+Normal X & Heterogeneous slope & Wrong & 0.260 & 0.264 & 0.0\% & 0.768 & 0.2\% \\
+Normal X & Missing interaction & Correct & 0.019 & 0.023 & 94.8\% & 1.009 & 94.8\% \\
+Normal X & Missing interaction & Wrong & 0.067 & 0.084 & 81.7\% & 0.694 & 81.7\% \\
+Normal X & Nonlinearity & Correct & 0.017 & 0.021 & 94.5\% & 1.004 & 94.8\% \\
+Normal X & Nonlinearity & Wrong & 0.090 & 0.114 & 66.9\% & 0.506 & 66.6\% \\
+Normal X & Omitted variable & Correct & 0.018 & 0.023 & 95.6\% & 1.025 & 95.3\% \\
+Normal X & Omitted variable & Wrong & 0.431 & 0.433 & 0.0\% & 0.909 & 0.0\% \\
+Normal X & Structural break & Correct & 0.019 & 0.023 & 95.4\% & 1.012 & 94.8\% \\
+Normal X & Structural break & Wrong & 0.259 & 0.262 & 0.1\% & 0.845 & 0.1\% \\
+Normal X & Threshold & Correct & 0.023 & 0.029 & 95.1\% & 1.009 & 94.8\% \\
+Normal X & Threshold & Wrong & 0.475 & 0.477 & 0.0\% & 0.784 & 0.0\% \\
+\addlinespace
+Mixed-normal X & Heterogeneous slope & Correct & 0.006 & 0.007 & 95.2\% & 1.017 & 94.9\% \\
+Mixed-normal X & Heterogeneous slope & Wrong & 0.023 & 0.025 & 22.8\% & 0.810 & 21.8\% \\
+Mixed-normal X & Missing interaction & Correct & 0.006 & 0.007 & 94.8\% & 1.004 & 94.8\% \\
+Mixed-normal X & Missing interaction & Wrong & 0.082 & 0.103 & 52.0\% & 0.369 & 52.6\% \\
+Mixed-normal X & Nonlinearity & Correct & 0.005 & 0.006 & 95.1\% & 1.021 & 95.0\% \\
+Mixed-normal X & Nonlinearity & Wrong & 0.081 & 0.102 & 66.9\% & 0.504 & 66.6\% \\
+Mixed-normal X & Omitted variable & Correct & 0.006 & 0.007 & 94.6\% & 0.994 & 94.5\% \\
+Mixed-normal X & Omitted variable & Wrong & 0.141 & 0.142 & 0.0\% & 0.698 & 0.1\% \\
+Mixed-normal X & Structural break & Correct & 0.006 & 0.007 & 94.6\% & 0.996 & 94.6\% \\
+Mixed-normal X & Structural break & Wrong & 0.023 & 0.025 & 23.4\% & 0.806 & 22.6\% \\
+Mixed-normal X & Threshold & Correct & 0.007 & 0.009 & 94.8\% & 0.999 & 94.7\% \\
+Mixed-normal X & Threshold & Wrong & 0.069 & 0.076 & 2.0\% & 0.417 & 4.6\% \\
+\addlinespace
+Contaminated X & Heterogeneous slope & Correct & 0.001 & 0.002 & 95.1\% & 0.991 & 94.6\% \\
+Contaminated X & Heterogeneous slope & Wrong & 0.002 & 0.003 & 64.8\% & 0.819 & 62.7\% \\
+Contaminated X & Missing interaction & Correct & 0.001 & 0.002 & 94.3\% & 1.004 & 94.6\% \\
+Contaminated X & Missing interaction & Wrong & 0.112 & 0.139 & 22.4\% & 0.145 & 22.2\% \\
+Contaminated X & Nonlinearity & Correct & 0.001 & 0.001 & 93.9\% & 0.975 & 93.8\% \\
+Contaminated X & Nonlinearity & Wrong & 0.076 & 0.095 & 68.9\% & 0.532 & 69.0\% \\
+Contaminated X & Omitted variable & Correct & 0.001 & 0.002 & 95.1\% & 0.992 & 94.4\% \\
+Contaminated X & Omitted variable & Wrong & 0.030 & 0.030 & 0.0\% & 0.712 & 0.0\% \\
+Contaminated X & Structural break & Correct & 0.001 & 0.001 & 95.2\% & 1.010 & 94.9\% \\
+Contaminated X & Structural break & Wrong & 0.002 & 0.003 & 64.3\% & 0.831 & 61.8\% \\
+Contaminated X & Threshold & Correct & 0.002 & 0.002 & 94.7\% & 0.974 & 94.1\% \\
+Contaminated X & Threshold & Wrong & 0.026 & 0.039 & 14.1\% & 0.176 & 3.7\% \\
+\bottomrule
+\end{tabular}%
+}
+\par\smallskip
+\begin{minipage}{0.96\linewidth}
+\footnotesize
+\textit{Note:} SE ratio is mean reported SE divided by the sampling-SD proxy sqrt(RMSE squared minus mean bias squared); predicted coverage is the corresponding normal approximation.
+\end{minipage}
+\end{table}

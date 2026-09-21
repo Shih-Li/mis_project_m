@@ -1,0 +1,26 @@
+\begin{table}[htbp]
+\centering
+\caption{MIS 80-percent detection boundary by scenario at k/n = 2.5 percent.}
+\label{tab:05-boundary-summary}
+\resizebox{0.85\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Scenario & Reachers / 96 & Censored & Reach rate & Censoring-aware median \\
+\midrule
+Linear endogeneity & 0 / 96 & 96 & 0.0\% & >0.900 \\
+Nonlinear confounding & 96 / 96 & 0 & 100.0\% & 0.200 \\
+Heterogeneous slope & 96 / 96 & 0 & 100.0\% & 0.273 \\
+Heteroskedasticity & 68 / 96 & 28 & 70.8\% & 0.680 \\
+Missing interaction & 91 / 96 & 5 & 94.8\% & 0.253 \\
+Nonlinearity & 96 / 96 & 0 & 100.0\% & 0.209 \\
+Omitted variable & 8 / 96 & 88 & 8.3\% & >1.400 \\
+Threshold & 96 / 96 & 0 & 100.0\% & 0.307 \\
+\bottomrule
+\end{tabular}%
+}
+\par\smallskip
+\begin{minipage}{0.96\linewidth}
+\footnotesize
+\textit{Note:} Boundaries are right-censored at the maximum simulated severity, so the censoring-aware median is reported; it is identified whenever fewer than half of environments are censored. Means over the reaching subset, which condition on detection succeeding and therefore understate the boundary, are given in Table~\ref{tab:05-boundary-mean}.
+\end{minipage}
+\end{table}

@@ -1,0 +1,57 @@
+\begin{table}[htbp]
+\centering
+\caption{MIS deletion-budget sensitivity by scenario.}
+\label{tab:05-budget-by-scenario}
+\resizebox{0.85\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Scenario & k/n & Reachers / 96 & Censored & Censoring-aware median \\
+\midrule
+Linear endogeneity & 1.0\% & 0 / 96 & 96 & >0.900 \\
+Linear endogeneity & 2.5\% & 0 / 96 & 96 & >0.900 \\
+Linear endogeneity & 5.0\% & 0 / 96 & 96 & >0.900 \\
+Linear endogeneity & 10.0\% & 0 / 96 & 96 & >0.900 \\
+\addlinespace
+Nonlinear confounding & 1.0\% & 96 / 96 & 0 & 0.188 \\
+Nonlinear confounding & 2.5\% & 96 / 96 & 0 & 0.200 \\
+Nonlinear confounding & 5.0\% & 96 / 96 & 0 & 0.289 \\
+Nonlinear confounding & 10.0\% & 64 / 96 & 32 & 0.534 \\
+\addlinespace
+Heterogeneous slope & 1.0\% & 89 / 96 & 7 & 0.282 \\
+Heterogeneous slope & 2.5\% & 96 / 96 & 0 & 0.273 \\
+Heterogeneous slope & 5.0\% & 96 / 96 & 0 & 0.371 \\
+Heterogeneous slope & 10.0\% & 64 / 96 & 32 & 0.580 \\
+\addlinespace
+Heteroskedasticity & 1.0\% & 60 / 96 & 36 & 0.770 \\
+Heteroskedasticity & 2.5\% & 68 / 96 & 28 & 0.680 \\
+Heteroskedasticity & 5.0\% & 61 / 96 & 35 & 0.710 \\
+Heteroskedasticity & 10.0\% & 44 / 96 & 52 & >1.000 \\
+\addlinespace
+Missing interaction & 1.0\% & 81 / 96 & 15 & 0.240 \\
+Missing interaction & 2.5\% & 91 / 96 & 5 & 0.253 \\
+Missing interaction & 5.0\% & 96 / 96 & 0 & 0.311 \\
+Missing interaction & 10.0\% & 93 / 96 & 3 & 0.422 \\
+\addlinespace
+Nonlinearity & 1.0\% & 96 / 96 & 0 & 0.190 \\
+Nonlinearity & 2.5\% & 96 / 96 & 0 & 0.209 \\
+Nonlinearity & 5.0\% & 96 / 96 & 0 & 0.300 \\
+Nonlinearity & 10.0\% & 64 / 96 & 32 & 0.596 \\
+\addlinespace
+Omitted variable & 1.0\% & 4 / 96 & 92 & >1.400 \\
+Omitted variable & 2.5\% & 8 / 96 & 88 & >1.400 \\
+Omitted variable & 5.0\% & 8 / 96 & 88 & >1.400 \\
+Omitted variable & 10.0\% & 19 / 96 & 77 & >1.400 \\
+\addlinespace
+Threshold & 1.0\% & 88 / 96 & 8 & 0.312 \\
+Threshold & 2.5\% & 96 / 96 & 0 & 0.307 \\
+Threshold & 5.0\% & 90 / 96 & 6 & 0.434 \\
+Threshold & 10.0\% & 53 / 96 & 43 & 0.779 \\
+\bottomrule
+\end{tabular}%
+}
+\par\smallskip
+\begin{minipage}{0.96\linewidth}
+\footnotesize
+\textit{Note:} Boundaries are right-censored at the maximum simulated severity, so the censoring-aware median is reported; it is identified whenever fewer than half of environments are censored. Reacher-only means and medians, together with the censoring counts, are given in Table~\ref{tab:05-budget-mean}.
+\end{minipage}
+\end{table}

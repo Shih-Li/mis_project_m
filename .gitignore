@@ -21,10 +21,18 @@ Thumbs.db
 *.xml
 *.bcf
 
-output/
+# Ignore PDFs globally
 *.pdf
 *.docx
 *.rds
+
+output/**
+
+!output/**/
+
+!output/**/figures/**/*.pdf
+
+!output/**/tables/**/*.tex
 
 data/*
 !data/README.md

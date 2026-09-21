@@ -1,0 +1,32 @@
+\begin{table}[htbp]
+\centering
+\small
+\caption{Null calibration, convergence, and fitted shape by architecture and GEV fitting method.}
+\label{tab:03A-calibration-by-architecture}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llrrrr@{}}
+\toprule
+Architecture & GEV fit & Size at 5\%, mean [P10, P90] & Convergence & KS p below 0.01 & Median shape \\
+\midrule
+Simple linear & Constrained GEV & 0.1\% [0.0, 0.4] & 93.2\% & 100.0\% & 0.000 \\
+Simple linear & Robust GEV & 0.7\% [0.0, 1.4] & 100.0\% & 100.0\% & -0.000 \\
+Complex linear & Constrained GEV & 0.1\% [0.0, 0.3] & 93.4\% & 100.0\% & 0.000 \\
+Complex linear & Robust GEV & 0.8\% [0.0, 2.0] & 100.0\% & 100.0\% & -0.000 \\
+Interaction & Constrained GEV & 0.1\% [0.0, 0.4] & 94.3\% & 100.0\% & 0.000 \\
+Interaction & Robust GEV & 0.3\% [0.0, 0.8] & 100.0\% & 100.0\% & -0.000 \\
+Triple interaction & Constrained GEV & 0.3\% [0.0, 0.6] & 92.5\% & 100.0\% & 0.000 \\
+Triple interaction & Robust GEV & 0.6\% [0.0, 1.4] & 100.0\% & 100.0\% & 0.000 \\
+Sparse binary interaction & Constrained GEV & 0.4\% [0.0, 1.3] & 96.3\% & 100.0\% & 0.000 \\
+Sparse binary interaction & Robust GEV & 0.4\% [0.0, 0.8] & 100.0\% & 100.0\% & 0.296 \\
+Polynomial interaction & Constrained GEV & 0.1\% [0.0, 0.4] & 93.8\% & 100.0\% & 0.000 \\
+Polynomial interaction & Robust GEV & 0.3\% [0.0, 0.7] & 100.0\% & 100.0\% & -0.000 \\
+Nonlinear nuisance & Constrained GEV & 0.3\% [0.0, 0.6] & 94.5\% & 100.0\% & -0.000 \\
+Nonlinear nuisance & Robust GEV & 0.5\% [0.0, 1.1] & 100.0\% & 100.0\% & 0.000 \\
+PLM: confounded & Constrained GEV & 0.1\% [0.0, 0.1] & 93.1\% & 100.0\% & 0.000 \\
+PLM: confounded & Robust GEV & 0.8\% [0.0, 1.5] & 100.0\% & 100.0\% & -0.000 \\
+PLM: nonlinear & Constrained GEV & 0.1\% [0.0, 0.3] & 94.1\% & 100.0\% & -0.000 \\
+PLM: nonlinear & Robust GEV & 0.6\% [0.0, 1.3] & 100.0\% & 100.0\% & -0.000 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

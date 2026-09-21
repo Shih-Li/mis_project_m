@@ -1,0 +1,21 @@
+\begin{table}[htbp]
+\centering
+\caption{Good-leverage mechanism diagnostic by error distribution. Entries are medians with 10th--90th percentile intervals; ratios compare the MIS-selected set with the injected set.}
+\label{tab:02-good-leverage-mechanism}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Error distribution & MIS recovery & Absolute DFBETA ratio & Leverage ratio & Residual ratio \\
+\midrule
+Normal & 0.0\% [0.0, 10.0] & 19.19 [7.79, 81.13] & 0.07 [0.06, 0.21] & 131.91 [72.50, 204.94] \\
+Beta(2,5) & 10.0\% [0.0, 20.0] & 19.49 [6.34, 87.44] & 0.19 [0.07, 0.31] & 36.07 [24.17, 51.22] \\
+Mixed normal & 20.0\% [10.0, 30.0] & 52.84 [10.70, 257.82] & 0.28 [0.15, 0.43] & 587.85 [145.26, 1129.02] \\
+Skewed t & 20.0\% [0.0, 40.0] & 29.29 [10.04, 155.03] & 0.31 [0.07, 0.53] & 269.58 [111.79, 470.79] \\
+Contaminated & 20.0\% [0.0, 30.0] & 70.83 [11.91, 410.78] & 0.28 [0.05, 0.44] & 865.07 [150.41, 3942.18] \\
+GOLM & 45.0\% [20.0, 70.0] & 81.67 [17.04, 765.92] & 0.54 [0.29, 0.78] & 1110.72 [225.44, 3455.62] \\
+Pareto & 30.0\% [10.0, 51.0] & 34.24 [12.81, 349.75] & 0.39 [0.17, 0.65] & 248.45 [135.75, 454.45] \\
+GPD & 90.0\% [70.0, 90.0] & 186.35 [63.06, 565.51] & 0.92 [0.79, 0.94] & 2769.74 [845.42, 13780.70] \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

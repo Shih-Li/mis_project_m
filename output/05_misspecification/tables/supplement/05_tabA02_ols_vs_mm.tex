@@ -1,0 +1,39 @@
+\begin{table}[htbp]
+\centering
+\caption{Frozen-05 estimation comparison of full OLS and full MM. Results are reported within X-distribution strata; no comparison of frozen-05 severity values with the formal 05a scale is made.}
+\label{tab:05-frozen-ols-vs-mm}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llrrrrl@{}}
+\toprule
+X distribution & Scenario & OLS RMSE & MM RMSE & OLS coverage & MM coverage & MM closer to 95 percent \\
+\midrule
+Normal X & Linear endogeneity & 0.535 & 0.533 & 0.0\% & 0.0\% & No \\
+Normal X & Heterogeneous slope & 0.475 & 0.264 & 17.3\% & 0.0\% & No \\
+Normal X & Heteroskedasticity & 0.255 & 0.040 & 87.0\% & 86.2\% & No \\
+Normal X & Missing interaction & 0.186 & 0.084 & 89.7\% & 81.7\% & No \\
+Normal X & Nonlinearity & 0.206 & 0.114 & 77.2\% & 66.9\% & No \\
+Normal X & Omitted variable & 0.475 & 0.433 & 17.4\% & 0.0\% & No \\
+Normal X & Structural break & 0.469 & 0.262 & 17.6\% & 0.1\% & No \\
+Normal X & Threshold & 0.641 & 0.477 & 12.7\% & 0.0\% & No \\
+\addlinespace
+Mixed-normal X & Linear endogeneity & 0.316 & 0.315 & 0.0\% & 0.0\% & No \\
+Mixed-normal X & Heterogeneous slope & 0.146 & 0.025 & 17.9\% & 22.8\% & Yes \\
+Mixed-normal X & Heteroskedasticity & 0.102 & 0.033 & 69.4\% & 53.8\% & No \\
+Mixed-normal X & Missing interaction & 0.671 & 0.103 & 31.9\% & 52.0\% & Yes \\
+Mixed-normal X & Nonlinearity & 3.217 & 0.102 & 22.6\% & 66.9\% & Yes \\
+Mixed-normal X & Omitted variable & 0.156 & 0.142 & 16.2\% & 0.0\% & No \\
+Mixed-normal X & Structural break & 0.144 & 0.025 & 17.8\% & 23.4\% & Yes \\
+Mixed-normal X & Threshold & 0.204 & 0.076 & 12.4\% & 2.0\% & No \\
+\addlinespace
+Contaminated X & Linear endogeneity & 0.130 & 0.130 & 0.0\% & 0.0\% & No \\
+Contaminated X & Heterogeneous slope & 0.031 & 0.003 & 17.9\% & 64.8\% & Yes \\
+Contaminated X & Heteroskedasticity & 0.025 & 0.013 & 66.0\% & 43.1\% & No \\
+Contaminated X & Missing interaction & 0.762 & 0.139 & 25.7\% & 22.4\% & No \\
+Contaminated X & Nonlinearity & 17.313 & 0.095 & 20.4\% & 68.9\% & Yes \\
+Contaminated X & Omitted variable & 0.032 & 0.030 & 16.3\% & 0.0\% & No \\
+Contaminated X & Structural break & 0.030 & 0.003 & 18.4\% & 64.3\% & Yes \\
+Contaminated X & Threshold & 0.042 & 0.039 & 12.2\% & 14.1\% & Yes \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

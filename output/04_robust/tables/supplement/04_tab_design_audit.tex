@@ -1,0 +1,25 @@
+\begin{table}[htbp]
+\centering
+\caption{Design audit for the formal Script 04 simulation. The primary analysis uses the seven finite-moment error distributions; GPD is retained separately as an infinite-mean stress condition.}
+\label{tab:robust-design-audit}
+\resizebox{0.7\columnwidth}{!}{%
+\begin{tabular}{@{}lr@{}}
+\toprule
+Item & Value \\
+\midrule
+Total design cells & 1,248 \\
+Iterations per cell & 100 \\
+Total rows & 124,800 \\
+Finite-moment primary cells & 1,092 \\
+Finite-moment primary rows & 109,200 \\
+GPD stress cells & 156 \\
+GPD stress rows & 15,600 \\
+Sample sizes & 500, 1000, 2500, 5000 \\
+Contamination proportions & 0.5\%, 1\%, 2.5\%, 5\% \\
+Predictor families & 3 \\
+Error families & 8 \\
+Contamination mechanisms & 3 + clean \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

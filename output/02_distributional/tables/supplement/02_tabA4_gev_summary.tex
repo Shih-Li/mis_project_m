@@ -1,0 +1,45 @@
+\begin{table}[htbp]
+\centering
+\caption{GEV convergence, rejection, parameter, and computation-time summaries by error distribution and scenario.}
+\label{tab:02A-gev-summary}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llrrrrrr@{}}
+\toprule
+Error distribution & Scenario & Convergence & Rejection & Median shape & Median scale & Median location & Median time (s) \\
+\midrule
+Normal & No contamination & 100.0\% & 4.5\% & 0.000 & 0.002 & 0.004 & 0.014 \\
+Normal & Response outliers & 100.0\% & 71.8\% & 0.000 & 0.003 & 0.004 & 0.014 \\
+Normal & Good leverage & 100.0\% & 1.1\% & 0.000 & 0.002 & 0.004 & 0.015 \\
+Normal & Bad leverage & 100.0\% & 97.1\% & 0.060 & 0.015 & 0.023 & 0.014 \\
+Beta(2,5) & No contamination & 100.0\% & 4.0\% & 0.000 & 0.000 & 0.001 & 0.016 \\
+Beta(2,5) & Response outliers & 100.0\% & 81.3\% & 0.000 & 0.001 & 0.001 & 0.015 \\
+Beta(2,5) & Good leverage & 100.0\% & 1.3\% & 0.000 & 0.000 & 0.001 & 0.016 \\
+Beta(2,5) & Bad leverage & 100.0\% & 96.9\% & 0.093 & 0.015 & 0.019 & 0.015 \\
+Mixed normal & No contamination & 100.0\% & 4.4\% & 0.231 & 0.006 & 0.008 & 0.014 \\
+Mixed normal & Response outliers & 100.0\% & 45.7\% & 0.235 & 0.007 & 0.009 & 0.014 \\
+Mixed normal & Good leverage & 100.0\% & 1.2\% & 0.227 & 0.006 & 0.008 & 0.015 \\
+Mixed normal & Bad leverage & 100.0\% & 97.0\% & 0.221 & 0.022 & 0.035 & 0.014 \\
+Skewed t & No contamination & 100.0\% & 4.2\% & 0.009 & 0.002 & 0.004 & 0.014 \\
+Skewed t & Response outliers & 100.0\% & 66.3\% & 0.010 & 0.003 & 0.004 & 0.014 \\
+Skewed t & Good leverage & 100.0\% & 1.4\% & 0.000 & 0.002 & 0.003 & 0.015 \\
+Skewed t & Bad leverage & 100.0\% & 97.5\% & 0.010 & 0.017 & 0.033 & 0.014 \\
+Contaminated & No contamination & 100.0\% & 4.4\% & 0.423 & 0.025 & 0.028 & 0.014 \\
+Contaminated & Response outliers & 100.0\% & 11.3\% & 0.421 & 0.025 & 0.028 & 0.014 \\
+Contaminated & Good leverage & 100.0\% & 1.0\% & 0.413 & 0.023 & 0.027 & 0.015 \\
+Contaminated & Bad leverage & 100.0\% & 94.7\% & 0.371 & 0.045 & 0.065 & 0.014 \\
+GOLM & No contamination & 100.0\% & 4.9\% & 0.438 & 0.011 & 0.016 & 0.014 \\
+GOLM & Response outliers & 100.0\% & 15.3\% & 0.458 & 0.011 & 0.016 & 0.014 \\
+GOLM & Good leverage & 100.0\% & 1.8\% & 0.402 & 0.011 & 0.016 & 0.015 \\
+GOLM & Bad leverage & 100.0\% & 96.2\% & 0.407 & 0.030 & 0.042 & 0.014 \\
+Pareto & No contamination & 100.0\% & 5.3\% & 0.000 & 0.001 & 0.001 & 0.015 \\
+Pareto & Response outliers & 100.0\% & 69.2\% & 0.000 & 0.002 & 0.002 & 0.014 \\
+Pareto & Good leverage & 100.0\% & 1.7\% & 0.000 & 0.001 & 0.001 & 0.015 \\
+Pareto & Bad leverage & 100.0\% & 97.5\% & 0.010 & 0.017 & 0.033 & 0.014 \\
+GPD & No contamination & 97.4\% & 4.2\% & 0.217 & 38097963.840 & 19507.658 & 0.015 \\
+GPD & Response outliers & 97.1\% & 4.6\% & 0.216 & 37871306.492 & 15801.518 & 0.015 \\
+GPD & Good leverage & 97.3\% & 3.4\% & 0.207 & 36524439.917 & 12081.373 & 0.016 \\
+GPD & Bad leverage & 97.4\% & 58.0\% & 0.201 & 36314084.619 & 4978.303 & 0.015 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}

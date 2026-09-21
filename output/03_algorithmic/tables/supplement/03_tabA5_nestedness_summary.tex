@@ -1,0 +1,25 @@
+\begin{table}[htbp]
+\centering
+\caption{Nestedness and computational summaries for the representative traces.}
+\label{tab:03A-nestedness-summary}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{@{}llrrrrr@{}}
+\toprule
+Architecture & Method & Mean Jaccard & Minimum Jaccard & Violations & Median time (s) & Final influence \\
+\midrule
+Simple linear & Dinkelbach & 0.863 & 0.500 & 0 & 0.0010 & 0.104 \\
+Simple linear & Dinkelbach + refinement & 0.863 & 0.500 & 0 & 0.0020 & 0.104 \\
+Simple linear & Greedy & 0.837 & 0.000 & 1 & 0.0030 & 0.104 \\
+Interaction & Dinkelbach & 0.863 & 0.500 & 0 & 0.0010 & 0.018 \\
+Interaction & Dinkelbach + refinement & 0.836 & 0.500 & 2 & 0.0020 & 0.010 \\
+Interaction & Greedy & 0.837 & 0.000 & 1 & 0.0040 & 0.012 \\
+Collinear interaction & Dinkelbach & 0.863 & 0.500 & 0 & 0.0010 & 0.020 \\
+Collinear interaction & Dinkelbach + refinement & 0.731 & 0.222 & 5 & 0.0030 & 0.001 \\
+Collinear interaction & Greedy & 0.817 & 0.000 & 4 & 0.0030 & 0.001 \\
+PLM: nonlinear & Dinkelbach & 0.863 & 0.500 & 0 & 0.0010 & 0.124 \\
+PLM: nonlinear & Dinkelbach + refinement & 0.857 & 0.500 & 1 & 0.0025 & 0.119 \\
+PLM: nonlinear & Greedy & 0.804 & 0.000 & 5 & 0.0050 & 0.119 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
