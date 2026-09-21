@@ -42,3 +42,9 @@ data/*
 # Remote
 *.sh
 .positai
+
+# app
+application/**
+!application/**/
+!application/**/*.pdf
+!application/**/*.tex
