@@ -1653,19 +1653,36 @@ write_tex_table(
 )
 
 # ----------------------------------------------------------------------------
-# Table A5: Adaptive block-count summary
+# Table A5: Block-maxima configuration
+#
+# block_count is deterministic given (n, k): the simulation caps the requested
+# 50 blocks at floor((n - k) / k) so that each block admits a size-k search.
+# The former min/median/max columns were therefore identical in every cell and
+# are replaced by block size and the ratio of the deletion budget to block
+# size, which is the quantity governing whether the blockwise values behave as
+# maxima. See exact_dfb_bmx_diag() in /R/exact_dfb_bmx.R.
 # ----------------------------------------------------------------------------
 
 tabA5_raw <- sim %>%
   group_by(n_obs, contam_prop, contam_label, set_size) %>%
   summarise(
-    block_min = min(block_count, na.rm = TRUE),
-    block_median = safe_median(block_count),
-    block_max = max(block_count, na.rm = TRUE),
-    low_or_infeasible_rate = safe_mean(block_count < 10),
+    block_count  = dplyr::first(stats::na.omit(block_count)),
+    block_n_uniq = dplyr::n_distinct(block_count[!is.na(block_count)]),
     .groups = "drop"
   ) %>%
+  mutate(
+    block_size           = (n_obs - set_size) %/% block_count,
+    ratio_k_to_blocksize = set_size / block_size
+  ) %>%
   arrange(n_obs, contam_prop)
+
+# block_count must be constant within a cell for the collapse above to be valid,
+# and a zero block size would make the ratio undefined.
+stopifnot(
+  all(tabA5_raw$block_n_uniq == 1L),
+  all(is.finite(tabA5_raw$block_count)),
+  all(tabA5_raw$block_size > 0L)
+)
 
 utils::write.csv(
   tabA5_raw,
@@ -1676,22 +1693,25 @@ utils::write.csv(
 
 tabA5_display <- tabA5_raw %>%
   transmute(
-    `Sample size` = n_obs,
-    `Contamination` = as.character(contam_label),
-    `Set size` = set_size,
-    `Minimum blocks` = block_min,
-    `Median blocks` = fmt_num(block_median, 0),
-    `Maximum blocks` = block_max,
-    `Blocks below 10` = fmt_pct(low_or_infeasible_rate)
+    `Sample size`    = n_obs,
+    `Contamination`  = as.character(contam_label),
+    `Set size`       = set_size,
+    `Blocks`         = block_count,
+    `Block size`     = block_size,
+    `k / block size` = fmt_num(ratio_k_to_blocksize, 2)
   )
 
 write_tex_table(
   tabA5_display,
   tex_path = file.path(tab_supp_dir, "02_tabA5_block_count_summary.tex"),
-  caption = "Adaptive block-count summary by sample size and contamination proportion.",
+  caption = paste0(
+    "Block-maxima configuration by sample size and contamination proportion. ",
+    "Block size is computed after removing the size-k reference set, and the ",
+    "final column reports the ratio of the deletion budget to block size."
+  ),
   label = "tab:02A-block-count-summary",
   resize_width = TABLE_WIDTH_MEDIUM,
-  align = "lrrrrrr"
+  align = "lrrrrr"
 )
 
 # Full design-cell data are retained in CSV because a complete LaTeX rendering

@@ -21,7 +21,7 @@ The complete recovery grid provides the design-level detail underlying the mecha
 
 \input{../../output/02_distributional/tables/supplement/02_tabA1_mis_advantage_grid.tex}
 
-Distribution-specific comparisons show that the bad-leverage result remains strong across most error distributions. MIS recovery exceeded \(97\%\) under normal, Beta\((2,5)\), mixed-normal, skewed-\(t\), and Pareto errors, with positive recovery differences relative to the highest-recovery classical diagnostic in every error distribution (\autoref{tab:02A-detection-by-error}). The largest differences occurred under GOLM and contaminated errors, at \(21.1\) and \(17.3\) percentage points. GPD errors produced the weakest separation: MIS recovered \(78.5\%\) of the injected bad-leverage observations and exceeded the classical benchmark by \(3.2\) percentage points. The distributional variation therefore qualifies the strength of the bad-leverage result without changing its direction.
+Distribution-specific comparisons show that the bad-leverage result remains strong across most error distributions. MIS recovery exceeded \(97\%\) under normal, Beta\((2,5)\), mixed-normal, skewed-\(t\), and Pareto errors, with positive recovery differences relative to the highest-recovery classical diagnostic in every error distribution (\autoref{tab:02A-detection-by-error}). The largest differences occurred under GOLM and contaminated errors, at \(21.1\) and \(17.3\) percentage points. GPD errors produced the weakest separation: MIS recovered \(78.5\%\) of the injected bad-leverage observations and exceeded the classical benchmark by \(3.2\) percentage points. The distributional variation therefore qualifies the strength of the bad-leverage result without changing its direction (\autoref{fig:02A-all-method-overlap-dgp}).
 
 \begin{figure}[htbp]
 	\centering
@@ -64,7 +64,9 @@ The distribution-level GEV summaries show similar null rejection across most err
 
 \input{../../output/02_distributional/tables/supplement/02_tabA4_gev_summary.tex}
 
-Adaptive block selection reduces the number of EVT blocks as the deletion set grows (\autoref{tab:02A-block-count-summary}). Fifty blocks were retained at contamination proportions of \(0.5\%\) and \(1\%\), while the median count declined to approximately \(39\)--\(40\) at \(2.5\%\), \(19\) at \(5\%\), and \(9\) at \(10\%\). Numerical convergence remained high even in the largest-contamination configurations, but convergence alone does not establish a well-supported GEV approximation. At the \(10\%\) deletion budget, the median block count is \(9\). Configurations with fewer than ten block maxima are treated as low-quality EVT configurations in the numerical diagnostics, so the corresponding rejection results should be interpreted cautiously.
+Block size relative to the deletion budget is the binding diagnostic for the block-maxima construction (\autoref{tab:02A-block-count-summary}). Block count alone understates the problem. Fifty blocks were retained at contamination proportions of \(0.5\%\) and \(1\%\), while the block count declined to approximately \(39\)--\(40\) at \(2.5\%\), \(19\) at \(5\%\), and \(9\) at \(10\%\). Block size falls alongside the count. The ratio of \(k\) to block size rises from roughly \(0.24\) at \(0.5\%\) contamination to about \(0.53\) at \(1\%\), and it reaches exactly \(1.00\) at \(2.5\%\) and above.
+
+A ratio of one admits a single size-\(k\) subset per block. The blockwise value is then the influence of that whole block, and the fitted GEV describes ordinary block-level influence. Twelve of the twenty sample-size and contamination cells reach this ratio. Numerical convergence remained high throughout these degenerate cells (\autoref{tab:02A-evt-convergence-grid}), which confirms that successful GEV fitting establishes the numerical availability of a rejection calculation and nothing about the quality of the underlying extremal approximation. EVT results hold at \(0.5\%\) and are marginal at \(1\%\).
 
 \input{../../output/02_distributional/tables/supplement/02_tabA5_block_count_summary.tex}
 
@@ -171,6 +173,8 @@ Adaptive capping of the number of available blocks is most consequential in the 
 \subsubsection{Null Behaviour and Calibration Limits}
 \label{app:03-null}
 
+
+
 The renewed null experiment identifies an important limitation of the EVT approximation in these architecture stress tests. Both GEV fitting procedures are strongly conservative rather than nominally calibrated (\autoref{fig:03-null-calibration} and \autoref{tab:03-null-calibration}). At a nominal \(5\%\) level, empirical rejection is \(0.2\%\) for constrained GEV and \(0.6\%\) for robust GEV; at a nominal \(10\%\) level, the corresponding rates are \(0.3\%\) and \(1.0\%\). Robust GEV improves convergence from a mean of \(93.9\%\) to \(100.0\%\), but this numerical improvement does not remove the conservatism of the resulting p-values.
 
 \begin{figure}[htbp]
@@ -201,6 +205,8 @@ The null p-value quantile plots make the direction of the distortion explicit (\
 	\caption{Null p-value quantile plots for constrained and robust GEV fits across architecture groups. The diagonal denotes the Uniform\((0,1)\) reference.}
 	\label{fig:03A-null-pvalue-qq}
 \end{figure}
+
+The two null experiments are not directly comparable, and their difference is informative. The algorithmic null experiment holds at least thirty observations in every block, so the ratio of \(k\) to block size stays between \(0.01\) and \(0.50\) across its grid. The distributional-recovery design constrains blocks only to hold \(k\) observations, and its ratio reaches one in most cells. Conservative rejection appears where the blockwise values are genuine maxima. Rejection near the nominal level appears where the construction has degenerated toward ordinary block-level influence. The near-nominal empirical size recorded in \autoref{tab:02-empirical-size-summary} should therefore not be read as evidence of correct EVT calibration.
 
 \subsection{Supplementary Robust-Estimation Results}
 \label{app:estimation-results}
@@ -404,7 +410,7 @@ Average power also varies across the surrounding error and predictor environment
 
 \input{../../output/05_misspecification/tables/supplement/05_tabS07_power_by_n.tex}
 
-The environment-level heatmap shows that these pooled averages conceal meaningful heterogeneity across predictor and error distributions (\autoref{fig:05S-environment-heterogeneity}). At maximum simulated severity, several scenarios attain uniformly high power, whereas heteroskedasticity, omitted variables, and the invariant linear-endogeneity case retain substantial weak environments. The worst-environment summaries quantify this variation: for example, maximum-severity threshold power remains at least \(95.4\%\) across the \(96\) environments, whereas omitted-variable power ranges from \(0.0\%\) to \(100.0\%\) and has a median of only \(7.2\%\).
+The environment-level heatmap shows that these pooled averages conceal meaningful heterogeneity across predictor and error distributions (\autoref{fig:05S-environment-heterogeneity}). At maximum simulated severity, several scenarios attain uniformly high power, whereas heteroskedasticity, omitted variables, and the invariant linear-endogeneity case retain substantial weak environments. The worst-environment summaries quantify this variation (\autoref{tab:05-worst-case-environment}): for example, maximum-severity threshold power remains at least \(95.4\%\) across the \(96\) environments, whereas omitted-variable power ranges from \(0.0\%\) to \(100.0\%\) and has a median of only \(7.2\%\).
 
 \begin{figure}[htbp]
 	\centering
@@ -427,7 +433,9 @@ The comparison with the classical observation-level diagnostics shows a similar 
 \subsubsection{Boundary and Deletion-Budget Diagnostics}
 \label{app:misspec-boundary}
 
-The faceted boundary results provide the complete sample-size pattern underlying \autoref{fig:05-boundary-by-n}. For nonlinear confounding, heterogeneous slopes, missing interactions, nonlinearity, and threshold behaviour, the censoring-aware median boundary declines as sample size increases. Heteroskedasticity also becomes detectable after the smallest design but retains a higher boundary. Linear endogeneity and omitted-variable misspecification remain right-censored throughout the displayed sample-size grid.
+The faceted boundary results in \autoref{fig:05S-boundary-faceted} provide the
+complete sample-size pattern underlying \autoref{fig:05-boundary-by-n}. For nonlinear confounding, heterogeneous slopes, missing interactions, nonlinearity, and threshold behaviour, the censoring-aware median boundary declines as sample size increases. Heteroskedasticity also becomes detectable after the smallest design but retains a higher boundary. Linear endogeneity and omitted-variable misspecification remain right-censored
+throughout the displayed sample-size grid (\autoref{tab:05-boundary-mean}).
 
 \begin{figure}[htbp]
 	\centering
@@ -438,7 +446,7 @@ The faceted boundary results provide the complete sample-size pattern underlying
 
 \input{../../output/05_misspecification/tables/supplement/05_tabA04_boundary_mean.tex}
 
-The detailed deletion-budget results show that the pooled operating characteristic does not imply a universally preferred \(k\). For example, missing-interaction reach rises from \(84.4\%\) at \(k/n=0.01\) to \(100.0\%\) at \(0.05\), whereas nonlinear-confounding and heterogeneous-slope reach declines at the \(10\%\) budget. Linear endogeneity remains undetected at every budget, and omitted-variable reach remains low even though it increases to \(19.8\%\) at \(10\%\). The fixed-\(k\) analysis therefore describes sensitivity to analyst-chosen budgets rather than recovery of a latent contamination proportion.
+The detailed deletion-budget results show that the pooled operating characteristic does not imply a universally preferred \(k\) (\autoref{tab:05-budget-by-scenario} and \autoref{tab:05-budget-mean}). No budget dominates across scenarios. For example, missing-interaction reach rises from \(84.4\%\) at \(k/n=0.01\) to \(100.0\%\) at \(0.05\), whereas nonlinear-confounding and heterogeneous-slope reach declines at the \(10\%\) budget. Linear endogeneity remains undetected at every budget, and omitted-variable reach remains low even though it increases to \(19.8\%\) at \(10\%\). The fixed-\(k\) analysis therefore describes sensitivity to analyst-chosen budgets rather than recovery of a latent contamination proportion.
 
 \input{../../output/05_misspecification/tables/main/05_tab_budget_by_scenario.tex}
 
@@ -455,13 +463,13 @@ The frozen-05 estimation results address a different question from the formal de
 
 \input{../../output/05_misspecification/tables/supplement/05_tabA01_mm_correct_vs_wrong.tex}
 
-The comparison of full OLS and full MM similarly shows that lower RMSE does not imply improved interval calibration in every environment. MM has lower RMSE in all eight recorded scenarios within each predictor-distribution stratum, but coverage is closer to \(95\%\) in none of the normal-\(X\) cases and in only four of eight cases under each of the mixed-normal and contaminated predictor designs (\autoref{tab:05-frozen-mm-win-counts}).
+The comparison of full OLS and full MM similarly shows that lower RMSE does not imply improved interval calibration in every environment. MM has lower RMSE in all eight recorded scenarios within each predictor-distribution stratum, but coverage is closer to \(95\%\) in none of the normal-\(X\) cases and in only four of eight cases under each of the mixed-normal and contaminated predictor designs ((\autoref{tab:05-frozen-ols-vs-mm} and \autoref{tab:05-frozen-mm-win-counts}).
 
 \input{../../output/05_misspecification/tables/supplement/05_tabA02_ols_vs_mm.tex}
 
 \input{../../output/05_misspecification/tables/supplement/05_tabA03_mm_win_counts.tex}
 
-Finally, the deletion-arm results show why detection should not be equated with model repair. MIS deletion frequently increases the mean cell-level RMSE as the deletion fraction grows, particularly under mixed-normal and contaminated predictors. With contaminated predictors, for example, mean cell RMSE for MIS deletion rises from \(5.697\) at a \(1\%\) deletion budget to \(18.209\) at \(10\%\), compared with \(2.296\) for the unchanged full OLS fit. The structural defect remains in the estimating model after deletion, so improved diagnostic localisation does not imply improved estimation.
+Finally, the deletion-arm results show why detection should not be equated with model repair. MIS deletion frequently increases the mean cell-level RMSE as the deletion fraction grows, particularly under mixed-normal and contaminated predictors. With contaminated predictors, mean cell RMSE for MIS deletion rises from \(5.697\) at a \(1\%\) budget to \(18.209\) at \(10\%\). The unchanged full OLS fit records \(2.296\) (\autoref{tab:05-frozen-rmse-mean-median}). Cook's distance and DFBETAS deletion move in the opposite direction, falling as the budget grows. The structural defect remains in the estimating model after deletion, so improved diagnostic localisation does not imply improved estimation.
 
 \input{../../output/05_misspecification/tables/supplement/05_tabA06_frozen_rmse_mean.tex}
 
