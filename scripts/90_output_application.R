@@ -283,21 +283,6 @@ threshold_shapes <- c(
 
 
 # Ten soft / bright study colours for Figure 2.
-study_palette <- c(
-  "#6EA8FE",
-  "#63C7B2",
-  "#7C83C9",
-  "#F2B66D",
-  "#A78BFA",
-  "#76C7E5",
-  "#B48EAD",
-  "#F29C9C",
-  "#5DB0A6",
-  "#E69AC7"
-)
-
-names(study_palette) <- study_meta$study_no
-
 
 COL_GREY_DARK <- "#555555"
 COL_GREY <- "#A7A7A7"
@@ -2166,6 +2151,13 @@ build_persistence_panel <- function(
     ) +
     
     labs(
+      subtitle =
+        if (panel_role == "nested") {
+          "Stable-core accumulation"
+        } else {
+          "Influential-set turnover"
+        },
+      
       x =
         "Deletion-set size k",
       
@@ -2184,6 +2176,16 @@ build_persistence_panel <- function(
     theme(
       panel.grid =
         element_blank(),
+      
+      plot.subtitle =
+        element_text(
+          face = "bold",
+          size = 10.5,
+          colour = COL_GREY_DARK,
+          margin = margin(
+            b = 7
+          )
+        ),
       
       axis.text =
         element_text(
@@ -2320,10 +2322,148 @@ non_nested_panel <- build_persistence_panel(
 
 
 # ------------------------------------------------------------------------------
+# Shared visual key for Figure 2
+# ------------------------------------------------------------------------------
+
+legend_plot <- ggplot() +
+  
+  # Selected MIS membership.
+  annotate(
+    "rect",
+    xmin = 0.55,
+    xmax = 0.85,
+    ymin = 0.36,
+    ymax = 0.64,
+    fill = COL_PERSIST_SELECTED,
+    alpha = 0.72
+  ) +
+  
+  annotate(
+    "text",
+    x = 0.95,
+    y = 0.50,
+    label = "Selected in MIS",
+    hjust = 0,
+    size = 3.15,
+    colour = COL_GREY_DARK
+  ) +
+  
+  # First entry.
+  annotate(
+    "point",
+    x = 2.45,
+    y = 0.50,
+    shape = 23,
+    size = 3.1,
+    stroke = 0.55,
+    fill = COL_PERSIST_ENTRY,
+    colour = "white"
+  ) +
+  
+  annotate(
+    "text",
+    x = 2.62,
+    y = 0.50,
+    label = "First entry",
+    hjust = 0,
+    size = 3.15,
+    colour = COL_GREY_DARK
+  ) +
+  
+  # Re-entry.
+  annotate(
+    "point",
+    x = 3.75,
+    y = 0.50,
+    shape = 21,
+    size = 3.0,
+    stroke = 0.55,
+    fill = COL_PERSIST_REENTRY,
+    colour = "white"
+  ) +
+  
+  annotate(
+    "text",
+    x = 3.92,
+    y = 0.50,
+    label = "Re-entry",
+    hjust = 0,
+    size = 3.15,
+    colour = COL_GREY_DARK
+  ) +
+  
+  # Non-nested step.
+  annotate(
+    "point",
+    x = 4.90,
+    y = 0.50,
+    shape = 4,
+    size = 3.0,
+    stroke = 0.85,
+    colour = COL_PERSIST_EVENT
+  ) +
+  
+  annotate(
+    "text",
+    x = 5.08,
+    y = 0.50,
+    label = "Non-nested step",
+    hjust = 0,
+    size = 3.15,
+    colour = COL_GREY_DARK
+  ) +
+  
+  # Zero crossing.
+  annotate(
+    "segment",
+    x = 6.75,
+    xend = 6.75,
+    y = 0.32,
+    yend = 0.68,
+    colour = COL_PERSIST_CROSS,
+    linewidth = 0.6,
+    linetype = "dashed"
+  ) +
+  
+  annotate(
+    "text",
+    x = 6.90,
+    y = 0.50,
+    label = "Zero crossing",
+    hjust = 0,
+    size = 3.15,
+    colour = COL_GREY_DARK
+  ) +
+  
+  coord_cartesian(
+    xlim = c(
+      0.4,
+      8.0
+    ),
+    ylim = c(
+      0.25,
+      0.75
+    ),
+    clip = "off"
+  ) +
+  
+  theme_void() +
+  
+  theme(
+    plot.margin =
+      margin(
+        0,
+        4,
+        0,
+        4
+      )
+  )
+
+# ------------------------------------------------------------------------------
 # 14.6 Combine into a 1 x 2 publication figure
 # ------------------------------------------------------------------------------
 
-fig2 <- (
+fig2_panels <- (
   nested_panel$plot |
     non_nested_panel$plot
 ) +
@@ -2341,12 +2481,25 @@ fig2 <- (
   )
 
 
+fig2 <- (
+  fig2_panels /
+    legend_plot
+) +
+  
+  patchwork::plot_layout(
+    heights = c(
+      1,
+      0.09
+    )
+  )
+
+
 save_plot(
   fig2,
   filename =
     "05_fig2_influential_set_persistence",
   width = 7.6,
-  height = 4.7
+  height = 5.0
 )
 
 
