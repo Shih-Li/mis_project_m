@@ -1,6 +1,10 @@
 \documentclass[12pt]{article}
 \usepackage[utf8]{inputenc}
-\usepackage{times}            
+\usepackage{times}
+\usepackage{amsthm} 
+\newtheorem{proposition}{Proposition}[section]
+\newtheorem{lemma}[proposition]{Lemma}
+\newtheorem{corollary}[proposition]{Corollary}           
 \usepackage{setspace}    
 \usepackage{graphicx}
 \usepackage{float}
@@ -33,10 +37,18 @@
 
 \subfile{tex_sections/section4_simulation.tex}
 
+\subfile{tex_sections/section5_application.tex}
+
 
 \clearpage
 \appendix
 \subfile{tex_sections/appendixA.tex}
+
+\clearpage
+\subfile{tex_sections/appendixB.tex}
+
+\clearpage
+\subfile{tex_sections/appendixC.tex}
 
 \newpage
 \printbibliography

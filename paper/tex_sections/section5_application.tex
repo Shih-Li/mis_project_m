@@ -1,0 +1,67 @@
+\documentclass[../main.tex]{subfiles}
+\begin{document}
+
+\section{Empirical Applications}
+\label{sec:application}
+
+This section evaluates observation sensitivity across ten published empirical studies built around randomized experimental variation. One target estimand is selected from each study and audited under a common deletion protocol. The application asks how far each target coefficient can move when a small subset of observations is removed from its validated estimation sample. The analysis therefore complements the original experimental design with a finite-sample sensitivity diagnostic. Study-specific specifications, validation checks, and implementation details are reported in \autoref{app:application-details}.
+
+\subsection{Audit Design}
+\label{subsec:application-design}
+
+The empirical audit applies a common procedure while preserving the specification associated with each selected estimand. Each application first reproduces the relevant estimation sample and verifies the baseline target coefficient. Candidate deletion sets are then constructed in both directions of coefficient movement over deletion sizes up to approximately \(5\%\) of the estimation sample. For every selected set, the target coefficient is re-estimated using the corresponding paper-specific estimator. The reported sensitivity paths therefore record coefficients obtained from feasible leave-set-out refits.
+
+The common search requires an MIS-compatible linear representation of the target coefficient. Fixed effects, fixed weights, and selected nuisance specifications are represented within this framework only after baseline equivalence has been verified. Some applications consequently audit a documented linear companion or robustness specification when the headline estimator lies outside the current linear search framework. These choices define the estimand being audited. \autoref{app:application-details} documents the corresponding specification for each study and separates the search representation from the final paper-specific refit.
+
+The application focuses on point-estimate sensitivity conditional on these validated specifications. Randomized assignment provides the identifying variation underlying the studies, while deletion analysis examines how that variation is translated into a finite-sample coefficient estimate. The two questions are distinct. A coefficient can be identified by experimental variation while remaining sensitive to a small number of observations in the realized sample.
+
+\subsection{Cross-Study Sensitivity}
+\label{subsec:application-sensitivity}
+
+Observation sensitivity varies substantially across the ten selected estimands. To make coefficient movements comparable across studies, the audit records the smallest deletion fraction required to produce prespecified changes from the full-sample estimate. The main thresholds are a \(50\%\) attenuation, a \(50\%\) amplification, and a crossing of zero. All thresholds are evaluated within the common deletion budget of approximately \(5\%\) of the corresponding estimation sample.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{../../application/00_cross_study/figures/main/05_fig2_influential_set_persistence.pdf}
+	\caption{Influential-set persistence in two empirical applications. Panel A reports the access-to-finance application of \textcite{cai2024indirect}, where influential observations accumulate through a nested path over the displayed deletion range. Panel B reports the health-information application of \textcite{ciancio2025surviving}, where influential-set membership changes as the deletion budget increases. The dashed line marks the first zero crossing of the audited coefficient.}
+	\label{fig:application-persistence}
+\end{figure}
+
+\input{../../application/00_cross_study/tables/main/05_tab1_cross_study_sensitivity.tex}
+
+Eight of the ten selected coefficients cross zero along at least one searched deletion path within the prespecified budget (\autoref{fig:application-sensitivity-thresholds} and \autoref{tab:application-sensitivity}). The required deletion fractions differ sharply across studies. The cash-versus-in-kind contrast crosses zero after deleting a single observation, corresponding to approximately \(0.009\%\) of its estimation sample. The access-to-finance coefficient crosses zero after deleting \(20\) observations, or approximately \(0.23\%\) of its sample, while the electricity-information coefficient requires \(63\) deletions, approximately \(3.46\%\) of its estimation sample. These differences indicate substantial heterogeneity in finite-sample stability across the selected experimental estimates.
+
+Two audited coefficients remain on their original side of zero throughout the deletion budget. The vaccine-delivery estimate reaches a \(50\%\) attenuation only after approximately \(4.17\%\) of its sample is removed, while the selected self-esteem coefficient does not cross zero within the searched range. These cases show that substantial coefficient movement and sign reversal are separate sensitivity outcomes. The cross-study evidence therefore reveals considerable heterogeneity even within a collection of studies based on randomized experimental variation.
+
+\subsection{Illustrative Applications}
+\label{subsec:application-interpretation}
+
+\autoref{fig:application-persistence} illustrates two forms of observation sensitivity in experimental applications. \textcite{cai2024indirect} study how experimentally induced access to finance affects treated firms and firms exposed to treated competitors. They find positive direct effects on treated firms together with negative indirect effects on firms whose competitors receive access to finance. The present audit targets the competitor-treatment exposure coefficient for firm log sales. Its validated full-sample estimate is \(-0.0855\), and the coefficient crosses zero after deleting \(20\) of \(8{,}612\) observations, corresponding to approximately \(0.23\%\) of the estimation sample. The negative indirect-effect estimate is therefore sensitive to a small influential set within the audited specification.
+
+\textcite{ciancio2025surviving} examine the consequences of learning an HIV-positive diagnosis in a setting where antiretroviral treatment was initially unavailable. Among HIV-positive individuals, they find that learning one's status is associated with substantially lower subsequent survival, with their preferred causal estimates indicating a reduction of approximately \(23\) percentage points after six years. The present audit considers the reported OLS companion specification for the survival outcome, whose validated full-sample coefficient on learning HIV-positive status is \(-0.1566\). The coefficient crosses zero after deleting \(17\) of \(2{,}332\) observations, corresponding to approximately \(0.73\%\) of the estimation sample. The audited OLS estimate is therefore sensitive to a comparatively small subset of observations. The preferred IV/GMM causal specification studied by \textcite{ciancio2025surviving} lies outside the current linear MIS audit.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{../../application/00_cross_study/figures/main/05_fig1_sensitivity_thresholds.pdf}
+	\caption{Cross-study observation-sensitivity thresholds for the ten selected estimands. Markers report the smallest deletion fraction required for the audited coefficient to reach a \(50\%\) attenuation, a \(50\%\) amplification, or a zero crossing. Hollow markers indicate that the corresponding threshold is not reached within the prespecified deletion budget of approximately \(5\%\) of the estimation sample.}
+	\label{fig:application-sensitivity-thresholds}
+\end{figure}
+
+The two applications also differ in the structure of the influential sets. In the access-to-finance application, observations entering the influential set at smaller deletion sizes tend to remain as the set expands. The resulting path therefore has a relatively stable core. In the health-information application, membership changes repeatedly as the deletion budget increases, producing a non-nested path. The observations driving sensitivity can consequently depend on the permitted size of the deletion set, even when the target coefficient remains fixed.
+
+\textcite{banerjee2025selecting} study how alternative combinations of reminders, incentives, and community ambassadors affect immunization uptake in Haryana, India. Their large-scale randomized experiment evaluates multiple policy combinations and identifies information-hub ambassadors combined with SMS reminders and no incentives as the most cost-effective policy, increasing immunizations per dollar by \(9.1\%\) relative to the status quo. The present audit targets the corresponding pooled policy coefficient for immunizations per dollar. Its validated full-sample estimate is \(0.0040\), and the coefficient first crosses zero after deleting \(214\) of \(7{,}370\) village-month observations, corresponding to approximately \(2.90\%\) of the estimation sample.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{../../application/09_StMEN/fig_spatial_concentration.pdf}
+	\caption{Spatial composition of the first sign-reversing MIS in the immunization application of \textcite{banerjee2025selecting}. Panel A reports the number of sign-reversing MIS observations in each of the seven study districts. Panel B compares each district's share of the full estimation sample with its share of the \(214\)-observation sign-reversing MIS. District boundaries follow the Census 2011 definitions retained in the study data.}
+	\label{fig:application-spatial-concentration}
+\end{figure}
+
+\autoref{fig:application-spatial-concentration} shows that the sign-reversing observations are unevenly distributed across the study districts. Panipat and Mewat account for substantially larger shares of the sign-reversing MIS than of the full estimation sample, while Jhajjar and Rewari are substantially less represented. Panel A gives the corresponding geographic distribution, with \(51\) influential observations in Bhiwani, \(46\) in Panipat, and \(38\) in Mewat. The sensitivity of the pooled cost-effectiveness coefficient is therefore associated with a geographically structured subset of the realized sample. This comparison is descriptive and does not establish separate district-level treatment effects.
+
+The empirical applications show that experimental identification and finite-sample stability address different properties of an estimate. Random assignment provides the identifying variation used by these studies, while the MIS audit measures how strongly a selected coefficient depends on particular observations in the realized sample. In eight of the ten applications, a feasible deletion set within the approximately \(5\%\) audit budget is sufficient to move the selected coefficient across zero. \autoref{fig:application-persistence} shows that this sensitivity can arise through both stable and changing influential-set structures, while \autoref{fig:application-spatial-concentration} shows that the observations producing a sign reversal can also be unevenly distributed across geographic units.
+
+These results apply to the audited estimands. A zero crossing establishes that the selected coefficient is observation-sensitive under the stated specification and deletion budget. It does not assess every result in the corresponding study or the validity of the underlying experimental design. Study-specific specifications, validation results, and scope qualifications are reported in \autoref{app:application-details}.
+
+\end{document}
