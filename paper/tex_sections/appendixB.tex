@@ -1,0 +1,306 @@
+\documentclass[../main.tex]{subfiles}
+\begin{document}
+	
+	\section{Derivations}
+	\label{app:derivations}
+	
+	This appendix collects derivations for claims in the main text that are constructed in this thesis. The closed-form set-DFBETA, the Dinkelbach reduction to top-\(k\) selection and its global optimality, and the block-maxima testing framework are established by \textcite{konrad2026finding} and \textcite{konrad2026testing}, so they are cited in \autoref{sec:methodology} and not reproduced here. The derivations use the fixed-residualised deletion convention unless stated otherwise. In the misspecification study, the deletion set is selected under this convention and its coefficient change is evaluated by refitting the full model, and \autoref{app:deriv-invariance} treats both steps. Notation follows \autoref{eq:linear_fractional_components} and \autoref{eq:WG_definitions}. The first three subsections are exact consequences of the definitions and the simulation design, while the fourth interprets an empirical pattern asymptotically.
+	
+	\subsection{Joint Deletion and the Set-DFBETA}
+	\label{app:deriv-joint}
+	
+	Joint deletion amplifies same-signed contributions. For \(i\in[n]\), write \(\delta_i=\Delta(\{i\})=w_i/(T-c_i)\) for the fixed-residualised single-deletion effect of observation \(i\), which evaluates each observation against the denominator obtained after removing that observation alone.
+	
+	\begin{lemma}
+		\label{lem:superadditive}
+		Let \(S\subseteq[n]\) satisfy \(G(S)>0\). If \(w_i\geq0\) for every \(i\in S\), then \(\Delta(S)\geq\sum_{i\in S}\delta_i\). If \(w_i\leq0\) for every \(i\in S\), then \(\Delta(S)\leq\sum_{i\in S}\delta_i\).
+	\end{lemma}
+	
+	\begin{proof}
+		Fix \(i\in S\). Because \(c_j=\widetilde{x}_j^2\geq0\) for every \(j\),
+		\begin{align*}
+			T-c_i
+			\;\geq\;
+			T-\sum_{j\in S}c_j
+			\;=\;
+			G(S)
+			\;>\;0
+			\qquad\Longrightarrow\qquad
+			\frac{1}{G(S)}\;\geq\;\frac{1}{T-c_i}.
+		\end{align*}
+		If \(w_i\geq0\) for every \(i\in S\), multiplying by \(w_i\) and summing over \(S\) gives
+		\begin{align*}
+			\Delta(S)
+			\overset{\text{\eqref{eq:linear_fractional_objective}}}{=}
+			\frac{W(S)}{G(S)}
+			=\sum_{i\in S}\frac{w_i}{G(S)}
+			\;\geq\;
+			\sum_{i\in S}\frac{w_i}{T-c_i}
+			=\sum_{i\in S}\delta_i .
+		\end{align*}
+		If \(w_i\leq0\) for every \(i\in S\), multiplication reverses the inequality.
+	\end{proof}
+	
+	The shared denominator is the channel of amplification. Every member of \(S\) removes residualised design information from a denominator that the whole set shares, so each contribution \(w_i\) is evaluated against less remaining information than in its single-deletion counterpart. Summed single-deletion effects therefore understate a same-signed joint effect. The lemma concerns sums of effects and implies no ordering of diagnostic rankings. With mixed signs no general inequality holds, so the result formalises one source of non-additivity that can contribute to masking.
+	
+	\subsection{Block-Maxima Configuration}
+	\label{app:deriv-blocks}
+	
+	The ratio of the deletion budget to block size determines whether blockwise values are maxima. Write \(m=\lfloor(n-k)/B\rfloor\) for the block size when the \(n-k\) observations outside the tested set form \(B\) blocks, and write \(c=k/n\) for the deletion fraction. A ratio of one leaves a single admissible subset per block.
+	
+	\begin{proposition}
+		\label{prop:block-ratio}
+		For every \(B\geq1\) with \(m\geq k\),
+		\[
+		\frac{k}{m}\geq\frac{cB}{1-c}.
+		\]
+		Consequently, if \(k/m\leq r\) and \(B\geq B_{\min}\), then \(c\leq r/(r+B_{\min})\).
+	\end{proposition}
+	
+	\begin{proof}
+		Because the floor does not exceed its argument and \(k=cn\),
+		\begin{align*}
+			m=\left\lfloor\frac{n-k}{B}\right\rfloor\leq\frac{n-k}{B}
+			\qquad\Longrightarrow\qquad
+			\frac{k}{m}
+			\;\geq\;
+			\frac{kB}{n-k}
+			=\frac{cnB}{n-cn}
+			=\frac{cB}{1-c}.
+		\end{align*}
+		If \(k/m\leq r\) and \(B\geq B_{\min}\), then
+		\begin{align*}
+			r\;\geq\;\frac{k}{m}\;\geq\;\frac{cB}{1-c}\;\geq\;\frac{cB_{\min}}{1-c}
+			&\iff r(1-c)\geq cB_{\min}\\
+			&\iff c\,(r+B_{\min})\leq r\\
+			&\iff c\leq\frac{r}{r+B_{\min}}.
+			\qedhere
+		\end{align*}
+	\end{proof}
+	
+	For fixed \(B\), the bound depends on \(n\) only through \(c\). In the implementation, \(B\) may itself change with \(n\) and \(k\), and the exact ratio additionally reflects integer rounding in \(m\). With \(B_{\min}=10\), the bound gives \(c\leq0.048\) at \(r=1/2\) and \(c\leq0.024\) at \(r=1/4\), which are the values stated in \autoref{subsec:evt_fixed_k} for the two ratio thresholds.
+	
+	\begin{corollary}
+		\label{cor:block-rule}
+		Suppose \(B=\min\{B_{\mathrm{req}},q\}\) with \(q=\lfloor(n-k)/k\rfloor\geq1\), and write \(n-k=qk+\rho\) with \(0\leq\rho<k\). If \(q\leq B_{\mathrm{req}}\), then \(B=q\), \(m=k+\lfloor\rho/q\rfloor\), and \(k/m>q/(q+1)\), with \(k/m=1\) whenever \(\rho<q\). The condition \(q<B_{\mathrm{req}}\) holds if and only if \(k>n/(B_{\mathrm{req}}+1)\).
+	\end{corollary}
+	
+	\begin{proof}
+		If \(q\leq B_{\mathrm{req}}\), then \(B=q\). Since \(k\) is an integer,
+		\begin{align*}
+			m
+			=\left\lfloor\frac{qk+\rho}{q}\right\rfloor
+			=\left\lfloor k+\frac{\rho}{q}\right\rfloor
+			=k+\left\lfloor\frac{\rho}{q}\right\rfloor .
+		\end{align*}
+		Using \(\rho\leq k-1\),
+		\begin{align*}
+			m
+			\;\leq\;
+			k+\frac{\rho}{q}
+			\;\leq\;
+			k+\frac{k-1}{q}
+			\;<\;
+			\frac{k(q+1)}{q}
+			\qquad\Longrightarrow\qquad
+			\frac{k}{m}>\frac{q}{q+1}.
+		\end{align*}
+		If \(\rho<q\), then \(\lfloor\rho/q\rfloor=0\), so \(m=k\) and \(k/m=1\). Finally, for an integer \(B_{\mathrm{req}}\), \(\lfloor a\rfloor<B_{\mathrm{req}}\) holds exactly when \(a<B_{\mathrm{req}}\), so
+		\begin{align*}
+			q<B_{\mathrm{req}}
+			\iff
+			\frac{n-k}{k}<B_{\mathrm{req}}
+			\iff
+			n<(B_{\mathrm{req}}+1)\,k
+			\iff
+			k>\frac{n}{B_{\mathrm{req}}+1}.
+			\qedhere
+		\end{align*}
+	\end{proof}
+	
+	In the distributional-recovery study \(B_{\mathrm{req}}=50\), so capping occurs once the deletion fraction exceeds approximately \(1/51\). Every design cell with \(c\geq0.025\) is capped and has \(q\geq9\), so its ratio exceeds \(0.9\). All twelve such cells satisfy \(\rho<q\). Their ratios therefore equal one exactly, as reported in \autoref{tab:02A-block-count-summary}. The algorithmic null experiment of \autoref{app:03-null} instead requires at least thirty observations per block, which bounds the ratio by one half for its set sizes \(k\leq15\).
+	
+	\subsection{Fitted-Span Invariance}
+	\label{app:deriv-invariance}
+	
+	Linear-endogeneity invariance has an exact algebraic basis (\autoref{subsubsec:misspec-specificity}). Let \(D=[\mathbf{x},\mathbf{Z}]\) denote the fitted design with target column \(\mathbf{x}\) and nuisance columns \(\mathbf{Z}\), with the intercept included among the nuisance columns, and assume that \(D\) has full column rank. Consider severity-indexed outcomes of the form
+	\begin{equation}
+		\mathbf{y}_\lambda
+		=
+		D\boldsymbol{\theta}_\lambda
+		+
+		b_\lambda\mathbf{v},
+		\qquad
+		b_\lambda\neq0,
+		\label{eq:span-outcome}
+	\end{equation}
+	where \(\mathbf{v}\in\mathbb{R}^n\) does not depend on \(\lambda\). Severity then enters only through a fitted-span coefficient and a common residual scale.
+	
+	\begin{proposition}
+		\label{prop:span-invariance}
+		Under \autoref{eq:span-outcome}, for every \(S\) with \(G(S)>0\),
+		\[
+		\Delta_\lambda(S)=b_\lambda\,\Delta_{\mathbf{v}}(S),
+		\qquad
+		\widehat{\operatorname{se}}_\lambda=|b_\lambda|\,\widehat{\operatorname{se}}_{\mathbf{v}},
+		\]
+		where \(\Delta_{\mathbf{v}}\) and \(\widehat{\operatorname{se}}_{\mathbf{v}}\) are computed with outcome \(\mathbf{v}\). Consequently, \(|\Delta_\lambda(S)|/\widehat{\operatorname{se}}_\lambda\) does not depend on \(\lambda\) for any admissible \(S\), and the set of maximisers of absolute standardised influence is the same for every \(\lambda\). When \(b_\lambda<0\), the positive and negative directional problems exchange roles.
+	\end{proposition}
+	
+	\begin{proof}
+		Write \(\boldsymbol{\theta}_\lambda=(\theta_{\lambda,x},\boldsymbol{\theta}_{\lambda,z}^{\top})^{\top}\). Since \(M_{\mathbf{Z}}\mathbf{Z}=\mathbf{0}\),
+		\begin{align}
+			\widetilde{\mathbf{y}}_\lambda
+			=M_{\mathbf{Z}}\bigl(\mathbf{x}\theta_{\lambda,x}+\mathbf{Z}\boldsymbol{\theta}_{\lambda,z}+b_\lambda\mathbf{v}\bigr)
+			=\theta_{\lambda,x}\widetilde{\mathbf{x}}+b_\lambda\widetilde{\mathbf{v}} .
+			\label{eq:inv-resid-outcome}
+		\end{align}
+		For any \(S\) with \(G(S)>0\), using \(\sum_{t\notin S}\widetilde{x}_t^2=G(S)\),
+		\begin{align*}
+			\widehat{\beta}_{\lambda,-S}
+			=\frac{\sum_{t\notin S}\widetilde{x}_t\widetilde{y}_{\lambda,t}}{G(S)}
+			=\theta_{\lambda,x}\,\frac{\sum_{t\notin S}\widetilde{x}_t^2}{G(S)}
+			+b_\lambda\,\frac{\sum_{t\notin S}\widetilde{x}_t\widetilde{v}_t}{G(S)}
+			=\theta_{\lambda,x}+b_\lambda\,\widehat{\beta}_{\mathbf{v},-S}.
+		\end{align*}
+		Setting \(S=\varnothing\) gives \(\widehat{\beta}_\lambda=\theta_{\lambda,x}+b_\lambda\widehat{\beta}_{\mathbf{v}}\), and therefore
+		\begin{align*}
+			\Delta_\lambda(S)
+			=\widehat{\beta}_\lambda-\widehat{\beta}_{\lambda,-S}
+			=b_\lambda\bigl(\widehat{\beta}_{\mathbf{v}}-\widehat{\beta}_{\mathbf{v},-S}\bigr)
+			=b_\lambda\,\Delta_{\mathbf{v}}(S).
+		\end{align*}
+		The residuals and the standard error follow from \autoref{eq:inv-resid-outcome}:
+		\begin{align*}
+			\widetilde{\mathbf{r}}_\lambda
+			&=\widetilde{\mathbf{y}}_\lambda-\widehat{\beta}_\lambda\widetilde{\mathbf{x}}
+			=\theta_{\lambda,x}\widetilde{\mathbf{x}}+b_\lambda\widetilde{\mathbf{v}}
+			-\bigl(\theta_{\lambda,x}+b_\lambda\widehat{\beta}_{\mathbf{v}}\bigr)\widetilde{\mathbf{x}}
+			=b_\lambda\widetilde{\mathbf{r}}_{\mathbf{v}},\\
+			\widehat{\operatorname{se}}_\lambda
+			&=\frac{s_\lambda}{\sqrt{T}}
+			=\frac{1}{\sqrt{T}}\left(\frac{\lVert\widetilde{\mathbf{r}}_\lambda\rVert^2}{n-p}\right)^{1/2}
+			=|b_\lambda|\,\widehat{\operatorname{se}}_{\mathbf{v}} .
+		\end{align*}
+		Combining the two results,
+		\begin{align*}
+			\frac{|\Delta_\lambda(S)|}{\widehat{\operatorname{se}}_\lambda}
+			=\frac{|b_\lambda|\,|\Delta_{\mathbf{v}}(S)|}{|b_\lambda|\,\widehat{\operatorname{se}}_{\mathbf{v}}}
+			=\frac{|\Delta_{\mathbf{v}}(S)|}{\widehat{\operatorname{se}}_{\mathbf{v}}}
+			\qquad\text{for every admissible }S.
+		\end{align*}
+		For the directional problems, \(\max_{|S|=k}\Delta_\lambda(S)=b_\lambda\max_{|S|=k}\Delta_{\mathbf{v}}(S)\) when \(b_\lambda>0\), and \(\max_{|S|=k}\Delta_\lambda(S)=|b_\lambda|\max_{|S|=k}\{-\Delta_{\mathbf{v}}(S)\}\) when \(b_\lambda<0\).
+		
+		The implemented search also returns the same set. For \(b_\lambda>0\), write \(\eta_t^{\lambda}\) and \(S_t^{\lambda}\) for the Dinkelbach parameter and the top-\(k\) set after \(t\) iterations, started from \(\eta_0^{\lambda}=0\) as in \autoref{subsec:dinkelbach_optimisation}. Since \(w_i^{\lambda}=\widetilde{x}_i\widetilde{r}_{\lambda,i}=b_\lambda w_i^{\mathbf{v}}\) and \(c_i\) is unchanged, induction on \(t\) gives
+		\begin{equation}
+			\begin{aligned}
+				s_i^{\lambda}\bigl(\eta_t^{\lambda}\bigr)
+				&=w_i^{\lambda}+\eta_t^{\lambda}c_i
+				=b_\lambda\,s_i^{\mathbf{v}}\bigl(\eta_t^{\mathbf{v}}\bigr),
+				\qquad
+				S_{t+1}^{\lambda}=S_{t+1}^{\mathbf{v}},\\
+				\eta_{t+1}^{\lambda}
+				=\frac{W_\lambda(S_{t+1}^{\lambda})}{G(S_{t+1}^{\lambda})}
+				&=b_\lambda\,\eta_{t+1}^{\mathbf{v}} .
+			\end{aligned}
+			\label{eq:inv-dinkelbach-path}
+		\end{equation}
+		Positive scaling preserves the ordering of the scores, and a deterministic index-based tie-break resolves ties identically, so the two searches visit the same sets. The stopping rule compares successive parameters with an absolute tolerance, so the stopping iteration could differ only if an increment fell below that tolerance before the set stabilised.
+	\end{proof}
+	
+	The conclusion also holds under full refitting whenever the retained design \(D_{-S}\) has full column rank. In that case,
+	\begin{align*}
+		\widehat{\boldsymbol{\theta}}_{\lambda,-S}
+		=\bigl(D_{-S}^{\top}D_{-S}\bigr)^{-1}D_{-S}^{\top}
+		\bigl(D_{-S}\boldsymbol{\theta}_\lambda+b_\lambda\mathbf{v}_{-S}\bigr)
+		=\boldsymbol{\theta}_\lambda+b_\lambda\,\widehat{\boldsymbol{\theta}}_{\mathbf{v},-S}.
+	\end{align*}
+	The retained fitted-span component is therefore reproduced exactly, and with \(S=\varnothing\) the same identity holds for the full fit. The full-versus-deleted target-coefficient change is therefore multiplied by \(b_\lambda\), while the full-sample standard error is multiplied by \(|b_\lambda|\). The statistic of \autoref{subsec:misspecification} selects \(S_k\) by the fixed-residualised search and evaluates that set by full refitting. By \autoref{eq:inv-dinkelbach-path}, the search selects the same set at every severity. The refitted statistic is therefore invariant up to floating-point error.
+	
+	The linear-endogeneity design satisfies \autoref{eq:span-outcome}. Its error is \(\varepsilon_\lambda=\kappa_\lambda\{\lambda x^{s}+(1-\lambda^2)^{1/2}u\}\), with \(x^{s}\) the standardised regressor, \(u\) the standardised baseline error \(\varepsilon_0\), and \(\kappa_\lambda>0\) a scalar rescaling computed from the sample. Since \(x^{s}\) is affine in \(\mathbf{x}\) and \(u\) is affine in \(\varepsilon_0\), the outcome has the stated form with \(\mathbf{v}=\varepsilon_0\) and \(b_\lambda=\kappa_\lambda(1-\lambda^2)^{1/2}/\operatorname{sd}(\varepsilon_0)\). Hence \(b_\lambda\neq0\) for every \(\lambda\in[0,1)\), a range containing the simulated grid. Common random numbers fix \(\varepsilon_0\) across severities within a draw, so the MIS statistic coincides across severities up to floating-point error, as the recorded discrepancy of \(1.87\times10^{-13}\) confirms.
+	
+	\begin{corollary}
+		\label{cor:all-detectors}
+		Under \autoref{eq:span-outcome}, leverage values, Cook's distances and absolute DFBETAS, together with their induced rankings, do not depend on \(\lambda\). Whenever the retained design has full column rank, the standardised coefficient change obtained by deleting a fixed top-\(k\) set and refitting is likewise invariant. The implemented heteroskedasticity-robust RESET statistic and the studentised Breusch--Pagan statistic are also invariant.
+	\end{corollary}
+	
+	\begin{proof}
+		Let \(H=D(D^{\top}D)^{-1}D^{\top}\) and \(M_D=I-H\). The leverages \(h_{ii}=H_{ii}\) depend on \(D\) alone, and the full-model residuals satisfy
+		\begin{align*}
+			\mathbf{e}_\lambda
+			&=M_D\bigl(D\boldsymbol{\theta}_\lambda+b_\lambda\mathbf{v}\bigr)
+			=b_\lambda M_D\mathbf{v}
+			=b_\lambda\mathbf{e}_{\mathbf{v}},\\
+			s_\lambda&=|b_\lambda|\,s_{\mathbf{v}},
+			\qquad
+			s_{(i),\lambda}=|b_\lambda|\,s_{(i),\mathbf{v}} .
+		\end{align*}
+		\emph{Cook's distance and DFBETAS.} With \(p\) fitted coefficients and \(\mathbf{d}_i\) the \(i\)th row of \(D\),
+		\begin{align*}
+			C_{i,\lambda}
+			&=\frac{e_{i,\lambda}^2}{p\,s_\lambda^2}\,\frac{h_{ii}}{(1-h_{ii})^2}
+			=\frac{b_\lambda^2e_{i,\mathbf{v}}^2}{p\,b_\lambda^2s_{\mathbf{v}}^2}\,\frac{h_{ii}}{(1-h_{ii})^2}
+			=C_{i,\mathbf{v}},\\
+			\bigl|\mathrm{DFBETAS}_{ij,\lambda}\bigr|
+			&=\frac{\bigl|[(D^{\top}D)^{-1}\mathbf{d}_i]_j\,e_{i,\lambda}\bigr|}
+			{(1-h_{ii})\,s_{(i),\lambda}\,[(D^{\top}D)^{-1}]_{jj}^{1/2}}\\
+			&=\frac{|b_\lambda|\,\bigl|[(D^{\top}D)^{-1}\mathbf{d}_i]_j\,e_{i,\mathbf{v}}\bigr|}
+			{|b_\lambda|\,(1-h_{ii})\,s_{(i),\mathbf{v}}\,[(D^{\top}D)^{-1}]_{jj}^{1/2}}\\
+			&=\bigl|\mathrm{DFBETAS}_{ij,\mathbf{v}}\bigr| .
+		\end{align*}
+		The induced rankings, and hence the deleted top-\(k\) sets, are unchanged. The refitted change after deleting a fixed set is invariant by the full-refitting identity above.
+		
+		\emph{RESET.} Let \(U=[D,P]\), where \(P\) contains the added powers of the regressors, and let \(R\) select the coefficients on \(P\). Since \(D\boldsymbol{\theta}_\lambda\) lies in the span of \(U\),
+		\begin{align*}
+			\widehat{\boldsymbol{\gamma}}_\lambda
+			=(U^{\top}U)^{-1}U^{\top}\mathbf{y}_\lambda
+			=\begin{pmatrix}\boldsymbol{\theta}_\lambda\\ \mathbf{0}\end{pmatrix}
+			+b_\lambda\widehat{\boldsymbol{\gamma}}_{\mathbf{v}},
+			\qquad
+			R\widehat{\boldsymbol{\gamma}}_\lambda=b_\lambda R\widehat{\boldsymbol{\gamma}}_{\mathbf{v}},
+			\qquad
+			\mathbf{e}^{U}_\lambda=b_\lambda\mathbf{e}^{U}_{\mathbf{v}} .
+		\end{align*}
+		Any heteroskedasticity-consistent covariance estimator whose weights depend on \(U\) alone therefore satisfies \(\widehat{V}_\lambda=(U^{\top}U)^{-1}U^{\top}\Omega(\mathbf{e}^{U}_\lambda)U(U^{\top}U)^{-1}=b_\lambda^2\widehat{V}_{\mathbf{v}}\), and the Wald statistic is
+		\begin{align*}
+			\mathcal{W}_\lambda
+			=\bigl(R\widehat{\boldsymbol{\gamma}}_\lambda\bigr)^{\top}
+			\bigl(R\widehat{V}_\lambda R^{\top}\bigr)^{-1}
+			\bigl(R\widehat{\boldsymbol{\gamma}}_\lambda\bigr)
+			=\frac{b_\lambda^2}{b_\lambda^2}\,\mathcal{W}_{\mathbf{v}}
+			=\mathcal{W}_{\mathbf{v}} .
+		\end{align*}
+		\emph{Studentised Breusch--Pagan.} The statistic is \(nR^2\) from the regression of \(\mathbf{e}_\lambda^{2}=b_\lambda^2\mathbf{e}_{\mathbf{v}}^{2}\) on an intercept and the variance regressors. Multiplying the response by the constant \(b_\lambda^2\) multiplies the fitted and total sums of squares by \(b_\lambda^4\), so \(R^2\) is unchanged.
+	\end{proof}
+	
+	The corollary accounts for the behaviour of the competing diagnostics under linear endogeneity. Their diagnostic statistics are invariant across severity under this design, so applying the same calibration or significance rule yields the same rejection behaviour as under severity zero. The absence of increasing detection with severity is therefore a property of the design shared by all six procedures. The invariance requires the departure to lie in the fitted span up to a common residual scale. Nonlinear confounding uses a centred quadratic in \(x^{s}\), which lies outside the span of \(\{1,\mathbf{x}\}\); heteroskedasticity rescales each error by an observation-specific factor; and the additive mechanisms introduce components outside the fitted span. None of these satisfies \autoref{eq:span-outcome}. This is consistent with their detectability in \autoref{subsec:misspecification}.
+	
+	\subsection{Order of Growth of the Null Statistic}
+	\label{app:deriv-rootn}
+	
+	The \(\sqrt{n}\)-type scaling reported in \autoref{tab:05-null-scaling} has a simple asymptotic interpretation. Consider an idealised null model with independent and identically distributed observations, suitable moment and nonsingularity conditions, a deletion fraction \(k/n\to c\in(0,1)\), and residualised design information that remains of order \(n\) after any admissible size-\(k\) deletion. The two factors of \(T_k\) then have different orders. Upper-tail laws for the score contributions imply that the fixed-residualised maximum \(\max_{|S|=k}|\Delta(S)|\) is \(O_p(1)\) and bounded away from zero in probability.
+	
+	The lower bound on the numerator rests on a deterministic inequality. Let \(S_w\) collect the \(k\) largest scores \(w_i\), so that whenever \(W(S_w)\geq0\) the positive-denominator condition in \autoref{eq:positive_denominator} gives
+	\begin{align*}
+		\max_{|S|=k}\bigl|\Delta(S)\bigr|
+		\;\geq\;
+		\frac{W(S_w)}{G(S_w)}
+		\;\geq\;
+		\frac{W(S_w)}{T}
+		=\frac{n^{-1}\sum_{i\in S_w}w_i}{n^{-1}T}.
+	\end{align*}
+	This inequality holds for every sample. In the idealised model, the right-hand numerator converges to the upper-\(c\) tail mean of the score, which is positive for any non-degenerate mean-zero score. The right-hand denominator converges to the second moment of the residualised regressor.
+	
+	The conventional OLS standard error is \(O_p(n^{-1/2})\), because the residual scale converges while the residualised design information grows linearly in \(n\), and the two orders combine as
+	\begin{align*}
+		T_k
+		=\underbrace{\max_{|S|=k}\bigl|\Delta(S)\bigr|}_{\text{order }1}
+		\;\Big/\;
+		\underbrace{\widehat{\operatorname{se}}(\widehat{\beta})}_{\text{order }n^{-1/2}}
+		=\Theta_p\bigl(\sqrt{n}\bigr).
+	\end{align*}
+	The fixed-residualised statistic therefore grows at rate \(\sqrt{n}\).
+	
+	Two features of the simulations lie outside this argument. The reported statistic evaluates the selected set by full refitting, as described in \autoref{app:deriv-invariance}. Several designs also depart from its literal assumptions, because baseline errors are centred at their sample mean, contaminated generators fix the number of contaminated draws, and the GPD and Pareto errors lack finite fourth moments. The fitted log--log slopes near \(0.47\) are consistent with the predicted \(\sqrt{n}\) order. The argument does not determine their finite-sample value, so empirical calibration within each environment remains the basis for the reported null cutoffs.
+	
+\end{document}
