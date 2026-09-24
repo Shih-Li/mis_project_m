@@ -451,7 +451,7 @@ coef_compare <- data.frame(
     "Leverage",
     "DFBETAS",
     "MIS",
-    "True bad\nset"
+    "Oracle bad-\nleverage set"
   ),
   
   beta = c(
@@ -479,10 +479,15 @@ recovery_compare <- c(
 
 # Expected pedagogical structure:
 #
-#   Good leverage      -> classical leverage can identify it.
-#   Response outlier   -> Cook's distance can identify it.
-#   Bad leverage 1:10  -> classical LOO diagnostics miss the coalition.
-#                         Exact fixed-k MIS recovers 1:10 jointly.
+#   Visually unusual observations are not necessarily the observations
+#   that matter most for the prespecified target coefficient.
+#
+#   Under the same fixed deletion budget, classical observation-level
+#   rankings and joint MIS selection can choose substantially different
+#   subsets and therefore produce different target-slope errors.
+#
+#   The oracle bad-leverage set provides the benchmark for the known
+#   harmful observations planted by the DGP.
 #
 # The important change relative to the current script is that the
 # three colours describe the TRUE contamination topology, not the
@@ -562,7 +567,7 @@ draw_panels <- function() {
   # ============================================================
   
   draw_base(
-    "Contamination Topology (Each Cluster Has n = 10)"
+    "Illustrative Contamination Configuration"
   )
   
   # Highlight the contamination clusters
@@ -652,8 +657,8 @@ draw_panels <- function() {
       "gray90"
     ),
     border = "gray30",
-    ylab = "Absolute slope error",
-    main = "Same 20-Point Budget: Which Method Finds the Harmful Points?",
+    ylab = "Absolute target-slope error",
+    main = "Target-Slope Error After Deletion",
     cex.names = 0.78
   )
   
@@ -664,7 +669,7 @@ draw_panels <- function() {
       coef_compare$error
     ),
     sprintf(
-      "error = %.3f\nbad = %d/%d",
+      "error = %.3f\nBL recovered\n= %d/%d",
       coef_compare$error,
       recovery_compare,
       k_bad
@@ -698,7 +703,7 @@ draw_panels <- function() {
   
   mtext(
     sprintf(
-      "Every method removes %d observations; bars show remaining slope error",
+      "Each diagnostic deletes %d observations; bars show resulting target-slope error",
       k_select
     ),
     side = 3,

@@ -32,6 +32,8 @@ output/**
 
 !output/**/figures/**/*.pdf
 
+!output/fig1_classical_vs_mis_demo.pdf
+
 !output/**/tables/**/*.tex
 
 data/*
