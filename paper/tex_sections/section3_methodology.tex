@@ -34,7 +34,9 @@ The Frisch--Waugh--Lovell theorem isolates the target coefficient by partialling
 \end{equation}
 This representation reduces estimation of the target coefficient to a scalar regression once the nuisance regressors have been partialled out. 
 
-The analysis adopts a fixed-residualised convention for deletion. The residualised quantities $\widetilde{x}_i$ and $\widetilde{y}_i$ are computed on the full sample and held fixed under deletion. Subsequent leave-set-out calculations therefore refer to the coefficient obtained from this fixed residualised regression over the retained observations. Accordingly, $\widehat{\beta}_{-S}$ need not coincide with the coefficient obtained by refitting the full regression specification on $[n]\setminus S$, because the nuisance projection is not re-estimated after deletion. This convention defines the linear-fractional objective used below. The global-optimality result for the Dinkelbach procedure refers to this fixed-residualised objective \parencite{konrad2026finding}.
+The analysis adopts a fixed-residualised convention for deletion. The residualised quantities $\widetilde{x}_i$ and $\widetilde{y}_i$ are computed on the full sample and held fixed under deletion. Subsequent leave-set-out calculations therefore refer to the coefficient obtained from this fixed residualised regression over the retained observations. Accordingly, $\widehat{\beta}_{-S}$ need not coincide with the coefficient obtained by refitting the full regression specification on $[n]\setminus S$, because the nuisance projection is not re-estimated after deletion. This convention defines the linear-fractional objective used below. The global-optimality result for the Dinkelbach procedure refers to this fixed-residualised objective \parencite{konrad2026finding}. 
+
+Throughout, ``exact'' refers to global optimisation of the stated fixed-\(k\) MIS objective under the fixed-residualisation formulation. It does not imply equivalence with exhaustive full refitting of the original multivariate regression model. When a selected deletion set is subsequently evaluated by re-estimating the original model specification, this procedure is referred to as full-refit validation.
 
 Define the corresponding residual of the residualised target regression by
 \begin{equation}
@@ -196,7 +198,7 @@ The optimisation proceeds iteratively. The implementation initialises $\eta=0$ a
 	\frac{W(S)}{G(S)}.
 	\label{eq:dinkelbach_update}
 \end{equation}
-The updated ratio generates a new set of transformed scores and hence a new top-$k$ candidate set. Under exact arithmetic and exact top-$k$ selection, the Dinkelbach sequence terminates finitely \parencite{konrad2026finding,dinkelbach1967nonlinear}. The numerical implementation applies a ratio tolerance of $10^{-9}$ and imposes a finite iteration safeguard; numerical convergence is assessed separately in \autoref{app:numerical}.
+The updated ratio generates a new set of transformed scores and hence a new top-$k$ candidate set. Under Dinkelbach-based arithmetic and Dinkelbach-based fixed-$k$ selection, the Dinkelbach sequence terminates finitely \parencite{konrad2026finding,dinkelbach1967nonlinear}. The numerical implementation applies a ratio tolerance of $10^{-9}$ and imposes a finite iteration safeguard; numerical convergence is assessed separately in \autoref{app:numerical}.
 
 For fixed residualised inputs and under the positive-denominator condition in \autoref{eq:positive_denominator}, the Dinkelbach formulation identifies a global maximiser of the fixed-$k$ linear-fractional objective \parencite{konrad2026finding,dinkelbach1967nonlinear}. The result remains conditional on $k$. The global-optimality result applies to the fixed-residualised objective in \autoref{eq:fixed_k_fractional_problem}, which reproduces the set-DFBETA under the convention adopted in \autoref{subsec:regression_setup}.
 
