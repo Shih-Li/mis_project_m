@@ -78,7 +78,7 @@
 		\end{align*}
 	\end{proof}
 	
-	For fixed \(B\), the bound depends on \(n\) only through \(c\). In the implementation, \(B\) may itself change with \(n\) and \(k\), and the exact ratio additionally reflects integer rounding in \(m\). With \(B_{\min}=10\), the bound gives \(c\leq0.048\) at \(r=1/2\) and \(c\leq0.024\) at \(r=1/4\), which are the values stated in \autoref{subsec:evt_fixed_k} for the two ratio thresholds.
+	For fixed \(B\), the bound depends on \(n\) only through \(c\). In the implementation, \(B\) may itself change with \(n\) and \(k\), and the exact ratio additionally reflects integer rounding in \(m\). With \(B_{\min}=10\), the bound gives \(c\leq0.048\) at \(r=1/2\) and \(c\leq0.024\) at \(r=1/4\). These bounds quantify why block-maxima calibration becomes restrictive as the deletion fraction increases.
 	
 	\begin{corollary}
 		\label{cor:block-rule}

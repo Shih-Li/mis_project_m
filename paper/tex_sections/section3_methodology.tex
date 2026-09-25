@@ -3,9 +3,9 @@
 \section{Methodology}
 \label{sec:methodology}
 
-This section develops a framework for identifying and assessing jointly influential observations with respect to a prespecified target coefficient. The analysis first isolates that coefficient and defines the set-DFBETA as the coefficient change induced by deleting a group of observations. Conditional on a fixed set size $k$, the most influential set (MIS) is the size-$k$ deletion set that maximises this change in a prespecified direction. A Dinkelbach formulation identifies a global maximiser of the resulting fixed-residualised linear-fractional problem under a positive-denominator condition. Fixed-\(k\) MIS is used here as a coefficient-targeted diagnostic for joint influence. Its organising quantity is movement in a prespecified regression coefficient under set deletion. Outlier classification, robust estimation, omnibus specification testing, model repair, and causal identification are separate statistical tasks.
+This section defines fixed-\(k\) MIS as a coefficient-targeted diagnostic for joint influence. The analysis isolates a prespecified regression coefficient, expresses its change under set deletion as a set-DFBETA, and searches for the size-\(k\) set that maximises that change. Global optimisation refers specifically to the stated fixed-residualised objective. Outlier classification, robust estimation, omnibus specification testing, model repair, and causal identification remain separate statistical tasks.
 
-The set size $k$ is treated throughout as a sensitivity parameter rather than as an unknown quantity to be estimated. Different values of $k$ therefore correspond to different deletion budgets and may reveal different, simultaneously relevant aspects of coefficient sensitivity. Where inferential calibration is required, it is supplied separately from the optimisation step. The distributional-recovery analysis uses an extreme-value reference distribution for fixed-$k$ maximal influence, whereas the model-misspecification analysis uses independently simulated empirical null distributions. The role and choice of $k$ in each simulation design are described below.
+The deletion size \(k\) is treated as a sensitivity parameter. Different values of \(k\) define different deletion budgets, while inferential calibration is handled separately from optimisation. The simulation designs use either oracle-assisted values of \(k\) or analyst-specified deletion fractions, as described at the end of this section.
 
 \subsection{Regression setup and target coefficient}
 \label{subsec:regression_setup}
@@ -50,18 +50,7 @@ These residuals record the variation in the residualised outcome that remains af
 \subsection{Set influence and set-DFBETA}
 \label{subsec:set_influence}
 
-Set influence measures the change in the value of a prespecified scalar target functional after deleting a group of observations. Let $\phi$ denote that target functional. For a deletion set $S\subseteq[n]$, define
-\begin{equation}
-	\Delta(S;\phi)
-	=
-	\phi(\widehat{\beta})
-	-
-	\phi(\widehat{\beta}_{-S}).
-	\label{eq:set_influence}
-\end{equation}
-This quantity compares the full-sample target with its fixed-residualised leave-set-out value \parencite{konrad2026finding}. The functional $\phi$ determines the target quantity and the direction in which influence is evaluated.
-
-For the target coefficient itself, set $\phi(\beta)=\beta$. Set influence then becomes
+For a deletion set \(S\subseteq[n]\), define the coefficient-targeted set influence by
 \begin{equation}
 	\Delta(S)
 	=
@@ -69,6 +58,15 @@ For the target coefficient itself, set $\phi(\beta)=\beta$. Set influence then b
 	-
 	\widehat{\beta}_{-S}.
 	\label{eq:set_dfbeta}
+\end{equation}
+This quantity is referred to throughout the thesis as the \emph{set-DFBETA}. Its sign records the direction of coefficient movement: a positive value indicates that deleting \(S\) lowers the target estimate, while a negative value indicates that deletion raises it.
+
+For the target coefficient itself, set $\phi(\beta)=\beta$. Set influence then becomes
+\begin{equation}
+	\widehat{\beta}-\widehat{\beta}_{-S}
+	=
+	\frac{\sum_{s\in S}\widetilde{x}_s\widetilde{r}_s}
+	{\sum_{t\notin S}\widetilde{x}_t^2}.
 \end{equation}
 This coefficient change is referred to throughout the thesis as the \emph{set-DFBETA}, and its sign records the direction of movement. A positive value indicates that deleting $S$ lowers the target estimate, and a negative value indicates that deletion raises it.
 
@@ -92,36 +90,19 @@ Set influence is a joint property of the selected observations. Changing the mem
 \subsection{Fixed-\texorpdfstring{$k$}{k} most influential sets}
 \label{subsec:fixed_k_mis}
 
-Once set influence has been defined, the most influential set can be identified conditional on a prespecified set size. For $k<n$, the fixed-$k$ most influential set is defined as
+For a prespecified deletion size \(k<n\), the fixed-\(k\) MIS is defined by
 \begin{equation}
-	S_k^{\max}
+	S_k^*
 	\in
 	\arg\max_{\substack{S\subseteq[n]\\|S|=k}}
-	\Delta(S;\phi),
-	\label{eq:fixed_k_mis}
-\end{equation}
-where $\phi$ is the target functional defined in \autoref{eq:set_influence}. The corresponding maximum influence is
-\begin{equation}
-	\Delta_k^{\max}
-	=
-	\Delta(S_k^{\max};\phi).
-	\label{eq:maximum_influence}
-\end{equation}
-Here, $S_k^{\max}$ denotes a size-$k$ deletion set attaining the largest value of the influence measure defined in \autoref{eq:set_influence}, while $\Delta_k^{\max}$ records the resulting maximum influence \parencite{konrad2026finding}.
-
-The target functional $\phi$ determines how coefficient movement is evaluated. For the coefficient target, the fixed-$k$ problem can be evaluated in either direction of coefficient change; when direction is not itself of substantive interest, the corresponding absolute influence can be summarised as
-\begin{equation}
-	\max_{\substack{S\subseteq[n]\\|S|=k}}
 	|\Delta(S)|.
 	\label{eq:absolute_fixed_k_influence}
 \end{equation}
-The directional decomposition is therefore primarily a computational device for locating influential sets, while the substantive object remains the magnitude of target-coefficient sensitivity at the specified deletion budget.
+The absolute value allows influential movement in either coefficient direction. Computationally, the two directional problems can be solved separately and compared after optimisation.
 
-The set size $k$ is treated as a sensitivity parameter rather than as a latent quantity to be estimated. Conditional on a chosen deletion budget $k$, the optimisation in \autoref{eq:fixed_k_mis} determines which size-$k$ set produces the greatest target-coefficient influence. The framework therefore does not require a uniquely correct value of $k$. Different values of $k$ ask different sensitivity questions and may reveal different, simultaneously relevant influential structures.
+The set size \(k\) is a sensitivity parameter rather than a latent quantity to be estimated. Each value of \(k\) defines a separate deletion-budget question and can have a different maximising set. A sequence of prespecified values therefore describes an influence profile without implying that one of those values is the uniquely correct influential-set size.
 
-Several prespecified values of $k$ can consequently be examined to trace a fixed-$k$ sensitivity profile. Each point on this profile remains a separate optimisation problem, with its own maximising set and maximum influence. Comparisons across values of $k$ describe how coefficient sensitivity evolves as the permitted deletion budget changes; they are not used to estimate a unique ``true'' influential-set size.
-
-Direct enumeration becomes computationally infeasible as the sample size and set size increase. The definition in \autoref{eq:fixed_k_mis} ranges over all $\binom{n}{k}$ subsets of size $k$, and the number of candidates grows rapidly in both $n$ and $k$. The leave-set-out representation in \autoref{eq:set_dfbeta_ratio} supplies additional structure, since the numerator and the denominator are each additive in set membership. This structure permits the fixed-$k$ problem to be written as a linear-fractional optimisation problem. The following subsection develops that formulation and the associated Dinkelbach procedure.
+Direct enumeration requires evaluation of \(\binom{n}{k}\) subsets. The closed-form set-DFBETA supplies additional structure because both its numerator and denominator are additive in set membership. This yields the linear-fractional optimisation problem used below.
 
 \subsection{Linear-fractional reduction and Dinkelbach-based fixed-\texorpdfstring{$k$}{k} optimisation}
 \label{subsec:dinkelbach_optimisation}
@@ -166,68 +147,26 @@ Under this condition, deleting any admissible size-$k$ set leaves positive resid
 \end{equation}
 This formulation preserves the joint dependence of the numerator and denominator on the selected deletion set \parencite{konrad2026finding}.
 
-The fractional objective can be transformed using the Dinkelbach parameter $\eta$ \parencite{dinkelbach1967nonlinear}. For a given value of $\eta$, define
-\begin{equation}
-	F_{\eta}(S)
-	:=
-	W(S)-\eta G(S).
-	\label{eq:dinkelbach_function}
-\end{equation}
-Substituting the definitions in \autoref{eq:WG_definitions} gives
-\begin{equation}
-	F_{\eta}(S)
-	=
-	\sum_{i\in S}\left(w_i+\eta c_i\right)-\eta T.
-	\label{eq:dinkelbach_expansion}
-\end{equation}
-The transformed contribution of observation $i$ is therefore
-\begin{equation}
-	s_i(\eta)
-	:=
-	w_i+\eta c_i.
-	\label{eq:dinkelbach_score}
-\end{equation}
-For a given $\eta$, these scores determine the top-$k$ candidate set.
+Under the positive-denominator condition, the fixed-\(k\) problem is a linear-fractional optimisation problem. For a Dinkelbach parameter \(\eta\), the transformed objective ranks observations by
+\[
+s_i(\eta)=w_i+\eta c_i.
+\]
+Conditional on \(\eta\), the maximising candidate consists of the \(k\) observations with the largest transformed scores. The ratio is then updated using \(\eta=W(S)/G(S)\), and the top-\(k\) problem is resolved. Under exact arithmetic and exact top-\(k\) selection, the sequence terminates finitely \parencite{dinkelbach1967nonlinear,konrad2026finding}.
 
-For a fixed value of $\eta$, the term $-\eta T$ in \autoref{eq:dinkelbach_expansion} is constant across all candidate sets. Maximising $F_{\eta}(S)$ subject to $|S|=k$ therefore reduces to selecting the $k$ observations with the largest values of $s_i(\eta)$. The transformed problem consequently replaces enumeration of all $\binom{n}{k}$ deletion sets with a top-$k$ selection conditional on the current value of the Dinkelbach parameter \parencite{konrad2026finding}.
-
-The optimisation proceeds iteratively. The implementation initialises $\eta=0$ and computes the transformed scores $s_i(\eta)$ for all observations. The $k$ largest scores determine a candidate set $S$, from which $W(S)$ and $G(S)$ are evaluated. The parameter is then updated according to
-\begin{equation}
-	\eta
-	\leftarrow
-	\frac{W(S)}{G(S)}.
-	\label{eq:dinkelbach_update}
-\end{equation}
-The updated ratio generates a new set of transformed scores and hence a new top-$k$ candidate set. Under exact arithmetic and exact top-$k$ selection, the Dinkelbach sequence terminates finitely \parencite{konrad2026finding,dinkelbach1967nonlinear}. The numerical implementation applies a ratio tolerance of $10^{-9}$ and imposes a finite iteration safeguard; numerical convergence is assessed separately in \autoref{app:numerical}.
-
-For fixed residualised inputs and under the positive-denominator condition in \autoref{eq:positive_denominator}, the Dinkelbach formulation identifies a global maximiser of the fixed-$k$ linear-fractional objective \parencite{konrad2026finding,dinkelbach1967nonlinear}. The result remains conditional on $k$. The global-optimality result applies to the fixed-residualised objective in \autoref{eq:fixed_k_fractional_problem}, which reproduces the set-DFBETA under the convention adopted in \autoref{subsec:regression_setup}.
-
-The algorithmic study in \autoref{app:numerical} provides a computational check on this choice of optimiser. Among the refined variants reported in \autoref{app:numerical}, the greedy and Dinkelbach-based procedures attained a median influence ratio of $1.00$, with 10th and 90th percentiles also equal to $1.00$. These summaries indicate no material difference in captured influence between the two procedures. Median runtimes were $0.008$ and $0.005$ seconds, respectively, so the Dinkelbach-based procedure remained computationally inexpensive in the designs examined. Overlap with the injected set was not uniformly higher under Dinkelbach-based search. The
-fixed-$k$ influence objective and recovery of the injected observation labels are distinct targets, so global optimisation of the former need not maximise agreement with the latter. The Dinkelbach-based procedure is retained because it identifies a global maximiser of the specified fixed-residualised objective while remaining computationally practical in the simulations. Whether the attained maximum is large relative to a reference distribution for the selected maximum is a separate question, addressed in the following subsection.
+For fixed residualised inputs and the positive-denominator condition in \autoref{eq:positive_denominator}, this procedure identifies a global maximiser of the stated fixed-\(k\) linear-fractional objective. This is the scope of ``exact'' optimisation used throughout the thesis. It does not imply global optimisation of the coefficient obtained after re-estimating the complete multivariate model. Full-refit validation remains a separate operation. Numerical convergence and computational checks are reported in \autoref{app:numerical}.
 
 \subsection{EVT-based inference for fixed-\texorpdfstring{$k$}{k} MIS}
 \label{subsec:evt_fixed_k}
 
-Fixed-$k$ optimisation identifies the deletion set attaining the largest influence at a prespecified deletion budget. Because this set is selected by maximising over many candidate subsets, its attained influence cannot be interpreted in the same way as the influence of an arbitrary prespecified set. Extreme value theory (EVT) supplies a reference distribution for this comparison \parencite{konrad2026testing}. The distributional-recovery study implements the construction in a restricted form. The set submitted to the EVT test is the injected set under contamination and a randomly drawn size-$k$ set under the clean design, so the reported rejection rates calibrate a prespecified set against the blockwise reference. Calibration of the maximising set is left outside the simulations.
+Optimisation identifies a maximising set, while statistical calibration asks whether the resulting influence is unusually large. Because a fixed-\(k\) maximum is selected over many overlapping deletion sets, its reference distribution differs from that of one prespecified deletion set. The distributional-recovery simulation uses a block-maxima extreme-value construction as one calibration device \parencite{konrad2026testing}. In that simulation, the tested set is the injected set under contamination and a randomly selected size-\(k\) set under the clean design; calibration of the maximising set itself is outside the simulation design.
 
-The implementation uses a block-maxima construction. After excluding the tested set, the remaining full-sample residualised observations are partitioned into blocks. Within each block, a size-$k$ influential set is obtained using the fixed-residualised Dinkelbach search. The absolute blockwise influence values are then used to fit a generalised extreme value (GEV) reference distribution, against which the absolute influence of the tested set is evaluated. When the requested number of blocks is incompatible with the sample size and deletion budget, the number of blocks is reduced so that a size-$k$ search remains feasible within each block.
-
-Block size relative to the deletion budget governs whether the blockwise values behave as maxima. Writing $B$ for the number of blocks and $c=k/n$ for the deletion fraction, each block holds $(n-k)/B$ observations, so the ratio of $k$ to block size equals $cB/(1-c)$. Ignoring integer rounding, sample size cancels from this expression. Increasing $n$ therefore does not reduce degeneracy at a fixed deletion fraction, and the ratio can be controlled only through $B$ and $c$. Holding the ratio at or below one half while retaining at least ten block maxima restricts the deletion fraction to approximately $c\leq0.048$; the corresponding bound at a ratio of one quarter is approximately $c\leq0.024$. The calibration is therefore informative only at small deletion budgets. The block rule used in the simulations does not target this bound, because it caps a requested block count at the largest value admitting a size-$k$ search.
-
-EVT is therefore a calibration device conditional on the chosen value of $k$; it does not determine $k$ and is not required for the definition or optimisation of MIS itself. Detailed diagnostics for block construction, GEV fitting, numerical convergence, and null behaviour are reported in \autoref{app:numerical}. The model-misspecification study does not use EVT calibration and instead constructs environment-specific empirical null distributions from independent simulation draws.
+The block-maxima construction is reliable only when the deletion budget remains sufficiently small relative to the observations available within each block. Detailed block-size restrictions, GEV diagnostics, numerical checks, and null-calibration results are reported in the appendices. EVT remains conditional on the chosen \(k\), does not determine the deletion budget, and is not required for defining or optimising MIS. The misspecification simulation instead uses independently simulated empirical null distributions.
 
 \subsection{Role of \texorpdfstring{$k$}{k} in the simulation designs}
 \label{subsec:k_simulation_role}
 
-The simulation designs use $k$ in two different ways. In the distributional-recovery and robust-comparison studies, the data-generating process supplies a deletion budget matching the number of injected observations. This allows localisation and estimation to be studied conditional on a known benchmark size. In the misspecification study, no unique influential-set size is assumed to exist; several analyst-chosen deletion fractions are instead examined as separate sensitivity budgets.
+The simulations use \(k\) in two ways. In the distributional-recovery and robust-estimation studies, the data-generating process supplies an oracle deletion budget equal to the injected-set size. The distributional-recovery study additionally uses the known injected set to resolve the directional ambiguity of the fixed-\(k\) search, while observation identities remain unavailable to the optimiser. These designs therefore provide oracle-assisted localisation benchmarks and deliberately hold empirical selection of \(k\) outside the analysis.
 
-In the distributional-recovery study, the simulation supplies oracle $k$, and the known injected set is used to resolve the directional ambiguity of the fixed-$k$ search. The resulting recovery measure should therefore be interpreted as an oracle-assisted localisation benchmark. In the robust-comparison study, the injected set determines the benchmark direction of coefficient movement, after which the Dinkelbach-based search selects observation identities without access to the injected labels. In both studies, the empirical problem of selecting $k$ is deliberately held outside the analysis.
-
-The model-misspecification simulations instead use the analyst-chosen deletion fractions
-\[
-\frac{k}{n}\in\{0.01,0.025,0.05,0.10\}.
-\]
-For each fraction, the implementation sets $k=\lfloor n(k/n)\rfloor$, subject to the feasibility bounds imposed in the simulation code. These values represent fixed sensitivity budgets rather than estimates of an underlying influential-set size. The primary operating point is $k/n=0.025$, while the remaining fractions show how diagnostic behaviour changes as the deletion budget varies. Each value is interpreted separately, and no minimum across the fixed-$k$ assessments is used as a combined inferential criterion.
-
+The misspecification study assumes no underlying influential-set size and instead evaluates analyst-specified deletion fractions \(k/n\in\{0.01,0.025,0.05,0.10\}\). The implementation rounds the corresponding sample count to a feasible integer, with \(k/n=0.025\) treated as the primary operating point. Each fraction defines a separate sensitivity budget; the analysis does not combine them to estimate a unique value of \(k\).
 
 \end{document}
