@@ -32,143 +32,59 @@ where \(\widehat{\beta}_{\mathrm{full}}\) is the validated full-sample coefficie
 \subsection{Study 01: Mobile Money}
 \label{app:application-01}
 
-The first audit considers the primary capital outcome studied by \textcite{riley2024resisting}. The target is the coefficient on Mobile Disburse, denoted by \texttt{treatment3}, in the paper's fixed-effects OLS specification. The regression includes baseline capital, the alternative treatment indicator, and randomization-strata fixed effects. The validated estimation sample contains \(N=2{,}639\) observations, and the full-sample target coefficient is
-\[
-\widehat{\beta}_0=69.2072.
-\]
-The MIS representation replaces the absorbed fixed effects with explicit indicators and reproduces the target coefficient to numerical precision. Exact deletion refits then use the original fixed-effects estimator.
-
-The coefficient responds to deletions well below the common \(5\%\) budget. Along the corresponding searched paths, a \(50\%\) amplification is first attained after deleting \(13\) observations, approximately \(0.49\%\) of the estimation sample, while a \(50\%\) attenuation is first attained after \(14\) deletions, approximately \(0.53\%\). The first zero crossing occurs at \(k=41\), corresponding to approximately \(1.55\%\) of the sample. The selected capital coefficient is therefore sensitive to feasible deletion sets containing a small fraction of the validated estimation sample.
-
+The mobile-money audit targets the Mobile Disburse coefficient, \texttt{treatment3}, in the fixed-effects OLS specification of \textcite{riley2024resisting}. The validated sample contains \(N=2{,}639\) observations, with \(\widehat{\beta}_{\mathrm{full}}=69.2072\). The MIS representation replaces the absorbed randomization-strata fixed effects with explicit indicators, while full-refit validation uses the original fixed-effects estimator. The first searched zero crossing occurs after deleting \(41\) observations, approximately \(1.55\%\) of the estimation sample.
 
 \subsection{Study 02: Vaccine Delivery}
 \label{app:application-02}
 
-The second audit considers Table 1, column (1), of \textcite{meriggi2024lastmile}. The outcome is endline vaccination status, and the target coefficient is the door-to-door treatment indicator \texttt{treat\_dtd}. The alternative treatment arm, \texttt{treat\_small}, remains in the regression as a nuisance treatment regressor. The validated fixed-effects estimation sample contains \(N=12{,}096\) observations, with
-\[
-\widehat{\beta}_0=0.2935.
-\]
-The search representation uses explicit fixed-effect indicators, while exact deletion refits preserve the paper's fixed-effects estimator. Community-level clustering affects inference but does not change the point coefficient targeted by the audit.
-
-This coefficient is comparatively stable over the searched deletion range. A \(50\%\) attenuation is first reached after deleting \(505\) observations, approximately \(4.17\%\) of the estimation sample. A \(50\%\) amplification is not reached, and the coefficient does not cross zero within the maximum audited deletion share of approximately \(5\%\). The audited coefficient therefore remains positive throughout the searched deletion budget.
-
-
+The vaccine-delivery audit targets the door-to-door treatment coefficient \texttt{treat_dtd} in Table 1, column (1), of \textcite{meriggi2024lastmile}. The validated fixed-effects sample contains \(N=12{,}096\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.2935\); the alternative treatment arm remains in the regression as a nuisance regressor. The search uses explicit fixed-effect indicators and full-refit validation preserves the paper's fixed-effects estimator. The coefficient does not cross zero within the approximately \(5\%\) audit budget, although a \(50\%\) attenuation is first reached after \(505\) deletions, approximately \(4.17\%\) of the sample.
 
 \subsection{Study 03: Self-Esteem}
 \label{app:application-03}
 
-The third audit examines the first-follow-up, full-sample specification from Table 5 of \textcite{gallego2024s}. The outcome is standardized Rosenberg self-esteem, \texttt{sd\_rosen1}, and the target is the treatment coefficient. The preferred linear specification includes baseline self-esteem, baseline characteristics, and randomization-strata indicators. The validated sample contains \(N=634\) observations, with
-\[
-\widehat{\beta}_0=0.2317.
-\]
-Because heteroskedasticity-robust covariance estimation does not alter the OLS point estimate, the same linear specification is used for the MIS search and the exact point-estimate refits.
-
-A \(50\%\) attenuation is attained after deleting \(16\) observations, approximately \(2.52\%\) of the sample, while a \(50\%\) amplification requires \(18\) observations, approximately \(2.84\%\). The coefficient does not cross zero within the maximum deletion budget. The audit therefore identifies substantial movement in the magnitude of the treatment coefficient without a reversal of its sign.
-
-
+The self-esteem audit uses the first-follow-up full-sample specification from Table 5 of \textcite{gallego2024s} and targets the treatment coefficient for standardized Rosenberg self-esteem. The validated sample contains \(N=634\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.2317\). Heteroskedasticity-robust covariance estimation does not alter the OLS point estimate, so the same linear specification is used for the search and full-refit validation. The coefficient does not cross zero within the audit budget; a \(50\%\) attenuation is first reached after \(16\) deletions, approximately \(2.52\%\) of the sample.
 
 \subsection{Study 04: Health Information and Survival}
 \label{app:application-04}
 
-The fourth audit considers the survival analysis in \textcite{ciancio2025surviving}. The target is the coefficient on \texttt{learnhivpos} in the reported OLS companion specification for survival in 2018. The regression retains the coefficient for learning HIV-negative status and controls for HIV status, sex, age, age squared, and regional indicators. The validated estimation sample contains \(N=2{,}332\) observations, with
-\[
-\widehat{\beta}_0=-0.1566.
-\]
+The health-information audit targets \texttt{learnhivpos} in the reported OLS companion specification for survival in \textcite{ciancio2025surviving}. The validated sample contains \(N=2{,}332\) observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.1566\). The first searched zero crossing occurs after deleting \(17\) observations, approximately \(0.73\%\) of the estimation sample.
 
-The coefficient is sensitive to small deletion sets. A \(50\%\) amplification in the original negative direction is reached after deleting \(5\) observations, approximately \(0.21\%\) of the estimation sample, while a \(50\%\) attenuation is reached after \(9\) deletions, approximately \(0.39\%\). The coefficient first crosses zero after deleting \(17\) observations, approximately \(0.73\%\) of the sample. The audit also records non-nested transitions along the deletion paths, indicating that the composition of the selected influential set can change as \(k\) increases.
-
-The scope of this audit is narrower than the preferred causal analysis in \textcite{ciancio2025surviving}. The paper's preferred specifications use instrumental variables and efficient linear GMM, while the current shared MIS engine is defined for a linear OLS representation. The results in this appendix therefore apply to the reported OLS companion coefficient and do not constitute a deletion audit of the preferred IV/GMM causal estimate.
-
+The source study's preferred causal specifications use instrumental variables and efficient linear GMM. Those estimators lie outside the current linear MIS search framework. The audit therefore characterises sensitivity of the reported OLS companion coefficient and does not constitute a deletion audit of the preferred IV/GMM estimate.
 
 \subsection{Study 05: Cash versus In-Kind Transfers}
 \label{app:application-05}
 
-The fifth audit examines aggregate food consumption in \textcite{cunha2014testing}. The target is the contrast between the in-kind treatment effect and the equal-value cash treatment effect,
-\[
-\operatorname{ATT}(\text{In-kind})
--
-\operatorname{ATT}_{EQ}(\text{Cash}).
-\]
-The validated analysis uses the no-village-controls specification. An algebraic reparameterization places this contrast directly on the coefficient \texttt{ik\_minus\_eq\_cash} without changing the model span, fitted values, residuals, or estimation sample. The validated sample contains \(N=10{,}985\) observations, and the baseline contrast is
-\[
-\widehat{\beta}_0=-0.8861.
-\]
+The cash-versus-in-kind audit considers the aggregate food-consumption analysis of \textcite{cunha2014testing}. The target is the contrast between the in-kind and equal-value cash treatment effects, represented directly by \texttt{ik_minus_eq_cash}. The validated no-village-controls specification contains \(N=10{,}985\) observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.8861\). The algebraic reparameterization leaves the model span, fitted values, residuals, and estimation sample unchanged. The first searched zero crossing occurs at \(k=1\), approximately \(0.009\%\) of the estimation sample.
 
-This application exhibits the earliest threshold crossings among the ten searched audit paths. On the relevant directional paths, the \(50\%\) attenuation, \(50\%\) amplification, and zero-crossing thresholds are each first attained at \(k=1\), corresponding to approximately \(0.009\%\) of the estimation sample. Different directional searches can select different observations at the same deletion size, so these thresholds do not necessarily refer to the same deleted observation.
-
-The scope qualification is important. The replication retains unresolved differences in the fully controlled aggregate-consumption specification, whereas the no-village-controls aggregate regression reproduces the relevant benchmark and is therefore used for the MIS audit. The results should consequently be interpreted as sensitivity of this validated no-village-controls contrast.
-
-
+The fully controlled aggregate-consumption replication retains unresolved differences from the reported benchmark. The audit therefore uses the validated no-village-controls specification, and its sensitivity results apply to that contrast.
 
 \subsection{Study 06: Workforce Grant}
 \label{app:application-06}
 
-The sixth audit considers the main intent-to-treat employment specification in \textcite{mcintosh2022using}. The outcome is \texttt{bn\_employed}, and the target coefficient is \texttt{treat\_HD}. The paper estimates the model by fixed-weight weighted least squares with baseline outcomes, selected controls, and randomization-block indicators. The validated sample contains \(N=1{,}770\) observations, with
-\[
-\widehat{\beta}_0=0.0231.
-\]
-
-The MIS search represents the fixed-weight estimator through the exact transformation
-\[
-y_i^*=\sqrt{w_i}y_i,
-\qquad
-X_i^*=\sqrt{w_i}X_i.
-\]
-Deleting a transformed row is therefore equivalent to deleting the corresponding original observation while holding the weights fixed. Every selected set is subsequently re-estimated with the original weighted estimator.
-
-A \(50\%\) amplification is first attained after deleting \(4\) observations, approximately \(0.23\%\) of the sample, while a \(50\%\) attenuation occurs after \(5\) deletions, approximately \(0.28\%\). The coefficient first crosses zero at \(k=10\), corresponding to approximately \(0.56\%\) of the estimation sample. The selected employment coefficient is therefore sensitive to deletion sets containing well below one percent of the validated sample.
-
+The workforce-grant audit targets \texttt{treat_HD} in the intent-to-treat employment specification of \textcite{mcintosh2022using}. The validated fixed-weight sample contains \(N=1{,}770\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.0231\). The search represents weighted least squares through the exact square-root-weight transformation \(y_i^*=\sqrt{w_i}y_i\) and \(X_i^*=\sqrt{w_i}X_i\), while full-refit validation uses the original weighted estimator. The first searched zero crossing occurs after deleting \(10\) observations, approximately \(0.56\%\) of the estimation sample.
 
 \subsection{Study 07: Sanitation Spillovers}
 \label{app:application-07}
 
-The seventh audit examines the decision-spillover specification in Table 2 of \textcite{deutschmann2024spillovers}. The analysis is restricted to treated households, the outcome is \texttt{signup\_all}, and the target coefficient is \texttt{neighbor\_high}. The own-subsidy variable \texttt{subsidy\_high} remains in the specification. The validated estimation sample contains \(N=3{,}757\) observations, and the baseline coefficient is
-\[
-\widehat{\beta}_0=-0.00976.
-\]
-
-The original specification uses post-double-selection LASSO to determine nuisance controls before estimating the target coefficient. The audit reproduces this selection step on the validated full sample and then freezes the selected controls throughout the deletion path. Re-running LASSO after each deletion would change the nuisance specification as \(k\) changes and would therefore define a different sensitivity problem. The deletion refits consequently use the validated fixed-effects OLS specification with the selected controls held fixed.
-
-A \(50\%\) amplification is reached after deleting \(15\) observations, approximately \(0.40\%\) of the sample, while a \(50\%\) attenuation occurs after \(16\) deletions, approximately \(0.43\%\). The coefficient first crosses zero after \(33\) deletions, corresponding to approximately \(0.88\%\) of the estimation sample. The selected spillover coefficient is therefore sensitive within the first one percent of the deletion path.
-
+The sanitation-spillover audit targets \texttt{neighbor_high} in the treated-household specification of \textcite{deutschmann2024spillovers}. The validated sample contains \(N=3{,}757\) observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.00976\). The source specification uses post-double-selection LASSO for nuisance-control selection; the audit reproduces this step on the full sample and freezes the selected controls throughout the deletion path. Re-running selection after each deletion would define a different sensitivity problem. The first searched zero crossing occurs after \(33\) deletions, approximately \(0.88\%\) of the estimation sample.
 
 \subsection{Study 08: Access to Finance}
 \label{app:application-08}
 
-The eighth audit considers the main firm-level specification in Table 3 of \textcite{cai2024indirect}. The outcome is firm log sales, \texttt{lnpart5revenue}, and the target coefficient \texttt{inter4post} measures post-treatment exposure to the share of competitors receiving access to finance. The firm's own treatment effect remains in the regression. The validated estimation sample contains \(N=8{,}612\) observations, with
-\[
-\widehat{\beta}_0=-0.08555.
-\]
-
-The original model contains firm fixed effects. The MIS representation uses explicit firm indicators and reproduces the target coefficient before the deletion search, while exact deletion refits use the paper-specific fixed-effects estimator. This distinction also preserves the complete validated Table 3 sample when the fixed-effects implementation removes singleton groups internally.
-
-The target coefficient is sensitive at very small deletion fractions. A \(50\%\) attenuation is first reached after deleting \(5\) observations, approximately \(0.058\%\) of the estimation sample, and a \(50\%\) amplification is first reached after \(8\) deletions, approximately \(0.093\%\). The coefficient first crosses zero after deleting \(20\) observations, or approximately \(0.23\%\) of the sample. The full audit path contains several non-nested transitions, although the first \(40\) deletion sizes displayed in \autoref{fig:application-persistence} exhibit nested accumulation and a relatively stable influential-set core.
-
+The access-to-finance audit targets the competitor-treatment exposure coefficient \texttt{inter4post} for firm log sales in Table 3 of \textcite{cai2024indirect}. The validated sample contains \(N=8{,}612\) observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.08555\). The MIS representation uses explicit firm fixed effects, while full-refit validation uses the paper-specific fixed-effects estimator. The first searched zero crossing occurs after deleting \(20\) observations, approximately \(0.23\%\) of the estimation sample.
 
 \subsection{Study 09: Immunization Nudges}
 \label{app:application-09}
 
-The ninth audit considers the post-selection pooled policy model for immunizations per dollar in \textcite{banerjee2025selecting}. The target is the pooled coefficient combining information-hub ambassadors with SMS reminders and no incentives. The validated village-month estimation sample contains \(N=7{,}370\) observations, with
-\[
-\widehat{\beta}_0=0.004016.
-\]
-
-The published workflow first performs variable selection and policy pooling and subsequently estimates a weighted post-selection model. The audit reconstructs the selection and pooling procedure once on the validated full sample and freezes the resulting specification throughout the deletion path. Fixed village-population weights are represented through the exact square-root-weight transformation used for Study 06, and every selected deletion set is subsequently re-estimated using the validated weighted model with the pooled specification held fixed.
-
-A \(50\%\) amplification is reached after deleting \(55\) observations, approximately \(0.75\%\) of the sample. A \(50\%\) attenuation requires \(105\) observations, approximately \(1.42\%\), and the first zero crossing occurs at \(k=214\), corresponding to approximately \(2.90\%\) of the estimation sample. The audit records non-nested changes in influential-set membership as \(k\) increases. The geographic composition of the \(214\)-observation sign-reversing set is examined separately in \autoref{fig:application-spatial-concentration}.
-
+The immunization audit targets the pooled immunizations-per-dollar policy coefficient in \textcite{banerjee2025selecting}. The validated village-month sample contains \(N=7{,}370\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.004016\). The audit reconstructs variable selection and policy pooling on the full sample and freezes the resulting specification throughout the deletion path. Fixed village-population weights are represented through the same square-root-weight transformation used in Study 06, and full-refit validation uses the validated weighted model. The first searched zero crossing occurs after deleting \(214\) observations, approximately \(2.90\%\) of the estimation sample; the geographic composition of this set is examined in \autoref{fig:application-spatial-concentration}.
 
 \subsection{Study 10: Electricity Information}
 \label{app:application-10}
 
-The tenth audit considers the distribution-information treatment studied by \textcite{westberg2025power}. The target is \texttt{T1} in the reported Table A5 linear-probability robustness model for support for the price-subsidy scheme. The other randomized information treatments remain in the regression. The validated estimation sample contains \(N=1{,}819\) observations, with
-\[
-\widehat{\beta}_0=-0.1168.
-\]
+The electricity-information audit targets \texttt{T1} in the Table A5 linear-probability robustness specification of \textcite{westberg2025power}. The validated sample contains \(N=1{,}819\) observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.1168\). The first searched zero crossing occurs after deleting \(63\) observations, approximately \(3.46\%\) of the estimation sample.
 
-A \(50\%\) amplification in the original negative direction is first attained after deleting \(32\) observations, approximately \(1.76\%\) of the sample. A \(50\%\) attenuation occurs after \(34\) deletions, approximately \(1.87\%\), and the coefficient crosses zero after deleting \(63\) observations, corresponding to approximately \(3.46\%\) of the estimation sample. The sign of the linear-probability estimate is therefore preserved over a larger deletion fraction than in most of the sign-reversing applications, although a reversal remains feasible within the common \(5\%\) budget.
+The source study's headline specification uses ordered logit. The current MIS search is defined for a linear representation, so the audit applies to the reported linear-probability robustness coefficient for the same randomized treatment contrast and does not constitute a deletion audit of the headline ordered-logit estimate.
 
-The headline specification in \textcite{westberg2025power} uses an ordered-logit estimator. The shared MIS search is defined for a linear model, so the present audit uses the paper's reported linear-probability robustness specification for the same randomized treatment contrast. The results therefore characterize observation sensitivity of the Table A5 linear coefficient and do not constitute a deletion audit of the headline ordered-logit estimate.
 
 
 \subsection{Interpretation of the Study-Specific Audits}

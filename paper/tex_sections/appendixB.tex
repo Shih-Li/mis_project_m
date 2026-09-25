@@ -83,7 +83,7 @@ For fixed \(B\), the bound depends on \(n\) only through \(c\). In the implement
 \subsection{Fitted-Span Invariance}
 \label{app:deriv-invariance}
 
-Linear-endogeneity invariance has an exact algebraic basis (\autoref{subsubsec:misspec-specificity}). Let \(D=[\mathbf{x},\mathbf{Z}]\) denote the fitted design with target column \(\mathbf{x}\) and nuisance columns \(\mathbf{Z}\), with the intercept included among the nuisance columns, and assume that \(D\) has full column rank. Consider severity-indexed outcomes of the form
+Linear-endogeneity invariance has an exact algebraic basis for the boundary case discussed in \autoref{subsec:misspecification}. Let \(D=[\mathbf{x},\mathbf{Z}]\) denote the fitted design with target column \(\mathbf{x}\) and nuisance columns \(\mathbf{Z}\), with the intercept included among the nuisance columns, and assume that \(D\) has full column rank. Consider severity-indexed outcomes of the form
 \begin{equation}
 \mathbf{y}_\lambda
 =
@@ -150,8 +150,6 @@ Combining the two results,
 \qquad\text{for every admissible }S.
 \end{align*}
 The standardised objective is therefore identical across severity levels for every admissible set. Its set of maximisers is consequently unchanged. Positive and negative directional roles exchange when \(b_\lambda<0\).
-
-Positive scaling preserves the ordering of the scores, and a deterministic index-based tie-break resolves ties identically, so the two searches visit the same sets. The stopping rule compares successive parameters with an absolute tolerance, so the stopping iteration could differ only if an increment fell below that tolerance before the set stabilised.
 \end{proof}
 
 The same invariance extends to full-refit validation whenever the retained design has full column rank. For any retained set,

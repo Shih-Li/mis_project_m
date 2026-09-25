@@ -187,6 +187,12 @@ fig_main_dir <- file.path(
   "main"
 )
 
+fig_supp_dir <- file.path(
+  output_root,
+  "figures",
+  "supplement"
+)
+
 tab_main_dir <- file.path(
   output_root,
   "tables",
@@ -205,6 +211,7 @@ diag_dir <- file.path(
 
 for (path in c(
   fig_main_dir,
+  fig_supp_dir,
   tab_main_dir,
   data_dir,
   diag_dir
@@ -2593,6 +2600,189 @@ message(
   non_nested_panel$n_non_nested,
   " | re-entry events = ",
   non_nested_panel$n_reentries
+)
+
+# ==============================================================================
+# 15. Appendix C Figure:
+#     all ten normalized audit paths
+# ==============================================================================
+
+appendix_panel_meta <- study_meta %>%
+  arrange(study_no) %>%
+  mutate(
+    panel_letter = LETTERS[seq_len(n())],
+    short_label = sub(
+      "^[0-9]+[[:space:]]+",
+      "",
+      study_label
+    ),
+    panel_label = paste0(
+      panel_letter,
+      "  ",
+      short_label
+    )
+  )
+
+
+appendix_paths <- audit_path_clean %>%
+  left_join(
+    appendix_panel_meta %>%
+      select(
+        study_id,
+        panel_label
+      ),
+    by = "study_id"
+  ) %>%
+  mutate(
+    deletion_percent =
+      100 * removal_fraction,
+    
+    panel_label = factor(
+      panel_label,
+      levels = appendix_panel_meta$panel_label
+    ),
+    
+    path_type = factor(
+      path_type,
+      levels = c(
+        "Attenuation / reversal search",
+        "Amplification search"
+      )
+    )
+  )
+
+
+if (any(is.na(appendix_paths$panel_label))) {
+  stop(
+    "At least one audit-path row is missing an Appendix C panel label."
+  )
+}
+
+
+figA1_all_paths <- ggplot(
+  appendix_paths,
+  aes(
+    x = deletion_percent,
+    y = normalized_ratio,
+    group = path_type,
+    linetype = path_type
+  )
+) +
+  
+  geom_hline(
+    yintercept = 1,
+    linewidth = 0.35
+  ) +
+  
+  geom_hline(
+    yintercept = 0,
+    linetype = "dashed",
+    linewidth = 0.35
+  ) +
+  
+  geom_hline(
+    yintercept = c(
+      0.5,
+      1.5
+    ),
+    linetype = "dotted",
+    linewidth = 0.25
+  ) +
+  
+  geom_line(
+    linewidth = 0.55,
+    na.rm = TRUE
+  ) +
+  
+  facet_wrap(
+    vars(panel_label),
+    nrow = 2,
+    ncol = 5,
+    scales = "fixed"
+  ) +
+  
+  scale_x_continuous(
+    labels = scales::label_number(
+      accuracy = 1,
+      suffix = "\\%"
+    )
+  ) +
+  
+  scale_linetype_manual(
+    values = c(
+      "Attenuation / reversal search" = "solid",
+      "Amplification search" = "longdash"
+    )
+  ) +
+  
+  labs(
+    x = "Deleted share of estimation sample",
+    y = expression(
+      hat(beta)[-S[k]] / hat(beta)[full]
+    ),
+    linetype = NULL
+  ) +
+  
+  theme_minimal(
+    base_size = 8.5
+  ) +
+  
+  theme(
+    panel.grid.minor = element_blank(),
+    
+    strip.text = element_text(
+      face = "bold",
+      size = 8.2
+    ),
+    
+    axis.title = element_text(
+      size = 9
+    ),
+    
+    axis.text = element_text(
+      size = 7
+    ),
+    
+    legend.position = "bottom",
+    legend.text = element_text(
+      size = 8
+    ),
+    
+    panel.spacing = grid::unit(
+      0.8,
+      "lines"
+    )
+  )
+
+
+ggsave(
+  filename = file.path(
+    fig_supp_dir,
+    "05_figA1_all_audit_paths.pdf"
+  ),
+  plot = figA1_all_paths,
+  width = 11.5,
+  height = 5.3,
+  units = "in"
+)
+
+
+appendix_ratio_range <- range(
+  appendix_paths$normalized_ratio,
+  na.rm = TRUE,
+  finite = TRUE
+)
+
+message("")
+message(
+  "Appendix C all-path ratio range: ",
+  paste(
+    signif(
+      appendix_ratio_range,
+      4
+    ),
+    collapse = " to "
+  )
 )
 
 # ==============================================================================
