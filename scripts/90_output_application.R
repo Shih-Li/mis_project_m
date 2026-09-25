@@ -2659,12 +2659,6 @@ table_rows <- vapply(
       row$Study[[1L]],
       " & ",
       format(
-        row$N[[1L]],
-        big.mark = ",",
-        scientific = FALSE
-      ),
-      " & ",
-      format(
         row$p[[1L]],
         big.mark = ",",
         scientific = FALSE
@@ -2701,7 +2695,7 @@ table_tex <- c(
   
   paste0(
     "\\caption{",
-    "Cross-study observation-sensitivity thresholds.",
+    "Cross-study target-coefficient sensitivity thresholds.",
     "}"
   ),
   
@@ -2711,15 +2705,14 @@ table_tex <- c(
   
   "\\resizebox{\\textwidth}{!}{%",
   
-  "\\begin{tabular}{lrrrrrr}",
+  "\\begin{tabular}{lrrrrr}",
   
   "\\toprule",
   
   paste0(
     "Study",
     " & $N$",
-    " & $p$",
-    " & $\\hat{\\beta}_0$",
+    " & $\\widehat{\\beta}_{\\mathrm{full}}$",
     " & 50\\% attenuation",
     " & 50\\% amplification",
     " & Cross zero",
@@ -2745,7 +2738,7 @@ table_tex <- c(
     "Threshold entries report the fraction of the estimation sample removed, ",
     "with the corresponding number of deleted observations in parentheses. ",
     "The normalized coefficient is ",
-    "$R_k=\\hat{\\beta}_{(-S_k)}/\\hat{\\beta}_0$. ",
+    "$R_k=\\widehat{\\beta}_{-S_k}/\\widehat{\\beta}_{\\mathrm{full}}$. ",
     "A 50\\% attenuation is first reached when $R_k\\leq0.5$; ",
     "a 50\\% amplification is first reached when $R_k\\geq1.5$; ",
     "and the coefficient crosses zero when $R_k\\leq0$. ",
