@@ -7,288 +7,40 @@
 \subsection{Supplementary Influential-Set Recovery Results}
 \label{app:detection-results}
 
-\subsubsection{Recovery across Design Configurations}
-\label{app:detection-recovery}
-
-The complete recovery grid provides the design-level detail underlying the mechanism summaries in Section~\ref{subsec:detection-performance}. Under bad leverage, MIS recovered approximately \(83\%\) to \(98\%\) of the injected observations across the sample-size and contamination grid and generally exceeded the classical diagnostics (\autoref{fig:02A-all-method-overlap}). The target-aware recovery difference was positive in every bad-leverage cell, ranging from \(8.0\) to \(16.0\) percentage points (\autoref{tab:02A-mis-advantage-grid}). Recovery under response-outlier and good-leverage contamination followed different patterns because the classical procedures target residual magnitude, leverage, or single-observation coefficient influence. These comparisons reinforce the mechanism-specific interpretation of injected-set recovery.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/02_distributional/figures/supplement/02_figA1_all_method_overlap_heatmaps.pdf}
-	\caption{Injected-set top-\(k\) recovery for MIS, Cook's distance, leverage, and DFBETAS across sample sizes, contamination proportions, and contamination mechanisms.}
-	\label{fig:02A-all-method-overlap}
-\end{figure}
-
-\input{../../output/02_distributional/tables/supplement/02_tabA1_mis_advantage_grid.tex}
-
-Distribution-specific comparisons show that the bad-leverage result remains strong across most error distributions. MIS recovery exceeded \(97\%\) under normal, Beta\((2,5)\), mixed-normal, skewed-\(t\), and Pareto errors, with positive recovery differences relative to the highest-recovery classical diagnostic in every error distribution (\autoref{tab:02A-detection-by-error}). The largest differences occurred under GOLM and contaminated errors, at \(21.1\) and \(17.3\) percentage points. GPD errors produced the weakest separation: MIS recovered \(78.5\%\) of the injected bad-leverage observations and exceeded the classical benchmark by \(3.2\) percentage points. The distributional variation therefore qualifies the strength of the bad-leverage result without changing its direction (\autoref{fig:02A-all-method-overlap-dgp}).
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/02_distributional/figures/supplement/02_figA1b_all_method_overlap_dgp_heatmaps.pdf}
-	\caption{Injected-set top-\(k\) recovery for MIS, Cook's distance, leverage, and DFBETAS across predictor distributions, error distributions, and contamination mechanisms. Each cell averages over the remaining recorded design dimensions.}
-	\label{fig:02A-all-method-overlap-dgp}
-\end{figure}
+The mechanism-level results in \autoref{subsec:detection-performance} remain heterogeneous across error distributions. Under bad leverage, MIS recovery remains high across most finite-moment designs, while the GPD stress condition produces the weakest recovery and separation from the classical diagnostics. Response-outlier and good-leverage designs show lower injected-set recovery because injected outlyingness and target-coefficient influence are not generally aligned. The error-distribution breakdown is reported in \autoref{tab:02A-detection-by-error}.
 
 \input{../../output/02_distributional/tables/supplement/02_tabA3_detection_by_error.tex}
 
-\subsubsection{Good-Leverage Mechanism Diagnostics}
-\label{app:good-leverage-diagnostics}
-
-The summary mechanism comparison is reported in \autoref{fig:02-good-leverage-mechanism} and \autoref{tab:02-good-leverage-mechanism} in the main text. This diagnostic is a separate fixed-design exercise with \(n=1000\), \(k=10\), normal predictors, contamination magnitude \(10\), and \(200\) Monte Carlo iterations per error distribution. Because \(k=10\), iteration-level recovery changes in increments of ten percentage points. The analysis provides additional evidence for the same mechanism-specific interpretation. Across most error distributions, MIS-selected sets lie below the leverage-equality line and above the residual-equality line in \autoref{fig:02A-leverage-residual-scatter}. MIS therefore tends to substitute observations with lower leverage and larger residual magnitude for injected observations that are extreme in predictor space but approximately aligned with the fitted regression relation. Recovery increases when the injected observations themselves become more similar to the coefficient-influential sets selected by MIS, most visibly under GPD errors.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/02_distributional/figures/supplement/02_figA3_leverage_residual_scatter.pdf}
-	\caption{Iteration-level comparison of leverage and residual magnitude between the MIS-selected and injected good-leverage sets. The horizontal and vertical dashed lines denote equality, and shading indicates the proportion of injected observations recovered among the MIS top-\(k\) selections.}
-	\label{fig:02A-leverage-residual-scatter}
-\end{figure}
-
-\subsubsection{EVT Convergence and Computational Diagnostics}
-\label{app:detection-evt-diagnostics}
-
-\input{../../output/02_distributional/tables/main/02_tab2_empirical_size_summary.tex}
-
-The uncontaminated MIS-EVT result reported in \autoref{tab:02-empirical-size-summary} is accompanied by high numerical convergence in the marginal sample-size and contamination summaries (\autoref{fig:02A-evt-convergence} and \autoref{tab:02A-evt-convergence-grid}). Distribution-specific convergence is somewhat lower in the GPD stress condition, so the marginal convergence range should not be read as a minimum over every recorded distributional cell. More importantly, convergence concerns only the numerical availability of the EVT rejection calculation. Injected-set recovery is computed before GEV fitting and therefore does not depend on EVT convergence.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=0.95\textwidth]{../../output/02_distributional/figures/supplement/02_figA2_evt_convergence_heatmap.pdf}
-	\caption{EVT convergence rates across sample sizes, contamination proportions, and contamination mechanisms.}
-	\label{fig:02A-evt-convergence}
-\end{figure}
-
-\input{../../output/02_distributional/tables/supplement/02_tabA2_evt_convergence_grid.tex}
-
-The distribution-level GEV summaries show similar null rejection across most error distributions under the no-contamination scenario (\autoref{tab:02A-gev-summary}). Excluding the GPD stress condition, rejection rates ranged from \(4.0\%\) to \(5.3\%\). Under bad leverage, rejection exceeded \(94\%\) for every error distribution except GPD, where it fell to \(58.0\%\). Good-leverage rejection remained between \(1.0\%\) and \(3.4\%\), consistent with the limited target-coefficient disturbance generated by that mechanism. The GPD condition requires separate interpretation because the simulated shape parameters, \(\xi\in\{1.5,3,5,10\}\), imply an infinite population mean. Sample centring does not restore the usual finite-moment population conditions, so this condition is retained as an extreme stress test rather than treated as a regular sampling regime. Its GEV location and scale estimates should therefore not be compared directly with those from the finite-moment designs.
-
-\input{../../output/02_distributional/tables/supplement/02_tabA4_gev_summary.tex}
-
-Block size relative to the deletion budget is the binding diagnostic for the block-maxima construction (\autoref{tab:02A-block-count-summary}). Block count alone understates the problem. Fifty blocks were retained at contamination proportions of \(0.5\%\) and \(1\%\), while the block count declined to approximately \(39\)--\(40\) at \(2.5\%\), \(19\) at \(5\%\), and \(9\) at \(10\%\). Block size falls alongside the count. The ratio of \(k\) to block size rises from roughly \(0.24\) at \(0.5\%\) contamination to about \(0.53\) at \(1\%\), and it reaches exactly \(1.00\) at \(2.5\%\) and above.
-
-A ratio of one admits a single size-\(k\) subset per block. The blockwise value is then the influence of that whole block, and the fitted GEV describes ordinary block-level influence. Twelve of the twenty sample-size and contamination cells reach this ratio. Numerical convergence remained high throughout these degenerate cells (\autoref{tab:02A-evt-convergence-grid}), which confirms that successful GEV fitting establishes the numerical availability of a rejection calculation and nothing about the quality of the underlying extremal approximation. EVT results hold at \(0.5\%\) and are marginal at \(1\%\).
+The EVT component requires a separate qualification. Its numerical convergence does not establish the quality of the block-maxima approximation. As the deletion fraction increases, the ratio of \(k\) to the observations available within each block approaches one, eventually leaving only a single admissible size-\(k\) subset per block. The corresponding block-count diagnostics are reported in \autoref{tab:02A-block-count-summary}; the algebraic restriction is derived in \autoref{app:deriv-blocks}. The substantive injected-set recovery results do not depend on successful GEV fitting.
 
 \input{../../output/02_distributional/tables/supplement/02_tabA5_block_count_summary.tex}
 
-\subsection{Algorithmic and EVT Validation}
+\subsection{Algorithmic and Calibration Checks}
 \label{app:numerical}
 
-The algorithmic validation study evaluates the computational components underlying fixed-\(k\) MIS rather than supplying a separate substantive simulation result. The study compares greedy and Dinkelbach-based searches, with and without refinement, across linear, interaction, difficult, and partially linear regression architectures. It also compares alternative GEV fitting configurations for the EVT step. The purpose is to assess influence capture, injected-set overlap, computational scaling, set stability, numerical convergence, and null behaviour before these components are used in the substantive simulation studies.
-
-\subsubsection{Search Accuracy and Influence Capture}
-\label{app:03-search}
-
-The Dinkelbach and greedy procedures should be compared using both injected-set overlap and attained influence. These quantities answer different questions. Injected-set overlap measures recovery of the observations used to construct the simulation disturbance, whereas the influence ratio compares the absolute DFBETA of the detected set with that of the injected set. A value near one therefore indicates that the detected set captures approximately the same coefficient influence even when its membership differs from the injected coalition.
-
-Across the complete algorithmic design, refinement substantially increased injected-set overlap for both search procedures (\autoref{fig:03-detection-overlap} and \autoref{tab:03-algorithm-summary}). Mean overlap increased from \(77.1\%\) to \(96.5\%\) for greedy search and from \(80.4\%\) to \(94.1\%\) for the Dinkelbach-based search. More importantly for the optimisation objective, both refined procedures had a median influence ratio of \(1.00\), with 10th and 90th percentiles also equal to \(1.00\). Thus, differences in recovered membership do not generally imply differences of the same magnitude in coefficient influence.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/03_algorithmic/figures/main/03_fig1_detection_overlap.pdf}
-	\caption{Mean injected-set overlap for greedy and Dinkelbach-based search, with and without refinement, across influential-set sizes and architecture groups.}
-	\label{fig:03-detection-overlap}
-\end{figure}
+The algorithmic study checks the computational components used by fixed-\(k\) MIS. Injected-set overlap and attained coefficient influence are distinct evaluation criteria: two size-\(k\) sets can differ in membership while producing nearly identical target-coefficient movement. Across the refined comparisons, both greedy and Dinkelbach-based search attained a median influence ratio of \(1.00\), while their recovered observation identities sometimes differed. The aggregate results are reported in \autoref{tab:03-algorithm-summary}.
 
 \input{../../output/03_algorithmic/tables/main/03_tab1_algorithm_summary.tex}
 
-Architecture-specific results show why overlap should not be treated as the optimisation criterion. The refined Dinkelbach and refined greedy procedures both attain an influence ratio of \(1.00\) in every architecture-level summary, while their recovered memberships can differ (\autoref{tab:03A-architecture-comparison}). The largest discrepancy occurs in the triple-interaction architecture, where mean injected-set overlap is \(72.7\%\) for refined greedy search and \(48.4\%\) for refined Dinkelbach search. The Dinkelbach procedure nevertheless attains the same reported influence ratio. This distinction is consistent with the possibility that more than one size-\(k\) set can exert similar target-coefficient influence.
+The Dinkelbach formulation is retained because it globally optimises the stated fixed-residualised objective under the conditions in \autoref{sec:methodology}. Runtime comparisons, architecture-specific overlap, collinearity checks, nestedness traces, and numerical-convergence grids are retained in the repository as implementation diagnostics.
 
-\input{../../output/03_algorithmic/tables/supplement/03_tabA1_architecture_comparison.tex}
-
-The cell-level comparison gives the same qualification (\autoref{fig:03A-exact-refined-advantage}). Dinkelbach and greedy refinement agree closely over most architectures and set sizes, but membership differences appear in several interaction designs. The most pronounced discrepancy occurs for the triple-interaction design at small \(k\). These cells do not contradict the global-maximisation property of the Dinkelbach formulation: they show that correspondence with a planted set and maximisation of the fixed-residualised coefficient-influence objective are different evaluation criteria.
+The EVT stress tests provide a separate qualification. GEV fitting can converge numerically while the resulting reference distribution remains poorly calibrated. In the renewed null experiment, rejection is strongly conservative under both fitting procedures, as shown in \autoref{fig:03-null-calibration}. These results support treating EVT as a design-specific calibration device rather than a general inferential property of fixed-\(k\) MIS.
 
 \begin{figure}[htbp]
 	\centering
-	\includegraphics[width=\textwidth]{../../output/03_algorithmic/figures/supplement/03_figA2_exact_refined_advantage_heatmap.pdf}
-	\caption{Difference in injected-set overlap between refined Dinkelbach and refined greedy search across architectures and influential-set sizes.}
-	\label{fig:03A-exact-refined-advantage}
-\end{figure}
-
-The collinearity sensitivity exercise shows that these membership differences are concentrated in the smallest sample and largest set sizes (\autoref{fig:03A-collinearity}). At \(n\geq1000\), the overlap differences between refined Dinkelbach and refined greedy search are essentially zero throughout the displayed correlation grid. The comparison therefore provides no evidence that increasing predictor correlation systematically separates the two refined procedures in the larger designs.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/03_algorithmic/figures/supplement/03_figA6_collinearity_sensitivity.pdf}
-	\caption{Difference in injected-set overlap between refined Dinkelbach and refined greedy search across predictor correlation, sample size, and influential-set size.}
-	\label{fig:03A-collinearity}
-\end{figure}
-
-
-\subsubsection{Computational Scaling and Set Stability}
-\label{app:03-computation}
-
-Dinkelbach-based search remained computationally inexpensive over the recorded sample-size range. The unrefined Dinkelbach procedure had a median runtime of \(0.002\) seconds, compared with \(0.003\) seconds for unrefined greedy search, while Dinkelbach plus refinement required \(0.005\) seconds compared with \(0.008\) seconds for greedy plus refinement (\autoref{tab:03-algorithm-summary}). Runtime rises with sample size for all four procedures, but remains on the order of hundredths of a second at \(n=5000\) in the median comparison (\autoref{fig:03-detection-runtime}). The Dinkelbach formulation therefore does not introduce a prohibitive computational penalty in these designs.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=0.82\textwidth]{../../output/03_algorithmic/figures/main/03_fig2a_detection_runtime.pdf}
-	\caption{Median search runtime by sample size for greedy and Dinkelbach-based detection, with and without refinement.}
-	\label{fig:03-detection-runtime}
-\end{figure}
-
-The nestedness traces provide a separate measure of set stability as \(k\) changes (\autoref{fig:03A-nestedness} and \autoref{tab:03A-nestedness-summary}). In the representative traces, the unrefined Dinkelbach procedure records no nestedness violations and a mean Jaccard similarity of \(0.863\) in each displayed architecture. Refinement can alter this path: for example, the refined Dinkelbach trace in the collinear-interaction design records five violations and a minimum successive-set Jaccard similarity of \(0.222\). Optimising the objective separately at each fixed \(k\) therefore does not imply that the resulting sequence of maximising sets must itself be nested across \(k\).
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/03_algorithmic/figures/supplement/03_figA4_nestedness_traces.pdf}
-	\caption{Jaccard similarity between the size-\(k\) selected set and the preceding size-\((k-1)\) set for representative architectures.}
-	\label{fig:03A-nestedness}
-\end{figure}
-
-\input{../../output/03_algorithmic/tables/supplement/03_tabA5_nestedness_summary.tex}
-
-
-\subsubsection{EVT Configuration and Numerical Convergence}
-\label{app:03-evt}
-
-The EVT comparison evaluates three computational configurations: greedy search with constrained GEV fitting, Dinkelbach-based search with constrained GEV fitting, and Dinkelbach-based search with the robust GEV fit. Under the contaminated algorithmic designs, the two Dinkelbach-based configurations achieve higher average signal rejection than the greedy-constrained configuration, while the robust GEV fit substantially improves numerical availability (\autoref{tab:03-evt-configuration-summary}). Mean convergence is \(94.3\%\) for greedy plus constrained GEV, \(94.8\%\) for Dinkelbach plus constrained GEV, and \(99.4\%\) for Dinkelbach plus robust GEV. Their mean rejection rates at the nominal \(5\%\) threshold in the contaminated designs are \(85.7\%\), \(92.4\%\), and \(91.9\%\), respectively.
-
-\input{../../output/03_algorithmic/tables/main/03_tab2_evt_configuration_summary.tex}
-
-EVT runtime remains small relative to the broader simulation exercise (\autoref{fig:03-evt-runtime}). Median runtime is \(0.0150\) seconds for greedy plus constrained GEV, \(0.0080\) seconds for Dinkelbach plus constrained GEV, and \(0.0075\) seconds for Dinkelbach plus robust GEV. The Dinkelbach plus robust GEV configuration therefore combines the highest overall convergence with runtime comparable to, or below, the other recorded EVT configurations.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=0.82\textwidth]{../../output/03_algorithmic/figures/main/03_fig2b_evt_runtime.pdf}
-	\caption{Median EVT runtime by sample size and fitting configuration.}
-	\label{fig:03-evt-runtime}
-\end{figure}
-
-The architecture-level results show that the convergence improvement is broad but not literally universal (\autoref{fig:03A-evt-convergence} and \autoref{tab:03A-evt-by-architecture}). Dinkelbach plus robust GEV attains \(100\%\) convergence throughout most architecture--sample-size cells. The principal exception is the high-\(k\) interaction design, where convergence falls below \(100\%\) at several sample sizes. The robust fitting modification therefore substantially improves numerical reliability without eliminating every difficult configuration.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/03_algorithmic/figures/supplement/03_figA7_evt_convergence_heatmap.pdf}
-	\caption{EVT convergence rates by architecture, sample size, and search/fitting configuration.}
-	\label{fig:03A-evt-convergence}
-\end{figure}
-
-\input{../../output/03_algorithmic/tables/supplement/03_tabA4_evt_by_architecture.tex}
-
-Adaptive capping of the number of available blocks is most consequential in the smaller samples (\autoref{tab:03A-block-capping}). At \(n=500\), all recorded requested block rules are capped at \(16\) actual blocks. At \(n=1000\), the 50- and 100-block requests are capped at approximately \(31\)--\(33\) blocks, while at \(n=2000\) only the 100-block request is capped. No displayed rule is capped at \(n=5000\). These constraints should be borne in mind when interpreting the small-sample EVT results.
-
-\input{../../output/03_algorithmic/tables/supplement/03_tabA3_block_capping.tex}
-
-
-\subsubsection{Null Behaviour and Calibration Limits}
-\label{app:03-null}
-
-
-
-The renewed null experiment identifies an important limitation of the EVT approximation in these architecture stress tests. Both GEV fitting procedures are strongly conservative rather than nominally calibrated (\autoref{fig:03-null-calibration} and \autoref{tab:03-null-calibration}). At a nominal \(5\%\) level, empirical rejection is \(0.2\%\) for constrained GEV and \(0.6\%\) for robust GEV; at a nominal \(10\%\) level, the corresponding rates are \(0.3\%\) and \(1.0\%\). Robust GEV improves convergence from a mean of \(93.9\%\) to \(100.0\%\), but this numerical improvement does not remove the conservatism of the resulting p-values.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/03_algorithmic/figures/main/03_fig3_null_calibration.pdf}
-	\caption{Empirical null rejection rates across nominal significance levels for constrained and robust GEV fitting. The diagonal reference denotes equality between nominal and empirical rejection.}
+	\includegraphics[width=0.82\textwidth]{../../output/03_algorithmic/figures/main/03_fig3_null_calibration.pdf}
+	\caption{Empirical null rejection rates across nominal significance levels for constrained and robust GEV fitting. The diagonal denotes equality between nominal and empirical rejection.}
 	\label{fig:03-null-calibration}
 \end{figure}
-
-\input{../../output/03_algorithmic/tables/main/03_tab3_null_calibration.tex}
-
-The architecture-specific calibration results lead to the same conclusion (\autoref{fig:03A-calibration-deviation} and \autoref{tab:03A-calibration-by-architecture}). At the nominal \(5\%\) level, architecture-level rejection remains well below \(5\%\) under both fits. The uniformity diagnostic also rejects the Uniform\((0,1)\) reference throughout the reported architecture summaries. The robust fit should therefore be interpreted as improving numerical convergence, not as restoring nominal p-value calibration in this particular stress-test design.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/03_algorithmic/figures/supplement/03_figA3_calibration_deviation_heatmap.pdf}
-	\caption{Architecture- and set-size-specific difference between empirical null rejection and the nominal \(5\%\) level for constrained and robust GEV fitting.}
-	\label{fig:03A-calibration-deviation}
-\end{figure}
-
-\input{../../output/03_algorithmic/tables/supplement/03_tabA2_calibration_by_architecture.tex}
-
-The null p-value quantile plots make the direction of the distortion explicit (\autoref{fig:03A-null-pvalue-qq}). Empirical p-values are substantially larger than the corresponding uniform theoretical quantiles, consistent with conservative rejection behaviour. This result qualifies the inferential evidence from the algorithmic validation study: the simulations support the computational use of Dinkelbach-based search and document strong numerical performance for robust GEV fitting, but they do not establish nominal EVT calibration across these architecture stress tests.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/03_algorithmic/figures/supplement/03_figA5_null_pvalue_qq.pdf}
-	\caption{Null p-value quantile plots for constrained and robust GEV fits across architecture groups. The diagonal denotes the Uniform\((0,1)\) reference.}
-	\label{fig:03A-null-pvalue-qq}
-\end{figure}
-
-The two null experiments are not directly comparable, and their difference is informative. The algorithmic null experiment holds at least thirty observations in every block, so the ratio of \(k\) to block size stays between \(0.01\) and \(0.50\) across its grid. The distributional-recovery design constrains blocks only to hold \(k\) observations, and its ratio reaches one in most cells. Conservative rejection appears where the blockwise values are genuine maxima. Rejection near the nominal level appears where the construction has degenerated toward ordinary block-level influence. The near-nominal empirical size recorded in \autoref{tab:02-empirical-size-summary} should therefore not be read as evidence of correct EVT calibration.
 
 \subsection{Supplementary Robust-Estimation Results}
 \label{app:estimation-results}
 
-The formal robustness study contains \(1{,}248\) design cells and \(124{,}800\) Monte Carlo draws. Primary estimator summaries use the \(1{,}092\) finite-moment cells, while the GPD design is retained separately as an infinite-mean stress condition (\autoref{tab:robust-design-audit}).
-
-\input{../../output/04_robust/tables/supplement/04_tab_design_audit.tex}
-
-MIS is evaluated as an oracle benchmark for both the injected-set size and the direction of the induced target-coefficient perturbation. Observation identities are not supplied to the search. The oracle audit confirms that \(k\) matches the injected-set size in every contaminated draw and shows that the mean absolute oracle coefficient shift is \(1.902\) under bad leverage, compared with \(0.020\) under response-outlier contamination and \(0.003\) under good leverage (\autoref{tab:robust-oracle-audit}).
+The robust-estimation simulation uses MIS as an oracle-assisted localisation benchmark. The deletion budget and direction are supplied from the data-generating process, while observation identities remain unknown to the search. The oracle audit confirms that deleting the injected set produces a much larger target-coefficient shift under bad leverage than under response-outlier or good-leverage contamination (\autoref{tab:robust-oracle-audit}). This difference explains why localisation and post-deletion estimation are most closely aligned under bad leverage.
 
 \input{../../output/04_robust/tables/supplement/04_tab_oracle_audit.tex}
 
-\subsubsection{Distributional and Data-Generating-Process Variation}
-\label{app:estimation-dgp}
-
-The full absolute-bias distributions provide additional detail on the aggregate results reported in Section~\ref{subsec:estimation-performance}. MM and LTS remain concentrated near zero across the principal finite-moment contamination mechanisms, while the diagnostic-removal estimators exhibit wider distributions in mechanism-specific settings (\autoref{fig:04A-absolute-bias}). MIS with oracle \(k\) shows wider absolute-error distributions under response-outlier and good-leverage contamination. Under bad leverage, its distribution contracts substantially relative to OLS, consistent with the much larger target-coefficient perturbation induced by the injected set.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/04_robust/figures/supplement/04_figA1_absolute_bias_distributions.pdf}
-	\caption{Empirical distributions of absolute coefficient bias by estimator and contamination mechanism.}
-	\label{fig:04A-absolute-bias}
-\end{figure}
-
-Error distributions generate substantial heterogeneity in coefficient accuracy (\autoref{fig:04A-bias-error}). The relative ordering of the diagnostic-removal estimators changes across error environments, while MM and LTS retain comparatively small mean absolute bias across most of the finite-moment designs. Predictor distributions also alter the magnitude of the post-deletion error (\autoref{fig:04A-bias-x}). These results show that pooled estimator summaries can conceal important interactions between the contamination mechanism and the surrounding data-generating environment.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/04_robust/figures/supplement/04_figA2_mean_bias_by_error_distribution.pdf}
-	\caption{Mean absolute coefficient bias by estimator, error distribution, and contamination mechanism.}
-	\label{fig:04A-bias-error}
-\end{figure}
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/04_robust/figures/supplement/04_figA3_mean_bias_by_x_distribution.pdf}
-	\caption{Mean absolute coefficient bias by estimator, predictor distribution, and contamination mechanism.}
-	\label{fig:04A-bias-x}
-\end{figure}
-
-\subsubsection{Oracle-Benchmark MIS under Bad Leverage}
-\label{app:oracle-k-detail}
-
-The relative-error comparisons emphasise the mechanism specificity of the oracle-\(k\) benchmark. Relative to OLS, MIS with oracle \(k\) has lower mean absolute bias throughout the displayed bad-leverage finite-moment designs, often by a large margin (\autoref{fig:04A-mis-oracle-bias-advantage}). The corresponding differences are negative under vertical-outlier and good-leverage contamination. This pattern reflects the stronger alignment between bad leverage and the coefficient-targeted MIS objective.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/04_robust/figures/supplement/04_figA5_mis_oracle_bias_advantage_heatmap.pdf}
-	\caption{Relative mean absolute bias of OLS and MIS with oracle \(k\) across predictor distributions, error distributions, and contamination mechanisms. Values report \(\log_2(\mathrm{MAB}_{\mathrm{OLS}}/\mathrm{MAB}_{\mathrm{MIS}})\); positive values indicate lower mean absolute bias for MIS with oracle \(k\).}
-	\label{fig:04A-mis-oracle-bias-advantage}
-\end{figure}
-
-Comparison with the classical deletion procedures is more heterogeneous. Under bad leverage, MIS with oracle \(k\) compares favourably with leverage, Cook's distance, and DFBETAS in several normal and normal-mixture predictor environments, whereas the contaminated-normal predictor design changes the ordering substantially (\autoref{fig:04A-mis-oracle-vs-classical}). In that environment, extreme leverage can arise from the background predictor distribution as well as from the deliberately injected set. Deleting the injected observations therefore does not uniquely determine the geometry of the refitted sample. Cook's distance and DFBETAS can consequently produce a smaller post-deletion coefficient error despite recovering the injected set less selectively. This variation separates localisation accuracy from post-deletion estimation accuracy.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/04_robust/figures/supplement/04_figA6_mis_oracle_vs_classical_bad_leverage_heatmap.pdf}
-	\caption{Relative mean absolute error of leverage, Cook's distance, and DFBETAS deletion compared with MIS with oracle \(k\) under bad-leverage contamination. Values report \(\log_2(\mathrm{MAE}_{\mathrm{classical}}/\mathrm{MAE}_{\mathrm{MIS}})\); positive values indicate lower mean absolute error for MIS with oracle \(k\).}
-	\label{fig:04A-mis-oracle-vs-classical}
-\end{figure}
-
-The predictor-level summary makes this reversal explicit (\autoref{tab:robust-bad-leverage-by-predictor}). With normal predictors, mean absolute bias is \(0.108\) for MIS, compared with \(0.771\) for Cook's distance and \(0.607\) for DFBETAS. Under the normal-mixture design, the corresponding values are \(0.045\), \(0.111\), and \(0.108\). Under contaminated-normal predictors, however, Cook's distance and DFBETAS fall to \(0.006\) and \(0.012\), while MIS records \(0.074\). The pooled bad-leverage comparison therefore does not imply uniform estimator ordering across predictor environments.
-
-\input{../../output/04_robust/tables/supplement/04_tabA3_bad_leverage_by_predictor.tex}
-
-\subsubsection{Runtime and Numerical Availability}
-\label{app:estimation-computation}
-
-The computational comparison shows that fixed-\(k\) MIS is slower than the classical diagnostic-removal procedures but substantially faster than the direct robust estimators in the revised implementation. Under contaminated designs, mean MIS runtime is approximately \(0.006\) seconds per draw, compared with roughly \(0.002\)--\(0.003\) seconds for the classical diagnostics, \(0.052\) seconds for LTS, and \(0.50\) seconds for MM (\autoref{tab:robust-runtime}). Under no contamination, MIS performs no deletion search because oracle \(k=0\). The complete runtime distributions are shown in \autoref{fig:04A-runtime}.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/04_robust/figures/supplement/04_figA4_runtime_distributions.pdf}
-	\caption{Empirical distributions of complete runtime per Monte Carlo draw by estimator and contamination mechanism. The horizontal axis uses a logarithmic scale.}
-	\label{fig:04A-runtime}
-\end{figure}
-
-\input{../../output/04_robust/tables/supplement/04_tabA1_mean_runtime.tex}
-
-Numerical availability was complete for every estimator in the primary finite-moment analysis. All \(109{,}200\) recorded rows for each method produced finite coefficient estimates, coverage indicators, and runtimes (\autoref{tab:robust-method-health}). The reported differences therefore reflect statistical performance across the simulation grid rather than differential numerical non-completion.
-
-\input{../../output/04_robust/tables/supplement/04_tabA2_method_health.tex}
+The complete estimator-by-environment comparisons, coverage results, runtime diagnostics, and predictor/error-distribution breakdowns are retained in the repository. They support the same distinction developed in \autoref{subsec:estimation-performance}: influential-set localisation and robust coefficient estimation are separate statistical objectives.
 
 
 
@@ -297,40 +49,12 @@ Numerical availability was complete for every estimator in the primary finite-mo
 
 
 
-\subsection{Supplementary Misspecification Results}
-\label{app:misspecification-results}
-
-\subsubsection{Misspecification Severity and Operating-Characteristic Definitions}
+\subsubsection{Severity, Calibration, and Detection Boundaries}
 \label{app:misspec-definitions}
 
-The detector experiment uses the baseline model
-\[
-Y_i=\beta_0+\beta_1X_i+m_i+\varepsilon_i,
-\qquad
-\beta_0=0,
-\qquad
-\beta_1=1.
-\]
-For the additive misspecification mechanisms, a raw component \(h_i\) is scaled according to
-\[
-a_\lambda
-=
-\lambda
-\frac{\operatorname{sd}(\varepsilon_0)}
-{\operatorname{sd}(h)},
-\qquad
-m_i=a_\lambda h_i,
-\]
-so that
-\[
-\frac{\operatorname{sd}(m)}
-{\operatorname{sd}(\varepsilon_0)}
-=
-\lambda.
-\]
-Thus \(\lambda\) has a common signal-to-noise interpretation for nonlinearity, threshold behaviour, omitted-variable misspecification, heterogeneous slopes, and missing interactions. Equality of this signal-to-noise ratio makes the additive severity scale comparable in construction, although the substantive form of the imposed departure still differs across mechanisms. Heteroskedasticity instead uses an exponential spread-gradient parameter, while linear endogeneity and nonlinear confounding use mechanism-specific confounding-strength parameters. Detection boundaries are therefore interpreted within the corresponding severity scale.
+For the additive misspecification mechanisms, severity is scaled so that the standard deviation of the imposed misspecification component relative to the baseline error standard deviation equals the severity parameter \(\lambda\). Heteroskedasticity, linear endogeneity, and nonlinear confounding use mechanism-specific severity parameters. Detection boundaries are therefore interpreted within the corresponding mechanism-specific scale.
 
-The MIS comparison index is
+Target-coefficient sensitivity is evaluated using
 \[
 T_k
 =
@@ -340,102 +64,15 @@ T_k
 	\right|
 }{
 	\widehat{\operatorname{se}}(\widehat{\beta})
-}.
+},
 \]
-The denominator is the standard error from the original fitted model and is held fixed as the reference scale. Although \(T_k\) is measured in standard-error units, it is not treated as a Wald statistic. The full-sample and post-deletion estimates are dependent, the deletion set is selected adaptively, and the reported statistic is extremal over candidate deletions. A standard-normal reference distribution is therefore neither assumed nor used.
+where the selected set is obtained from the fixed-residualised search and \(\widehat{\beta}_{-S_k}\) is evaluated by full-refit validation. The denominator is the standard error from the original fitted model and is held fixed as a reference scale. \(T_k\) is not treated as a Wald statistic because the deletion set is selected adaptively and the full-sample and post-deletion estimates are dependent.
 
-For an independently calibrated rejection indicator \(R_b(\lambda)\) in Monte Carlo draw \(b\), empirical power is
-\[
-\widehat{\pi}(\lambda)
-=
-\frac{1}{B}
-\sum_{b=1}^{B}R_b(\lambda),
-\]
-and empirical size is \(\widehat{\pi}(0)\). The 80\% detection reach is the proportion of environments whose isotonic fitted power curve reaches \(0.80\) within the simulated severity range. For environments that cross this level, the detection boundary is the interpolated severity at which fitted power first reaches \(0.80\). Non-crossing environments are right-censored and are retained in the reach calculation.
-
-For paired diagnostic comparisons, the MIS-only rejection probability is
-\[
-P(R_{\mathrm{MIS}}=1,R_{\mathrm{rival}}=0),
-\]
-and the rival-only probability is
-\[
-P(R_{\mathrm{MIS}}=0,R_{\mathrm{rival}}=1).
-\]
-These discordant-rejection probabilities are reported separately because they measure complementarity between diagnostics. Their difference may be summarised descriptively as a paired rejection difference, but the two component probabilities carry the substantive interpretation.
-
-\subsubsection{Null Calibration and Scaling}
-\label{app:misspec-calibration}
-
-The standard-error normalisation does not make \(T_k\) pivotal. Its null distribution changes systematically with sample size and fitted model class, which is why calibration is performed within the relevant null environment. In particular, the null mean of the standardised statistic increases approximately with \(\sqrt{n}\), and correctly specified models containing additional regressors require their own null cutoffs. The calibration analysis therefore evaluates empirical size and cutoff stability directly rather than relying on Gaussian critical values. The detailed null results support the calibration used for the power comparisons in Section~\ref{subsec:misspecification}. Across error distributions, MIS empirical size at \(k/n=0.025\) remains close to \(5\%\), ranging from \(4.75\%\) to \(5.33\%\) (\autoref{tab:05-size-by-error}). The same stability appears across predictor distributions and sample sizes, where empirical rejection ranges from \(4.79\%\) to \(5.28\%\) (\autoref{tab:05-size-by-x-n}). The distribution of environment-level null rejection rates is shown in \autoref{fig:05S-size-calibration}.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=0.82\textwidth]{../../output/05_misspecification/figures/supplement/05_figS01_empirical_size_histogram.pdf}
-	\caption{Distribution of environment-level empirical MIS rejection rates at zero misspecification severity.}
-	\label{fig:05S-size-calibration}
-\end{figure}
+Independent null simulations provide the environment-specific reference distribution. At the primary deletion fraction, empirical null rejection remains close to the nominal \(5\%\) level across the evaluated error distributions (\autoref{tab:05-size-by-error}).
 
 \input{../../output/05_misspecification/tables/supplement/05_tabS01_size_by_error.tex}
 
-\input{../../output/05_misspecification/tables/supplement/05_tabS02_size_by_x_n.tex}
-
-The magnitude of the null MIS statistic increases systematically with sample size even though its calibrated rejection probability remains stable. The fitted log--log slopes are \(0.470\), \(0.469\), and \(0.472\) for normal, mixed-normal, and contaminated predictor distributions, respectively, with \(R^2\) values above \(0.999\) (\autoref{fig:05S-null-scaling} and \autoref{tab:05-null-scaling}). This scaling result motivates environment-specific calibration rather than comparison of uncalibrated statistic magnitudes across sample sizes.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=0.82\textwidth]{../../output/05_misspecification/figures/supplement/05_figS02_null_scaling.pdf}
-	\caption{Mean null MIS statistic by sample size and predictor distribution on logarithmic axes.}
-	\label{fig:05S-null-scaling}
-\end{figure}
-
-\input{../../output/05_misspecification/tables/main/05_tab02_null_scaling_slopes.tex}
-
-\subsubsection{Detailed Power and Environmental Heterogeneity}
-\label{app:misspec-power}
-
-The complete severity curves show that diagnostic sensitivity differs both across mechanisms and across methods (\autoref{fig:05S-power-severity}). MIS power rises rapidly for nonlinear confounding, heterogeneous slopes, missing interactions, nonlinearity, and threshold behaviour, while linear endogeneity remains close to its null rejection rate throughout the simulated range. The omitted-variable mechanism produces only a modest increase in pooled MIS power. RESET and Breusch--Pagan exhibit their own mechanism-specific profiles, reinforcing the distinction between general coefficient sensitivity and specialist specification tests.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/05_misspecification/figures/supplement/05_figS03_power_severity.pdf}
-	\caption{Empirical power by misspecification severity for MIS, classical influence diagnostics, RESET, and Breusch--Pagan. Severity is defined on a scenario-specific scale.}
-	\label{fig:05S-power-severity}
-\end{figure}
-
-Average power also varies across the surrounding error and predictor environments. MIS mean positive-severity power ranges from \(43.4\%\) under GOLM errors to \(51.9\%\) under normal errors, and from \(38.9\%\) with normal predictors to approximately \(51\%\) with mixed-normal and contaminated predictors (\autoref{tab:05-power-by-error} and \autoref{tab:05-power-by-x}). Average power increases with sample size from \(37.8\%\) at \(n=500\) to \(55.8\%\) at \(n=5000\) (\autoref{tab:05-power-by-n}).
-
-\input{../../output/05_misspecification/tables/supplement/05_tabS05_power_by_error.tex}
-
-\input{../../output/05_misspecification/tables/supplement/05_tabS06_power_by_x.tex}
-
-\input{../../output/05_misspecification/tables/supplement/05_tabS07_power_by_n.tex}
-
-The environment-level heatmap shows that these pooled averages conceal meaningful heterogeneity across predictor and error distributions (\autoref{fig:05S-environment-heterogeneity}). At maximum simulated severity, several scenarios attain uniformly high power, whereas heteroskedasticity, omitted variables, and the invariant linear-endogeneity case retain substantial weak environments. The worst-environment summaries quantify this variation (\autoref{tab:05-worst-case-environment}): for example, maximum-severity threshold power remains at least \(95.4\%\) across the \(96\) environments, whereas omitted-variable power ranges from \(0.0\%\) to \(100.0\%\) and has a median of only \(7.2\%\).
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/05_misspecification/figures/supplement/05_figS05_environment_heterogeneity.pdf}
-	\caption{MIS power across predictor distributions, error distributions, and sample sizes in the detailed environment comparison.}
-	\label{fig:05S-environment-heterogeneity}
-\end{figure}
-
-\input{../../output/05_misspecification/tables/supplement/05_tabS08_worst_case_environment.tex}
-
-The comparison with the classical observation-level diagnostics shows a similar pattern of non-nested rejection sets. MIS-only rejection is common for several nonlinear and heterogeneous mechanisms, while Cook's distance, DFBETAS, and leverage retain some exclusive detections (\autoref{fig:05S-exclusive-classical}). These results reinforce the interpretation of the methods as diagnostics with different targets rather than interchangeable specification tests.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/05_misspecification/figures/supplement/05_figS04_exclusive_classical.pdf}
-	\caption{Exclusive rejection probabilities for MIS relative to Cook's distance, DFBETAS, and leverage at \(k/n=0.025\).}
-	\label{fig:05S-exclusive-classical}
-\end{figure}
-
-\subsubsection{Boundary and Deletion-Budget Diagnostics}
-\label{app:misspec-boundary}
-
-The faceted boundary results in \autoref{fig:05S-boundary-faceted} provide the
-complete sample-size pattern underlying \autoref{fig:05-boundary-by-n}. For nonlinear confounding, heterogeneous slopes, missing interactions, nonlinearity, and threshold behaviour, the censoring-aware median boundary declines as sample size increases. Heteroskedasticity also becomes detectable after the smallest design but retains a higher boundary. Linear endogeneity and omitted-variable misspecification remain right-censored
-throughout the displayed sample-size grid (\autoref{tab:05-boundary-mean}).
+For an environment whose fitted power curve reaches \(0.80\), the detection boundary is the interpolated severity at which that level is first attained. Environments that do not reach the criterion within the simulated range are treated as right-censored. The complete sample-size pattern underlying \autoref{fig:05-boundary-by-n} is shown in \autoref{fig:05S-boundary-faceted}. The mechanism-specific differences reinforce the main-text conclusion that misspecification does not translate uniformly into target-coefficient sensitivity.
 
 \begin{figure}[htbp]
 	\centering
@@ -444,34 +81,7 @@ throughout the displayed sample-size grid (\autoref{tab:05-boundary-mean}).
 	\label{fig:05S-boundary-faceted}
 \end{figure}
 
-\input{../../output/05_misspecification/tables/supplement/05_tabA04_boundary_mean.tex}
-
-The detailed deletion-budget results show that the pooled operating characteristic does not imply a universally preferred \(k\) (\autoref{tab:05-budget-by-scenario} and \autoref{tab:05-budget-mean}). No budget dominates across scenarios. For example, missing-interaction reach rises from \(84.4\%\) at \(k/n=0.01\) to \(100.0\%\) at \(0.05\), whereas nonlinear-confounding and heterogeneous-slope reach declines at the \(10\%\) budget. Linear endogeneity remains undetected at every budget, and omitted-variable reach remains low even though it increases to \(19.8\%\) at \(10\%\). The fixed-\(k\) analysis therefore describes sensitivity to analyst-chosen budgets rather than recovery of a latent contamination proportion.
-
-\input{../../output/05_misspecification/tables/main/05_tab_budget_by_scenario.tex}
-
-\input{../../output/05_misspecification/tables/supplement/05_tabA05_budget_mean.tex}
-
-\subsubsection{Correct-Model Calibration and Supplementary Estimation}
-\label{app:misspec-estimation}
-
-The corrected-model cutoff audit confirms that the respecified-model analysis uses finite independently calibrated cutoffs in every recorded model class (\autoref{tab:05-correct-cutoff-audit}). Together with the approximately \(5\%\) corrected-model rejection rates in the main text, this supports the interpretation of the specificity exercise as a calibrated comparison rather than a mechanical consequence of reusing wrong-model thresholds.
-
-\input{../../output/05_misspecification/tables/supplement/05_tabS09_correct_cutoff_audit.tex}
-
-The frozen-05 estimation results address a different question from the formal detection experiment. When the missing model structure is explicitly restored, full-MM estimation has small absolute bias and coverage close to \(95\%\) across the recorded corrected-model cases (\autoref{tab:05-frozen-mm-correct-wrong}). Under the corresponding wrong models, bias and coverage can deteriorate substantially. These results concern estimation under corrected and incorrect specifications and should not be interpreted as evidence that deleting MIS-selected observations performs the same correction.
-
-\input{../../output/05_misspecification/tables/supplement/05_tabA01_mm_correct_vs_wrong.tex}
-
-The comparison of full OLS and full MM similarly shows that lower RMSE does not imply improved interval calibration in every environment. MM has lower RMSE in all eight recorded scenarios within each predictor-distribution stratum, but coverage is closer to \(95\%\) in none of the normal-\(X\) cases and in only four of eight cases under each of the mixed-normal and contaminated predictor designs ((\autoref{tab:05-frozen-ols-vs-mm} and \autoref{tab:05-frozen-mm-win-counts}).
-
-\input{../../output/05_misspecification/tables/supplement/05_tabA02_ols_vs_mm.tex}
-
-\input{../../output/05_misspecification/tables/supplement/05_tabA03_mm_win_counts.tex}
-
-Finally, the deletion-arm results show why detection should not be equated with model repair. MIS deletion frequently increases the mean cell-level RMSE as the deletion fraction grows, particularly under mixed-normal and contaminated predictors. With contaminated predictors, mean cell RMSE for MIS deletion rises from \(5.697\) at a \(1\%\) budget to \(18.209\) at \(10\%\). The unchanged full OLS fit records \(2.296\) (\autoref{tab:05-frozen-rmse-mean-median}). Cook's distance and DFBETAS deletion move in the opposite direction, falling as the budget grows. The structural defect remains in the estimating model after deletion, so improved diagnostic localisation does not imply improved estimation.
-
-\input{../../output/05_misspecification/tables/supplement/05_tabA06_frozen_rmse_mean.tex}
+Detailed power curves, predictor- and error-distribution breakdowns, diagnostic-comparison grids, deletion-budget summaries, and supplementary estimation comparisons are retained in the repository. They do not alter the two distinctions emphasised in the main text: the MIS response depends on the form of misspecification, and target-coefficient localisation does not constitute model correction.
 
 
 

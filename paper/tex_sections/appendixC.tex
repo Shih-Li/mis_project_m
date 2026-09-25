@@ -10,22 +10,23 @@ k=1,\ldots,\lfloor 0.05N\rfloor,
 \]
 subject to study-specific feasibility restrictions. Every selected deletion set is subsequently evaluated using the validated estimator associated with the frozen audit specification. The reported paths therefore record feasible leave-set-out refits of the audited coefficient.
 
-For comparability across applications, let
+For comparability across applications, define
 \[
 R_k
 =
-\frac{\widehat{\beta}_{(-S_k)}}{\widehat{\beta}_0},
+\frac{\widehat{\beta}_{-S_k}}
+{\widehat{\beta}_{\mathrm{full}}},
 \]
-where \(\widehat{\beta}_0\) is the validated full-sample coefficient and
-\(\widehat{\beta}_{(-S_k)}\) is the exact refitted coefficient after deleting the selected size-\(k\) set. A \(50\%\) attenuation is reached when \(R_k\leq0.5\), a \(50\%\) amplification when \(R_k\geq1.5\), and a zero crossing when \(R_k\leq0\). Amplification and attenuation are defined relative to the direction of the original coefficient, so these thresholds remain comparable for positive and negative baseline estimates.
+where \(\widehat{\beta}_{\mathrm{full}}\) is the validated full-sample coefficient and \(\widehat{\beta}_{-S_k}\) is the full-refit coefficient after deleting the selected size-\(k\) set. A \(50\%\) attenuation is reached when \(R_k\leq0.5\), a \(50\%\) amplification when \(R_k\geq1.5\), and a zero crossing when \(R_k\leq0\), with the direction normalised relative to the sign of the full-sample coefficient.
 
-The study-specific figures plot
-\[
-\Delta\beta_k
-=
-\widehat{\beta}_{(-S_k)}-\widehat{\beta}_0
-\]
-against the number of deleted observations. The upper horizontal axis reports the corresponding share of the estimation sample. The solid horizontal reference denotes no coefficient change, while the dashed horizontal reference denotes the change required for the refitted coefficient to equal zero. A vertical dotted line marks the first zero crossing along a displayed searched path when such a crossing occurs within the audit budget.
+\autoref{fig:application-all-paths} displays the complete audit paths for all ten applications using a common normalisation. Each panel reports \(R_k\) against the deleted share of the estimation sample, with common reference lines for the full-sample coefficient and zero crossing.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\textwidth]{../../application/00_cross_study/figures/supplement/05_figA1_all_audit_paths.pdf}
+	\caption{Target-coefficient sensitivity paths for the ten empirical applications. Panels A--J correspond to Studies 01--10. The horizontal axis reports the deleted share of the estimation sample and the vertical axis reports the full-refit coefficient normalised by its full-sample value. The two paths correspond to the two directional MIS searches.}
+	\label{fig:application-all-paths}
+\end{figure}
 
 
 \subsection{Study 01: Mobile Money}
@@ -39,13 +40,6 @@ The MIS representation replaces the absorbed fixed effects with explicit indicat
 
 The coefficient responds to deletions well below the common \(5\%\) budget. Along the corresponding searched paths, a \(50\%\) amplification is first attained after deleting \(13\) observations, approximately \(0.49\%\) of the estimation sample, while a \(50\%\) attenuation is first attained after \(14\) deletions, approximately \(0.53\%\). The first zero crossing occurs at \(k=41\), corresponding to approximately \(1.55\%\) of the sample. The selected capital coefficient is therefore sensitive to feasible deletion sets containing a small fraction of the validated estimation sample.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.88\textwidth]{../../application/01_RSPitHUMM/fig_mis_audit.pdf}
-\caption{Observation-sensitivity paths for the Mobile Disburse coefficient in the mobile-money application. The paths report exact fixed-effects OLS refits after each selected deletion set.}
-\label{fig:app01-mis-audit}
-\end{figure}
-
 
 \subsection{Study 02: Vaccine Delivery}
 \label{app:application-02}
@@ -58,12 +52,6 @@ The search representation uses explicit fixed-effect indicators, while exact del
 
 This coefficient is comparatively stable over the searched deletion range. A \(50\%\) attenuation is first reached after deleting \(505\) observations, approximately \(4.17\%\) of the estimation sample. A \(50\%\) amplification is not reached, and the coefficient does not cross zero within the maximum audited deletion share of approximately \(5\%\). The audited coefficient therefore remains positive throughout the searched deletion budget.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.88\textwidth]{../../application/02_LMDIVUiSL/fig_mis_audit.pdf}
-\caption{Observation-sensitivity paths for the door-to-door vaccination coefficient in the vaccine-delivery application.}
-\label{fig:app02-mis-audit}
-\end{figure}
 
 
 \subsection{Study 03: Self-Esteem}
@@ -77,12 +65,6 @@ Because heteroskedasticity-robust covariance estimation does not alter the OLS p
 
 A \(50\%\) attenuation is attained after deleting \(16\) observations, approximately \(2.52\%\) of the sample, while a \(50\%\) amplification requires \(18\) observations, approximately \(2.84\%\). The coefficient does not cross zero within the maximum deletion budget. The audit therefore identifies substantial movement in the magnitude of the treatment coefficient without a reversal of its sign.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.88\textwidth]{../../application/03_WbHS/fig_mis_audit.pdf}
-\caption{Observation-sensitivity paths for the treatment coefficient in the self-esteem application.}
-\label{fig:app03-mis-audit}
-\end{figure}
 
 
 \subsection{Study 04: Health Information and Survival}
@@ -96,13 +78,6 @@ The fourth audit considers the survival analysis in \textcite{ciancio2025survivi
 The coefficient is sensitive to small deletion sets. A \(50\%\) amplification in the original negative direction is reached after deleting \(5\) observations, approximately \(0.21\%\) of the estimation sample, while a \(50\%\) attenuation is reached after \(9\) deletions, approximately \(0.39\%\). The coefficient first crosses zero after deleting \(17\) observations, approximately \(0.73\%\) of the sample. The audit also records non-nested transitions along the deletion paths, indicating that the composition of the selected influential set can change as \(k\) increases.
 
 The scope of this audit is narrower than the preferred causal analysis in \textcite{ciancio2025surviving}. The paper's preferred specifications use instrumental variables and efficient linear GMM, while the current shared MIS engine is defined for a linear OLS representation. The results in this appendix therefore apply to the reported OLS companion coefficient and do not constitute a deletion audit of the preferred IV/GMM causal estimate.
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.88\textwidth]{../../application/04_SBN-HIWTO/fig_mis_audit.pdf}
-\caption{Observation-sensitivity paths for the OLS coefficient on learning HIV-positive status in the health-information application.}
-\label{fig:app04-mis-audit}
-\end{figure}
 
 
 \subsection{Study 05: Cash versus In-Kind Transfers}
@@ -123,12 +98,6 @@ This application exhibits the earliest threshold crossings among the ten searche
 
 The scope qualification is important. The replication retains unresolved differences in the fully controlled aggregate-consumption specification, whereas the no-village-controls aggregate regression reproduces the relevant benchmark and is therefore used for the MIS audit. The results should consequently be interpreted as sensitivity of this validated no-village-controls contrast.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.88\textwidth]{../../application/05_TPCvIKT/fig_mis_audit.pdf}
-\caption{Observation-sensitivity paths for the in-kind versus equal-value cash contrast in the food-consumption application.}
-\label{fig:app05-mis-audit}
-\end{figure}
 
 
 \subsection{Study 06: Workforce Grant}
@@ -149,13 +118,6 @@ Deleting a transformed row is therefore equivalent to deleting the corresponding
 
 A \(50\%\) amplification is first attained after deleting \(4\) observations, approximately \(0.23\%\) of the sample, while a \(50\%\) attenuation occurs after \(5\) deletions, approximately \(0.28\%\). The coefficient first crosses zero at \(k=10\), corresponding to approximately \(0.56\%\) of the estimation sample. The selected employment coefficient is therefore sensitive to deletion sets containing well below one percent of the validated sample.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.88\textwidth]{../../application/06_UHGtBtCEoaUWRP/fig_mis_audit.pdf}
-\caption{Observation-sensitivity paths for the target employment coefficient in the workforce-grant application.}
-\label{fig:app06-mis-audit}
-\end{figure}
-
 
 \subsection{Study 07: Sanitation Spillovers}
 \label{app:application-07}
@@ -168,13 +130,6 @@ The seventh audit examines the decision-spillover specification in Table 2 of \t
 The original specification uses post-double-selection LASSO to determine nuisance controls before estimating the target coefficient. The audit reproduces this selection step on the validated full sample and then freezes the selected controls throughout the deletion path. Re-running LASSO after each deletion would change the nuisance specification as \(k\) changes and would therefore define a different sensitivity problem. The deletion refits consequently use the validated fixed-effects OLS specification with the selected controls held fixed.
 
 A \(50\%\) amplification is reached after deleting \(15\) observations, approximately \(0.40\%\) of the sample, while a \(50\%\) attenuation occurs after \(16\) deletions, approximately \(0.43\%\). The coefficient first crosses zero after \(33\) deletions, corresponding to approximately \(0.88\%\) of the estimation sample. The selected spillover coefficient is therefore sensitive within the first one percent of the deletion path.
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.88\textwidth]{../../application/07_SwSIiUS/fig_mis_audit.pdf}
-\caption{Observation-sensitivity paths for the neighboring-treatment coefficient in the sanitation-spillover application.}
-\label{fig:app07-mis-audit}
-\end{figure}
 
 
 \subsection{Study 08: Access to Finance}
@@ -189,13 +144,6 @@ The original model contains firm fixed effects. The MIS representation uses expl
 
 The target coefficient is sensitive at very small deletion fractions. A \(50\%\) attenuation is first reached after deleting \(5\) observations, approximately \(0.058\%\) of the estimation sample, and a \(50\%\) amplification is first reached after \(8\) deletions, approximately \(0.093\%\). The coefficient first crosses zero after deleting \(20\) observations, or approximately \(0.23\%\) of the sample. The full audit path contains several non-nested transitions, although the first \(40\) deletion sizes displayed in \autoref{fig:application-persistence} exhibit nested accumulation and a relatively stable influential-set core.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.88\textwidth]{../../application/08_IEoAtF/fig_mis_audit.pdf}
-\caption{Observation-sensitivity paths for the competitor-treatment exposure coefficient in the access-to-finance application.}
-\label{fig:app08-mis-audit}
-\end{figure}
-
 
 \subsection{Study 09: Immunization Nudges}
 \label{app:application-09}
@@ -208,13 +156,6 @@ The ninth audit considers the post-selection pooled policy model for immunizatio
 The published workflow first performs variable selection and policy pooling and subsequently estimates a weighted post-selection model. The audit reconstructs the selection and pooling procedure once on the validated full sample and freezes the resulting specification throughout the deletion path. Fixed village-population weights are represented through the exact square-root-weight transformation used for Study 06, and every selected deletion set is subsequently re-estimated using the validated weighted model with the pooled specification held fixed.
 
 A \(50\%\) amplification is reached after deleting \(55\) observations, approximately \(0.75\%\) of the sample. A \(50\%\) attenuation requires \(105\) observations, approximately \(1.42\%\), and the first zero crossing occurs at \(k=214\), corresponding to approximately \(2.90\%\) of the estimation sample. The audit records non-nested changes in influential-set membership as \(k\) increases. The geographic composition of the \(214\)-observation sign-reversing set is examined separately in \autoref{fig:application-spatial-concentration}.
-
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.88\textwidth]{../../application/09_StMEN/fig_mis_audit.pdf}
-\caption{Observation-sensitivity paths for the selected pooled policy coefficient in the immunization application.}
-\label{fig:app09-mis-audit}
-\end{figure}
 
 
 \subsection{Study 10: Electricity Information}
@@ -229,19 +170,12 @@ A \(50\%\) amplification in the original negative direction is first attained af
 
 The headline specification in \textcite{westberg2025power} uses an ordered-logit estimator. The shared MIS search is defined for a linear model, so the present audit uses the paper's reported linear-probability robustness specification for the same randomized treatment contrast. The results therefore characterize observation sensitivity of the Table A5 linear coefficient and do not constitute a deletion audit of the headline ordered-logit estimate.
 
-\begin{figure}[htbp]
-\centering
-\includegraphics[width=0.88\textwidth]{../../application/10_TPoI/fig_mis_audit.pdf}
-\caption{Observation-sensitivity paths for the distribution-information coefficient in the electricity-information application.}
-\label{fig:app10-mis-audit}
-\end{figure}
-
 
 \subsection{Interpretation of the Study-Specific Audits}
 \label{app:application-interpretation-summary}
 
-The ten audits apply a common sensitivity question to paper-specific estimands whose estimation structures differ. Fixed effects are represented explicitly where required, fixed weights are handled through an exact transformed regression, and model-selection steps are frozen when repeated selection would alter the nuisance specification. Baseline equivalence is established before the deletion search in every application. The resulting paths therefore refer to explicitly defined and validated coefficients.
+The ten audits apply a common coefficient-sensitivity question to validated paper-specific estimands. Fixed effects are represented explicitly where required, fixed weights are handled through exact transformed regressions, and model-selection steps are frozen when repeated selection would change the nuisance specification. Full-refit validation then evaluates each selected deletion set using the corresponding frozen audit specification.
 
-The study-specific results also clarify the scope of the cross-study comparison in \autoref{subsec:application-sensitivity}. An early threshold crossing establishes that the audit identifies a feasible small subset capable of producing a large change in the selected point estimate. A later crossing indicates that the searched paths do not attain the same change at smaller deletion sizes. Neither result evaluates the experimental design as a whole, and a zero crossing does not imply that every finding in the source study is similarly sensitive. The empirical application therefore treats MIS as a targeted diagnostic of finite-sample observation sensitivity.
+The paths in \autoref{fig:application-all-paths} describe finite-sample dependence of these audited coefficients on selected observations. Early threshold crossings indicate sensitivity to small subsets, while later or absent crossings indicate greater stability over the searched deletion range. These results do not evaluate the source experiments as a whole, and they do not extend beyond the audited estimand and specification.
 
 \end{document}

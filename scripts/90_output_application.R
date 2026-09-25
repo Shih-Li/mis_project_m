@@ -2659,7 +2659,7 @@ table_rows <- vapply(
       row$Study[[1L]],
       " & ",
       format(
-        row$p[[1L]],
+        row$N[[1L]],
         big.mark = ",",
         scientific = FALSE
       ),
