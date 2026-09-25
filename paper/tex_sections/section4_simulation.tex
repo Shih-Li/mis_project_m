@@ -134,14 +134,9 @@ The second study therefore separates three statistical objectives. MM and LTS pr
 \subsection{Misspecification-Induced Target-Coefficient Influence}
 \label{subsec:misspecification}
 
-\subsubsection{Design and Calibration}
-\label{subsubsec:misspec-design}
+The third simulation asks whether model misspecification can generate concentrated target-coefficient influence without conventional injected contamination outliers. Eight mechanisms are considered: linear endogeneity, nonlinear confounding, heterogeneous slopes, heteroskedasticity, a missing interaction, nonlinear functional form, an omitted variable, and threshold behaviour. Each mechanism is evaluated across \(96\) environments formed by four sample sizes, three predictor distributions, and eight error distributions. These designs extend the preceding contamination study by allowing coefficient sensitivity to arise from the fitted specification itself.
 
-The third simulation study characterises when coefficient-targeted deletion sensitivity responds to model misspecification. Eight mechanisms are considered: linear endogeneity, nonlinear confounding, heterogeneous slopes, heteroskedasticity, a missing interaction, nonlinear functional form, an omitted variable, and threshold behaviour. Each scenario is evaluated in \(96\) environments formed by four sample sizes, three predictor distributions, and eight error distributions, giving \(8\times96=768\) scenario--environment combinations.
-
-MIS is compared with Cook's distance, DFBETAS, leverage, Ramsey's RESET, and the Breusch--Pagan test. The principal deletion fraction is \(k/n=0.025\), with \(0.01\), \(0.05\), and \(0.10\) used for sensitivity analysis. Detector cutoffs come from an independent null-calibration stream.
-
-For MIS, diagnostic sensitivity is measured by
+Fixed-\(k\) MIS is evaluated at deletion fractions \(k/n\in\{0.01,0.025,0.05,0.10\}\), with \(k/n=0.025\) used as the primary operating point. The MIS search selects \(S_k\) under the fixed-residualised objective described in \autoref{sec:methodology}; the selected set is then evaluated by refitting the full simulated model. Target-coefficient sensitivity is summarised by
 \[
 T_k
 =
@@ -153,38 +148,9 @@ T_k
 	\widehat{\operatorname{se}}(\widehat{\beta})
 },
 \]
-where \(\widehat{\beta}\) is the full-sample estimate of the target coefficient, \(\widehat{\beta}_{-S_k}\) is the corresponding estimate after deleting \(S_k\), and \(S_k\) is the size-\(k\) set producing the larger absolute target-coefficient movement across the two directional searches. The denominator places coefficient movement on the uncertainty scale of the original fit. Its role is scale normalisation. Inference uses the empirical null calibration, with no Gaussian or \(t\) reference distribution assumed. Larger values indicate greater target-coefficient sensitivity, and rejection occurs when \(T_k\) exceeds the corresponding empirically calibrated null cutoff.
+where \(\widehat{\beta}_{-S_k}\) is the full-refit target coefficient after deleting the selected set. Independent null simulations provide the reference distribution for \(T_k\). The remaining deletion fractions are treated as alternative sensitivity budgets rather than estimates of an underlying influential-set size.
 
-For the five additive mechanisms, \(\lambda\) measures the standard-deviation ratio of the imposed misspecification component to the baseline error. Heteroskedasticity and the two confounding designs use mechanism-specific severity scales. Empirical size is rejection at zero severity; detection reach records whether the fitted monotone power curve reaches \(80\%\), and the detection boundary records the corresponding severity when it does. Detailed calibration and environment-level results are reported in \autoref{app:misspecification-results}.
-
-\subsubsection{Calibration and Detection Breadth}
-\label{subsubsec:misspec-breadth}
-
-
-The independent calibration produces rejection rates close to the nominal \(5\%\) level under the reference model. MIS ranges from \(5.04\%\) to \(5.07\%\) across deletion fractions, and the competing procedures are similarly calibrated (\autoref{tab:05-size-by-k}). At \(k/n=0.025\), MIS reached \(80\%\) power in \(551\) of the \(768\) scenario--environment combinations, or \(71.7\%\), compared with \(68.4\%\) for Breusch--Pagan and \(50.0\%\) for RESET (\autoref{fig:05-detection-reach} and \autoref{tab:05-detection-reach}). The observation-level influence diagnostics reached substantially fewer environments. With baseline rejection rates aligned, these differences describe variation in detection breadth across misspecification mechanisms.
-
-\input{../../output/05_misspecification/tables/main/05_tab01_size_by_k.tex}
-
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=0.78\linewidth]{../../output/05_misspecification/figures/main/05_fig01_detection_reach.pdf}
-	\caption{Number of scenario--environment combinations in which each diagnostic attains at least \(80\%\) empirical power at the principal MIS deletion fraction \(k/n=0.025\).}
-	\label{fig:05-detection-reach}
-\end{figure}
-
-\input{../../output/05_misspecification/tables/main/05_tab03_detection_reach.tex}
-
-The comparison with RESET and Breusch--Pagan shows that the procedures respond to different forms of misspecification. Relative to Breusch--Pagan, MIS-only rejection is more common than Breusch--Pagan-only rejection in most mechanisms, including heterogeneous slopes, nonlinear confounding, heteroskedasticity, nonlinearity, and threshold behaviour. The comparison with RESET is more specialised: RESET-only rejection is substantial for nonlinear confounding, missing interactions, nonlinearity, and thresholds, whereas MIS-only rejection is especially pronounced for heterogeneous slopes and heteroskedasticity (\autoref{fig:05-generalist-specialist} and \autoref{tab:05-exclusive-specialists}). These patterns reflect the different diagnostic targets of the procedures.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\linewidth]{../../output/05_misspecification/figures/main/05_fig02_generalist_specialist.pdf}
-	\caption{Exclusive rejection probabilities for MIS relative to Breusch--Pagan and RESET at \(k/n=0.025\). Bars to the right report MIS-only rejection and bars to the left report rival-only rejection.}
-	\label{fig:05-generalist-specialist}
-\end{figure}
-
-\input{../../output/05_misspecification/tables/main/05_tab04_exclusive_specialists.tex}
+The response of fixed-\(k\) MIS is strongly mechanism dependent. At the primary deletion fraction, nonlinear confounding, heterogeneous slopes, nonlinear functional form, and threshold behaviour reached the \(80\%\) detection criterion in all \(96\) environments, while the omitted-variable design reached it in only \(8.3\%\) of environments. Linear endogeneity never reached the criterion. These differences are more informative for the present question than an aggregate ranking against other diagnostics: misspecification generates a strong MIS response when it produces sufficiently concentrated movement in the target coefficient, while other forms of misspecification can remain weak under the same coefficient-targeted diagnostic.
 
 \subsubsection{Detection Boundary and the Role of \(k\)}
 \label{subsubsec:misspec-boundary}
@@ -213,44 +179,16 @@ The deletion fraction changes the operating characteristics without identifying 
 
 \input{../../output/05_misspecification/tables/main/05_tab05_budget_summary.tex}
 
-\subsubsection{Specificity, Invariance, and Localisation}
-\label{subsubsec:misspec-specificity}
+Linear endogeneity provides a boundary case for this interpretation. In the simulated design, the endogeneity component lies within the fitted linear span, so increasing its severity changes the coefficient representation without changing the relevant deletion-sensitivity structure. The MIS statistic is consequently invariant up to numerical precision across severity levels. Nonlinear confounding removes this fitted-span invariance and produces a strong response across the recorded environments. Misspecification alone is therefore insufficient to generate concentrated target-coefficient influence; the form of the departure determines whether sensitivity becomes concentrated in particular observations.
 
-The wrong and correctly specified model classes require separate null calibration because the null distribution of \(T_k\) depends on the fitted specification. At \(k/n=0.025\), four wrong specifications produced rejection between \(62.9\%\) and \(81.9\%\), while the omitted-variable design was much weaker at \(11.1\%\) (\autoref{fig:05-specificity} and \autoref{tab:05-specificity}). After each correctly specified model was calibrated against its own null distribution, rejection returned to approximately \(5\%\). The substantive contrast is therefore the persistence of strong rejection for four wrong specifications after model-class-specific calibration.
+Localisation can be evaluated directly only when the simulation defines an observation-level affected subgroup. The threshold design provides the clearest case: at \(k/n=0.025\), the MIS-selected set has precision \(0.606\) and lift \(2.43\) relative to an affected fraction of \(0.25\). Heterogeneous slopes produce a different pattern, with precision \(0.274\) and lift \(1.10\), close to the no-enrichment benchmark. A mechanism can therefore generate substantial target-coefficient sensitivity without causing the selected MIS observations to coincide closely with a nominal affected subgroup. Detection of coefficient sensitivity and localisation of a known subgroup are distinct properties.
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=0.82\linewidth]{../../output/05_misspecification/figures/main/05_fig05_specificity.pdf}
-	\caption{MIS rejection rates under the wrong and correctly specified model classes at \(k/n=0.025\). Each model class is evaluated using its corresponding empirically calibrated null cutoff.}
-	\label{fig:05-specificity}
-\end{figure}
-
-\input{../../output/05_misspecification/tables/main/05_tab06_specificity.tex}
-
-Linear endogeneity is an algebraic fitted-span invariance in this design, not an ordinary low-power case. The endogeneity component is linear in the fitted regressor, so changing its severity changes the coefficient representation without changing the relevant deletion-sensitivity ordering. The maximum recorded discrepancy in the standardised MIS statistic across matched severity levels was only \(1.87\times10^{-13}\), confirming the invariance numerically (\autoref{tab:05-invariance-blind-set}). The corresponding \(4.95\%\) rejection rate is therefore a consequence of null calibration rather than evidence used to establish the invariance. The associated lack of rejection is not unique to MIS in this design: the competing diagnostics also remain near their calibrated null rates. The algebraic invariance established above applies specifically to the MIS deletion-sensitivity statistic. The invariance persists across all four deletion fractions, so varying \(k\)
-within the simulated range does not alter this result.
-
-\input{../../output/05_misspecification/tables/main/05_tab07_invariance_blind_set.tex}
-
-\input{../../output/05_misspecification/tables/main/05_invariance_argument.tex}
-
-The nonlinear-confounding experiment establishes the scope of this invariance. Linear endogeneity did not attain \(80\%\) power in any recorded environment at any deletion fraction. Nonlinear confounding, which replaces the linear-in-\(X\) component with a standardised quadratic component, attained \(80\%\) power in all recorded environments at deletion fractions of \(1\%\), \(2.5\%\), and \(5\%\). The contrast locates the invariance within the fitted linear span. Nonlinear confounding outside that span produces strong deletion sensitivity.
-
-Localisation is defined only for mechanisms with a well-defined observation-level affected subset. Heterogeneous slopes identify the \(G_i=1\) subgroup, which comprises approximately \(25\%\) of observations, while threshold misspecification identifies observations above the threshold. Nonlinearity, missing interaction, and omitted-variable misspecification do not define an analogous binary affected set, so precision and lift are not reported for those mechanisms.
-
-At \(k/n=0.025\), threshold misspecification produced precision \(0.606\) and lift \(2.43\) relative to the \(25\%\) affected fraction, indicating substantial enrichment among the MIS-selected observations (\autoref{tab:05-localisation}). Heterogeneous slopes produced precision \(0.274\) against an affected fraction of approximately \(0.25\), with lift \(1.10\). The latter result lies close to the no-enrichment benchmark. Because no Monte Carlo interval is reported for this contrast, the small difference from \(0.25\) is interpreted descriptively. The localisation contrast indicates that enrichment is strongest when the misspecification is concentrated on an identifiable subset of observations.
-
-\input{../../output/05_misspecification/tables/main/05_tab08_localisation.tex}
-
-\subsubsection{Deletion Consequences and Interpretation}
-\label{subsubsec:misspec-repair}
-
-Identifying observations associated with misspecification does not imply that deleting them restores a correctly specified model. Relative to the structural target coefficient used in the simulation, the lower panels of \autoref{fig:05-targeting-localisation} show that coefficient RMSE can increase as the deletion fraction grows. The relevant comparison is the within-panel change across deletion fractions; absolute RMSE levels should not be compared directly across predictor environments because the panels use different vertical scales. Deleting observations changes the estimating sample. It does not add an omitted variable, restore exogeneity, or supply a missing nonlinear or interaction term.
+Localisation of coefficient sensitivity does not provide a correction for model misspecification. The lower panels of \autoref{fig:05-targeting-localisation} show that coefficient RMSE can increase as the deletion budget grows, even after the observations selected by a diagnostic are removed and the model is refitted. Deletion changes the estimating sample, while model repair requires changes to the maintained specification or identifying assumptions. Fixed-\(k\) MIS therefore identifies where a fitted coefficient is sensitive within the observed sample; it does not supply an alternative estimator for the correctly specified structural model.
 
 \begin{figure}[htbp]
 	\centering
 	\includegraphics[width=\linewidth]{../../output/05_misspecification/figures/main/05_fig06_targeting_localisation.pdf}
-	\caption{Localisation and deletion consequences. The upper panels report localisation lift and precision for heterogeneous-slope and threshold designs, with diamonds marking the chance/reference level. The lower panels report mean cell-level RMSE for the full-sample and diagnostic-deletion estimators across predictor environments and fixed deletion fractions.}
+	\caption{Mechanism-specific localisation and post-deletion coefficient error. The upper panels report localisation lift and precision for the heterogeneous-slope and threshold designs, with diamonds marking the corresponding chance/reference levels. The lower panels report mean cell-level coefficient RMSE for the full-sample estimate and full-model refits after diagnostic deletion across predictor environments and fixed deletion fractions.}
 	\label{fig:05-targeting-localisation}
 \end{figure}
 
