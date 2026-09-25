@@ -61,15 +61,6 @@ For a deletion set \(S\subseteq[n]\), define the coefficient-targeted set influe
 \end{equation}
 This quantity is referred to throughout the thesis as the \emph{set-DFBETA}. Its sign records the direction of coefficient movement: a positive value indicates that deleting \(S\) lowers the target estimate, while a negative value indicates that deletion raises it.
 
-For the target coefficient itself, set $\phi(\beta)=\beta$. Set influence then becomes
-\begin{equation}
-	\widehat{\beta}-\widehat{\beta}_{-S}
-	=
-	\frac{\sum_{s\in S}\widetilde{x}_s\widetilde{r}_s}
-	{\sum_{t\notin S}\widetilde{x}_t^2}.
-\end{equation}
-This coefficient change is referred to throughout the thesis as the \emph{set-DFBETA}, and its sign records the direction of movement. A positive value indicates that deleting $S$ lowers the target estimate, and a negative value indicates that deletion raises it.
-
 Using the residualised variables defined in \autoref{subsec:regression_setup}, and substituting \autoref{eq:target_beta_residualised} and \autoref{eq:target_residual}, the set-DFBETA admits the closed-form representation
 \begin{equation}
 	\widehat{\beta}
@@ -133,27 +124,29 @@ Here, $W(S)$ collects the deleted score contributions, while $G(S)$ measures the
 The fixed-$k$ influence objective is therefore a ratio of two quantities that are additive in set membership.
 
 The ratio in \autoref{eq:linear_fractional_objective} requires a positive denominator for every admissible deletion set. For a fixed set size $k$, the analysis therefore assumes
+
 \begin{equation}
 	G(S)>0
 	\qquad
 	\text{for all } S\subseteq[n] \text{ such that } |S|=k.
 	\label{eq:positive_denominator}
 \end{equation}
-Under this condition, deleting any admissible size-$k$ set leaves positive residualised information for estimating the target coefficient. The fixed-$k$ MIS problem for the direct coefficient target can then be expressed as the linear-fractional optimisation problem
+Under this condition, deleting any admissible size-\(k\) set leaves positive residualised information for estimating the target coefficient. For the positive direction, the fixed-\(k\) problem can be expressed as the linear-fractional optimisation problem.
+
 \begin{equation}
 	\max_{\substack{S\subseteq[n]\\|S|=k}}
 	\frac{W(S)}{G(S)}.
 	\label{eq:fixed_k_fractional_problem}
 \end{equation}
-This formulation preserves the joint dependence of the numerator and denominator on the selected deletion set \parencite{konrad2026finding}.
+The negative-direction problem is obtained by replacing \(W(S)\) with \(-W(S)\). The absolute-value MIS in \autoref{eq:absolute_fixed_k_influence} compares the optimised solutions from the two directions. This formulation preserves the joint dependence of the numerator and denominator on the selected deletion set \parencite{konrad2026finding}.
 
-Under the positive-denominator condition, the fixed-\(k\) problem is a linear-fractional optimisation problem. For a Dinkelbach parameter \(\eta\), the transformed objective ranks observations by
+Under the positive-denominator condition, each directional fixed-\(k\) problem is a linear-fractional optimisation problem. For the positive direction and a Dinkelbach parameter \(\eta\), the transformed objective ranks observations by
 \[
 s_i(\eta)=w_i+\eta c_i.
 \]
 Conditional on \(\eta\), the maximising candidate consists of the \(k\) observations with the largest transformed scores. The ratio is then updated using \(\eta=W(S)/G(S)\), and the top-\(k\) problem is resolved. Under exact arithmetic and exact top-\(k\) selection, the sequence terminates finitely \parencite{dinkelbach1967nonlinear,konrad2026finding}.
 
-For fixed residualised inputs and the positive-denominator condition in \autoref{eq:positive_denominator}, this procedure identifies a global maximiser of the stated fixed-\(k\) linear-fractional objective. This is the scope of ``exact'' optimisation used throughout the thesis. It does not imply global optimisation of the coefficient obtained after re-estimating the complete multivariate model. Full-refit validation remains a separate operation. Numerical convergence and computational checks are reported in \autoref{app:numerical}.
+For fixed residualised inputs and the positive-denominator condition in \autoref{eq:positive_denominator}, this procedure identifies a global maximiser of each stated directional fixed-\(k\) linear-fractional objective. Comparing the two directional optima therefore yields a global maximiser of the absolute fixed-\(k\) objective in \autoref{eq:absolute_fixed_k_influence}. This is the scope of ``exact'' optimisation used throughout the thesis. It does not imply global optimisation of the coefficient obtained after re-estimating the complete multivariate model. Full-refit validation remains a separate operation. Numerical convergence and computational checks are reported in \autoref{app:numerical}.
 
 \subsection{EVT-based inference for fixed-\texorpdfstring{$k$}{k} MIS}
 \label{subsec:evt_fixed_k}
