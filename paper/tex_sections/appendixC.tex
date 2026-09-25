@@ -37,7 +37,7 @@ The mobile-money audit targets the Mobile Disburse coefficient, \texttt{treatmen
 \subsection{Study 02: Vaccine Delivery}
 \label{app:application-02}
 
-The vaccine-delivery audit targets the door-to-door treatment coefficient \texttt{treat_dtd} in Table 1, column (1), of \textcite{meriggi2024lastmile}. The validated fixed-effects sample contains \(N=12{,}096\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.2935\); the alternative treatment arm remains in the regression as a nuisance regressor. The search uses explicit fixed-effect indicators and full-refit validation preserves the paper's fixed-effects estimator. The coefficient does not cross zero within the approximately \(5\%\) audit budget, although a \(50\%\) attenuation is first reached after \(505\) deletions, approximately \(4.17\%\) of the sample.
+The vaccine-delivery audit targets the door-to-door treatment coefficient \texttt{treat\_dtd} in Table 1, column (1), of \textcite{meriggi2024last}. The validated fixed-effects sample contains \(N=12{,}096\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.2935\); the alternative treatment arm remains in the regression as a nuisance regressor. The search uses explicit fixed-effect indicators and full-refit validation preserves the paper's fixed-effects estimator. The coefficient does not cross zero within the approximately \(5\%\) audit budget, although a \(50\%\) attenuation is first reached after \(505\) deletions, approximately \(4.17\%\) of the sample.
 
 \subsection{Study 03: Self-Esteem}
 \label{app:application-03}
@@ -54,19 +54,19 @@ The source study's preferred causal specifications use instrumental variables an
 \subsection{Study 05: Cash versus In-Kind Transfers}
 \label{app:application-05}
 
-The cash-versus-in-kind audit considers the aggregate food-consumption analysis of \textcite{cunha2014testing}. The target is the contrast between the in-kind and equal-value cash treatment effects, represented directly by \texttt{ik_minus_eq_cash}. The validated no-village-controls specification contains \(N=10{,}985\) observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.8861\). The algebraic reparameterization leaves the model span, fitted values, residuals, and estimation sample unchanged. The first searched zero crossing occurs at \(k=1\), approximately \(0.009\%\) of the estimation sample.
+The cash-versus-in-kind audit considers the aggregate food-consumption analysis of \textcite{cunha2014testing}. The target is the contrast between the in-kind and equal-value cash treatment effects, represented directly by \texttt{ik\_minus\_eq\_cash}. The validated no-village-controls specification contains \(N=10{,}985\) observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.8861\). The algebraic reparameterization leaves the model span, fitted values, residuals, and estimation sample unchanged. The first searched zero crossing occurs at \(k=1\), approximately \(0.009\%\) of the estimation sample.
 
 The fully controlled aggregate-consumption replication retains unresolved differences from the reported benchmark. The audit therefore uses the validated no-village-controls specification, and its sensitivity results apply to that contrast.
 
 \subsection{Study 06: Workforce Grant}
 \label{app:application-06}
 
-The workforce-grant audit targets \texttt{treat_HD} in the intent-to-treat employment specification of \textcite{mcintosh2022using}. The validated fixed-weight sample contains \(N=1{,}770\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.0231\). The search represents weighted least squares through the exact square-root-weight transformation \(y_i^*=\sqrt{w_i}y_i\) and \(X_i^*=\sqrt{w_i}X_i\), while full-refit validation uses the original weighted estimator. The first searched zero crossing occurs after deleting \(10\) observations, approximately \(0.56\%\) of the estimation sample.
+The workforce-grant audit targets \texttt{treat\_HD} in the intent-to-treat employment specification of \textcite{mcintosh2022using}. The validated fixed-weight sample contains \(N=1{,}770\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.0231\). The search represents weighted least squares through the exact square-root-weight transformation \(y_i^*=\sqrt{w_i}y_i\) and \(X_i^*=\sqrt{w_i}X_i\), while full-refit validation uses the original weighted estimator. The first searched zero crossing occurs after deleting \(10\) observations, approximately \(0.56\%\) of the estimation sample.
 
 \subsection{Study 07: Sanitation Spillovers}
 \label{app:application-07}
 
-The sanitation-spillover audit targets \texttt{neighbor_high} in the treated-household specification of \textcite{deutschmann2024spillovers}. The validated sample contains \(N=3{,}757\) observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.00976\). The source specification uses post-double-selection LASSO for nuisance-control selection; the audit reproduces this step on the full sample and freezes the selected controls throughout the deletion path. Re-running selection after each deletion would define a different sensitivity problem. The first searched zero crossing occurs after \(33\) deletions, approximately \(0.88\%\) of the estimation sample.
+The sanitation-spillover audit targets \texttt{neighbor\_high} in the treated-household specification of \textcite{deutschmann2024spillovers}. The validated sample contains \(N=3{,}757\) observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.00976\). The source specification uses post-double-selection LASSO for nuisance-control selection; the audit reproduces this step on the full sample and freezes the selected controls throughout the deletion path. Re-running selection after each deletion would define a different sensitivity problem. The first searched zero crossing occurs after \(33\) deletions, approximately \(0.88\%\) of the estimation sample.
 
 \subsection{Study 08: Access to Finance}
 \label{app:application-08}

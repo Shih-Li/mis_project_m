@@ -105,7 +105,9 @@ required_packages <- c(
   "tidyr",
   "ggplot2",
   "scales",
-  "patchwork"
+  "patchwork",
+  "magick",
+  "pdftools"
 )
 
 missing_packages <- required_packages[
@@ -2604,185 +2606,230 @@ message(
 
 # ==============================================================================
 # 15. Appendix C Figure:
-#     all ten normalized audit paths
+#     merge the ten existing study-specific audit figures
 # ==============================================================================
 
 appendix_panel_meta <- study_meta %>%
-  arrange(study_no) %>%
-  mutate(
-    panel_letter = LETTERS[seq_len(n())],
-    short_label = sub(
-      "^[0-9]+[[:space:]]+",
-      "",
-      study_label
-    ),
-    panel_label = paste0(
-      panel_letter,
-      "  ",
-      short_label
-    )
-  )
-
-
-appendix_paths <- audit_path_clean %>%
-  left_join(
-    appendix_panel_meta %>%
-      select(
-        study_id,
-        panel_label
-      ),
-    by = "study_id"
+  arrange(
+    study_no
   ) %>%
   mutate(
-    deletion_percent =
-      100 * removal_fraction,
+    panel_letter =
+      LETTERS[
+        seq_len(
+          n()
+        )
+      ],
     
-    panel_label = factor(
-      panel_label,
-      levels = appendix_panel_meta$panel_label
-    ),
+    short_label =
+      sub(
+        "^[0-9]+[[:space:]]+",
+        "",
+        study_label
+      ),
     
-    path_type = factor(
-      path_type,
-      levels = c(
-        "Attenuation / reversal search",
-        "Amplification search"
+    panel_label =
+      paste0(
+        panel_letter,
+        "  ",
+        short_label
+      ),
+    
+    figure_file =
+      file.path(
+        application_root,
+        study_id,
+        "fig_mis_audit.pdf"
       )
-    )
   )
 
 
-if (any(is.na(appendix_paths$panel_label))) {
+missing_appendix_figures <-
+  appendix_panel_meta$figure_file[
+    !file.exists(
+      appendix_panel_meta$figure_file
+    )
+  ]
+
+
+if (length(missing_appendix_figures) > 0L) {
+  
   stop(
-    "At least one audit-path row is missing an Appendix C panel label."
+    paste0(
+      "Missing study-specific audit figure(s):\n  ",
+      paste(
+        missing_appendix_figures,
+        collapse = "\n  "
+      )
+    )
   )
 }
 
 
-figA1_all_paths <- ggplot(
-  appendix_paths,
-  aes(
-    x = deletion_percent,
-    y = normalized_ratio,
-    group = path_type,
-    linetype = path_type
+# ------------------------------------------------------------------------------
+# 15.1 Render one existing PDF and add its panel heading
+# ------------------------------------------------------------------------------
+
+render_appendix_panel <- function(
+    pdf_file,
+    panel_label,
+    dpi = 180
+) {
+  
+  tmp_png <- tempfile(
+    fileext = ".png"
   )
-) +
   
-  geom_hline(
-    yintercept = 1,
-    linewidth = 0.35
-  ) +
-  
-  geom_hline(
-    yintercept = 0,
-    linetype = "dashed",
-    linewidth = 0.35
-  ) +
-  
-  geom_hline(
-    yintercept = c(
-      0.5,
-      1.5
-    ),
-    linetype = "dotted",
-    linewidth = 0.25
-  ) +
-  
-  geom_line(
-    linewidth = 0.55,
-    na.rm = TRUE
-  ) +
-  
-  facet_wrap(
-    vars(panel_label),
-    nrow = 2,
-    ncol = 5,
-    scales = "fixed"
-  ) +
-  
-  scale_x_continuous(
-    labels = scales::label_number(
-      accuracy = 1,
-      suffix = "\\%"
-    )
-  ) +
-  
-  scale_linetype_manual(
-    values = c(
-      "Attenuation / reversal search" = "solid",
-      "Amplification search" = "longdash"
-    )
-  ) +
-  
-  labs(
-    x = "Deleted share of estimation sample",
-    y = expression(
-      hat(beta)[-S[k]] / hat(beta)[full]
-    ),
-    linetype = NULL
-  ) +
-  
-  theme_minimal(
-    base_size = 8.5
-  ) +
-  
-  theme(
-    panel.grid.minor = element_blank(),
-    
-    strip.text = element_text(
-      face = "bold",
-      size = 8.2
-    ),
-    
-    axis.title = element_text(
-      size = 9
-    ),
-    
-    axis.text = element_text(
-      size = 7
-    ),
-    
-    legend.position = "bottom",
-    legend.text = element_text(
-      size = 8
-    ),
-    
-    panel.spacing = grid::unit(
-      0.8,
-      "lines"
-    )
+  pdftools::pdf_convert(
+    pdf = pdf_file,
+    format = "png",
+    pages = 1,
+    filenames = tmp_png,
+    dpi = dpi,
+    verbose = FALSE
   )
+  
+  img <- magick::image_read(
+    tmp_png
+  )
+  
+  # Remove redundant outer white space from the original PDF.
+  img <- magick::image_trim(
+    img
+  )
+  
+  # Fit every original figure inside the same panel canvas.
+  # Aspect ratios are preserved.
+  img <- magick::image_resize(
+    img,
+    "1400x900"
+  )
+  
+  # Give every panel an identical canvas and reserve space at the top
+  # for the panel letter / study name.
+  img <- magick::image_extent(
+    img,
+    geometry = "1460x1040",
+    gravity = "south",
+    color = "white"
+  )
+  
+  img <- magick::image_annotate(
+    img,
+    text = panel_label,
+    gravity = "north",
+    location = "+0+20",
+    size = 38,
+    weight = 700,
+    color = "black"
+  )
+  
+  unlink(
+    tmp_png
+  )
+  
+  img
+}
 
 
-ggsave(
-  filename = file.path(
-    fig_supp_dir,
-    "05_figA1_all_audit_paths.pdf"
+# ------------------------------------------------------------------------------
+# 15.2 Render panels A--J
+# ------------------------------------------------------------------------------
+
+appendix_panels <- Map(
+  render_appendix_panel,
+  pdf_file =
+    appendix_panel_meta$figure_file,
+  panel_label =
+    appendix_panel_meta$panel_label
+)
+
+
+# ------------------------------------------------------------------------------
+# 15.3 Assemble 2 x 5 layout
+# ------------------------------------------------------------------------------
+
+appendix_row_1 <- magick::image_append(
+  magick::image_join(
+    appendix_panels[
+      1:5
+    ]
   ),
-  plot = figA1_all_paths,
-  width = 11.5,
-  height = 5.3,
-  units = "in"
+  stack = FALSE
 )
 
 
-appendix_ratio_range <- range(
-  appendix_paths$normalized_ratio,
-  na.rm = TRUE,
-  finite = TRUE
+appendix_row_2 <- magick::image_append(
+  magick::image_join(
+    appendix_panels[
+      6:10
+    ]
+  ),
+  stack = FALSE
 )
+
+
+appendix_2x5 <- magick::image_append(
+  magick::image_join(
+    list(
+      appendix_row_1,
+      appendix_row_2
+    )
+  ),
+  stack = TRUE
+)
+
+
+# ------------------------------------------------------------------------------
+# 15.4 Save publication PDF
+#
+# The source panels are rasterised at high resolution before assembly.
+# cairo_pdf places the resulting composite into a PDF container.
+# ------------------------------------------------------------------------------
+
+appendix_output_pdf <- file.path(
+  fig_supp_dir,
+  "05_figA1_all_audit_paths.pdf"
+)
+
+
+grDevices::cairo_pdf(
+  filename = appendix_output_pdf,
+  width = 12.0,
+  height = 3.6,
+  onefile = TRUE
+)
+
+grid::grid.newpage()
+
+grid::grid.raster(
+  as.raster(
+    appendix_2x5
+  ),
+  x = 0.5,
+  y = 0.5,
+  width = grid::unit(
+    1,
+    "npc"
+  ),
+  height = grid::unit(
+    1,
+    "npc"
+  ),
+  interpolate = TRUE
+)
+
+grDevices::dev.off()
+
 
 message("")
 message(
-  "Appendix C all-path ratio range: ",
-  paste(
-    signif(
-      appendix_ratio_range,
-      4
-    ),
-    collapse = " to "
-  )
+  "Saved Appendix C 2 x 5 audit-path figure:"
+)
+
+message(
+  "  ",
+  appendix_output_pdf
 )
 
 # ==============================================================================
