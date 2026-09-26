@@ -2,9 +2,9 @@
 \begin{document}
 \section{Literature Review}
 
-The literature on regression influence connects unusual observations, single-observation diagnostics, joint influence, robust estimation, and subset deletion. These strands address a common econometric problem: a fitted coefficient can depend heavily on a small group of observations even when individual case-deletion measures remain moderate. Classical diagnostics describe observation-level sensitivity, while joint-deletion methods evaluate groups of observations. Robust regression addresses stable estimation under contamination. Most Influential Sets (MIS) formulate joint deletion as a coefficient-targeted optimisation problem, which motivates the distinction developed below.
+The literature on regression influence studies how fitted quantities depend on individual observations and groups of observations. Classical diagnostics characterise residual unusualness, leverage, and single-case influence; joint-deletion methods examine dependence on subsets; robust regression targets estimator stability under contamination. More recent data-dropping and influential-set methods formulate sensitivity directly as a subset-selection problem. Together, these strands motivate a coefficient-targeted analysis of how sensitivity is distributed across observations.
 
-Outlyingness and target-coefficient influence are distinct statistical properties. Outlyingness describes observations that are unusual relative to the sample, the data-generating process, or the fitted model. Target-coefficient influence describes the change in a prespecified regression coefficient induced by deleting an observation or set. An observation can therefore be unusual with little target-coefficient influence, while substantial influence can arise without conventional contamination outliers.
+Outlyingness and target-coefficient influence provide the starting distinction. Outlyingness describes observations that are unusual relative to the sample, the data-generating process, or the fitted model. Target-coefficient influence describes the change in a prespecified regression coefficient induced by deleting an observation or set. Unusual observations can exert little influence on the target coefficient, while substantial coefficient influence can arise without conventional contamination outliers. The broader question is therefore how target-coefficient sensitivity becomes concentrated in particular subsets and how that structure depends on the underlying mechanism.
 
 \subsection{Classical influence diagnostics}
 \label{subsec:classical_influence_diagnostics}
@@ -13,7 +13,7 @@ Classical influence analysis distinguishes residual unusualness, leverage, and r
 
 Case deletion provides the operational basis for regression influence diagnostics \parencite{cook2000detection}. Cook's distance summarises overall coefficient movement after deleting one observation, leverage describes the corresponding covariate geometry, and DFBETAS measures the standardised change in a selected coefficient \parencite{hoaglin1978hat,chatterjee1986influential}. DFBETAS is therefore closest to the coefficient-targeted perspective used in this thesis, although it remains a single-observation diagnostic.
 
-Single-case deletion is informative when coefficient sensitivity is concentrated in one observation. It can understate influence when several observations jointly support the same fitted relationship. Deleting one member leaves the remaining configuration in place, so the measured coefficient change can remain moderate even when deleting the group produces a substantial shift. This limitation motivates subset-level influence.
+Single-case deletion characterises sensitivity that is concentrated in individual observations. When several observations jointly support the same fitted relationship, deleting one member can leave most of that configuration intact. The resulting casewise coefficient change can remain moderate even when deletion of the group produces a substantial shift. Joint sensitivity therefore requires analysis at the level of observation sets.
 
 \subsection{Joint influence, masking, and swamping}
 \label{subsec:joint_influence}
@@ -34,7 +34,7 @@ Searching directly over deletion sets is computationally difficult because a fix
 \subsubsection{Fixed-\texorpdfstring{$k$}{k} most influential sets}
 \label{subsubsec:fixed_k_most_influential_sets}
 
-Most Influential Sets provide a coefficient-targeted formulation of joint deletion. \textcite{kuschnig2021hidden} show that groups of observations can remain concealed under conventional diagnostics while jointly determining an estimated coefficient. Fixed-\(k\) MIS searches jointly over deletion sets of a prespecified size, and subsequent work exploits the linear-regression structure to obtain global optimisation of the stated fixed-residualised objective under appropriate conditions \parencite{konrad2026finding}. The resulting set has an objective-specific interpretation: among admissible sets of the same size, it maximises movement in the prespecified target coefficient under that formulation.
+Most Influential Sets provide a coefficient-targeted formulation of joint deletion. \textcite{kuschnig2021hidden} show that groups of observations can remain concealed under conventional diagnostics while exerting substantial joint influence on an estimated coefficient. Fixed-\(k\) MIS searches jointly over deletion sets of a prespecified size, and subsequent work exploits linear-regression structure to obtain global optimisation of the stated fixed-residualised objective under appropriate conditions \parencite{konrad2026finding}. The resulting set has an objective-specific interpretation: among admissible sets of size \(k\), it maximises movement in the prespecified target coefficient under that formulation.
 
 For a prespecified subset size \(k\), the fixed-\(k\) MIS objective can be represented conceptually as
 \[
@@ -45,9 +45,9 @@ S_k^*
 \widehat{\beta}_{j,-S}
 -
 \widehat{\beta}_{j}
-\right|,
+\right|.
 \]
-Here, \(k\) is a prespecified sensitivity parameter rather than an estimate of an unknown contamination count. Different values of \(k\) therefore define different deletion-budget questions. The fixed-residualisation convention, the scope of global optimisation, and the distinction between this objective and full-refit validation are defined in \autoref{sec:methodology}.
+The parameter \(k\) specifies the deletion budget. Different values of \(k\) therefore define different sensitivity questions and can produce different influential sets. The fixed-residualisation convention, scope of global optimisation, and relationship to full-refit validation are defined in \autoref{sec:methodology}.
 
 Optimisation and statistical calibration are separate tasks. A fixed-\(k\) maximum is selected from many candidate subsets, so its magnitude cannot generally be interpreted as though the deletion set had been prespecified. Where calibration is required in the simulations, the reference distribution is constructed separately from the optimisation step.
 
@@ -56,14 +56,16 @@ Optimisation and statistical calibration are separate tasks. A fixed-\(k\) maxim
 
 Robust regression addresses coefficient stability by changing the estimation rule used in the presence of contamination or other departures from the reference model. M-estimation limits residual influence through alternative loss functions, while high-breakdown procedures such as Least Trimmed Squares and MM regression use resistant fitting criteria to maintain stability under more substantial contamination \parencite{huber1964location,huber1973robust,rousseeuw1984applying,yohai1987high}. These procedures are therefore designed primarily for stable estimation.
 
-Coefficient-targeted influence analysis answers a different empirical question. Fixed-\(k\) MIS identifies the subset whose joint deletion produces the largest movement in a prespecified coefficient, whereas robust estimators seek a coefficient estimate that remains stable under contamination. The two objectives can consequently yield different observations, estimates, and performance criteria. This distinction motivates the separate localisation and robust-estimation comparison in \autoref{subsec:estimation-performance}.
+Coefficient-targeted influence analysis and robust regression characterise different dimensions of sensitivity. Fixed-\(k\) MIS identifies the subset whose joint deletion produces the largest movement in a prespecified coefficient, while robust estimators seek coefficient stability under contamination. Their performance criteria therefore need not coincide. This difference motivates the localisation and estimation comparison in \autoref{subsec:estimation-performance}.
 
 \subsection{Model misspecification and coefficient sensitivity}
 \label{subsec:model_misspecification}
 
-Model misspecification can alter a fitted coefficient without producing a conventional contamination set. Under conditional-mean misspecification, least squares can converge to a well-defined linear approximation even when the fitted regression differs from the population regression function \parencite{white1980using}. The finite-sample influence of particular observations then depends on how the departure interacts with the covariate distribution and the target coefficient. Sensitivity analysis therefore concerns a different object from establishing whether a specification is correct.
+Model misspecification provides a potential source of target-coefficient sensitivity without requiring a conventional contamination set. Under conditional-mean misspecification, least squares can converge to a well-defined linear approximation even when the fitted regression differs from the population regression function \parencite{white1980using}. The finite-sample influence of particular observations then depends on how the departure interacts with the covariate distribution and the target coefficient. Misspecification can therefore alter both the coefficient itself and the way its sensitivity is distributed across observations.
 
 Different departures can generate different patterns of coefficient sensitivity. Omitted variables, nonlinear functional form, missing interactions, heterogeneous slopes, and threshold behaviour alter the conditional-mean relationship, while endogeneity changes the relation between regressors and disturbances and heteroskedasticity changes the conditional variance. Specification-focused procedures such as RESET and the Breusch--Pagan test target particular implications of these departures \parencite{ramsey1969tests,breusch1979simple}. Coefficient-targeted deletion instead asks whether the departure is expressed through concentrated influence on the prespecified coefficient.
 
-The misspecification simulation therefore treats MIS as a diagnostic of finite-sample target-coefficient sensitivity. It is not an omnibus specification test, and localisation of influential observations does not establish model repair. The substantive question is whether different forms of misspecification generate concentrated joint influence, whether identifiable affected subgroups coincide with the selected influential set, and where the MIS response becomes weak or invariant.
+The misspecification simulation therefore uses MIS to study how model departures are expressed through finite-sample target-coefficient sensitivity. The analysis asks whether different forms of misspecification generate concentrated joint influence, whether identifiable affected subgroups coincide with the selected influential set, and where the sensitivity response becomes weak or invariant. Specification testing and model correction address separate properties of the fitted model.
+
+Together, these literatures motivate a study of the structure of joint target-coefficient sensitivity. Classical diagnostics establish the distinction between unusualness and realised influence, subset-deletion methods make groups of observations the relevant diagnostic unit, robust regression separates localisation from estimator stability, and misspecification broadens the mechanisms through which concentrated sensitivity can arise. The methodology below operationalises this perspective through fixed-\(k\) coefficient-targeted influential sets.
 \end{document}

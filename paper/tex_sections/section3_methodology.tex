@@ -3,9 +3,9 @@
 \section{Methodology}
 \label{sec:methodology}
 
-This section defines fixed-\(k\) MIS as a coefficient-targeted diagnostic for joint influence. The analysis isolates a prespecified regression coefficient, expresses its change under set deletion as a set-DFBETA, and searches for the size-\(k\) set that maximises that change. Global optimisation refers specifically to the stated fixed-residualised objective. Outlier classification, robust estimation, omnibus specification testing, model repair, and causal identification remain separate statistical tasks.
+This section defines fixed-\(k\) MIS as a coefficient-targeted method for localising joint influence. The methodology isolates a prespecified regression coefficient, expresses its change under set deletion as a set-DFBETA, formulates the fixed-\(k\) subset-selection problem, and exploits its linear-fractional structure for global optimisation. Statistical calibration is treated separately from optimisation.
 
-The deletion size \(k\) is treated as a sensitivity parameter. Different values of \(k\) define different deletion budgets, while inferential calibration is handled separately from optimisation. The simulation designs use either oracle-assisted values of \(k\) or analyst-specified deletion fractions, as described at the end of this section.
+The deletion size \(k\) is prespecified and defines the sensitivity budget. Different values of \(k\) therefore pose different subset-deletion questions and can generate different influential sets. The simulation designs use either oracle-assisted values of \(k\) or analyst-specified deletion fractions, as described at the end of this section.
 
 \subsection{Regression setup and target coefficient}
 \label{subsec:regression_setup}
@@ -34,9 +34,9 @@ The Frisch--Waugh--Lovell theorem isolates the target coefficient by partialling
 \end{equation}
 This representation reduces estimation of the target coefficient to a scalar regression once the nuisance regressors have been partialled out. 
 
-The analysis adopts a fixed-residualised convention for deletion. The residualised quantities $\widetilde{x}_i$ and $\widetilde{y}_i$ are computed on the full sample and held fixed under deletion. Subsequent leave-set-out calculations therefore refer to the coefficient obtained from this fixed residualised regression over the retained observations. Accordingly, $\widehat{\beta}_{-S}$ need not coincide with the coefficient obtained by refitting the full regression specification on $[n]\setminus S$, because the nuisance projection is not re-estimated after deletion. This convention defines the linear-fractional objective used below. The global-optimality result for the Dinkelbach procedure refers to this fixed-residualised objective \parencite{konrad2026finding}. 
+The search objective uses a fixed-residualised deletion convention. The residualised quantities $\widetilde{x}_i$ and $\widetilde{y}_i$ are computed on the full sample and held fixed when observations are deleted. The resulting leave-set-out coefficient is therefore obtained from the retained observations without re-estimating the nuisance projection. This convention defines the linear-fractional objective used below. Global optimisation through the Dinkelbach procedure applies to this fixed-residualised objective \parencite{konrad2026finding}.
 
-Throughout, ``exact'' denotes global optimisation of the fixed-\(k\) MIS objective under the fixed-residualisation formulation. Re-estimation of the original multivariate model after deleting a selected set is treated separately and is termed \emph{full-refit validation}. The fixed-residualised objective and the full-refit coefficient need not coincide because the nuisance projection is re-estimated in the latter.
+Throughout, ``exact'' denotes global optimisation of the fixed-\(k\), fixed-residualised MIS objective. \emph{Full-refit validation} refers separately to re-estimating the original multivariate specification after deleting a selected set. The two coefficients can differ because full-refit validation re-estimates the nuisance projection. This terminology is used throughout the simulation and empirical analyses.
 
 Define the corresponding residual of the residualised target regression by
 \begin{equation}
@@ -91,7 +91,7 @@ For a prespecified deletion size \(k<n\), the fixed-\(k\) MIS is defined by
 \end{equation}
 The absolute value allows influential movement in either coefficient direction. Computationally, the two directional problems can be solved separately and compared after optimisation.
 
-The set size \(k\) is a sensitivity parameter rather than a latent quantity to be estimated. Each value of \(k\) defines a separate deletion-budget question and can have a different maximising set. A sequence of prespecified values therefore describes an influence profile without implying that one of those values is the uniquely correct influential-set size.
+Each prespecified value of \(k\) defines a separate deletion-budget question and can produce a different maximising set. Evaluating a sequence of values therefore traces how target-coefficient sensitivity and influential-set membership change with the deletion budget. The analysis does not treat \(k\) as an estimated contamination count.
 
 Direct enumeration requires evaluation of \(\binom{n}{k}\) subsets. The closed-form set-DFBETA supplies additional structure because both its numerator and denominator are additive in set membership. This yields the linear-fractional optimisation problem used below.
 
@@ -146,20 +146,22 @@ s_i(\eta)=w_i+\eta c_i.
 \]
 Conditional on \(\eta\), the maximising candidate consists of the \(k\) observations with the largest transformed scores. The ratio is then updated using \(\eta=W(S)/G(S)\), and the top-\(k\) problem is resolved. Under exact arithmetic and exact top-\(k\) selection, the sequence terminates finitely \parencite{dinkelbach1967nonlinear,konrad2026finding}.
 
-For fixed residualised inputs and the positive-denominator condition in \autoref{eq:positive_denominator}, this procedure identifies a global maximiser of each stated directional fixed-\(k\) linear-fractional objective. Comparing the two directional optima therefore yields a global maximiser of the absolute fixed-\(k\) objective in \autoref{eq:absolute_fixed_k_influence}. This is the scope of ``exact'' optimisation used throughout the thesis. It does not imply global optimisation of the coefficient obtained after re-estimating the complete multivariate model. Full-refit validation remains a separate operation. Numerical convergence and computational checks are reported in \autoref{app:numerical}.
+For fixed residualised inputs and the positive-denominator condition in \autoref{eq:positive_denominator}, this procedure identifies a global maximiser of each directional fixed-\(k\) linear-fractional objective. Comparing the two directional optima therefore yields a global maximiser of the absolute fixed-\(k\) objective in \autoref{eq:absolute_fixed_k_influence}. This result provides the ``exact'' optimisation terminology defined in \autoref{subsec:regression_setup}. Numerical convergence and computational checks are reported in \autoref{app:numerical}.
 
 \subsection{EVT-based inference for fixed-\texorpdfstring{$k$}{k} MIS}
 \label{subsec:evt_fixed_k}
 
-Optimisation identifies a maximising set, while statistical calibration asks whether the resulting influence is unusually large. Because a fixed-\(k\) maximum is selected over many overlapping deletion sets, its reference distribution differs from that of one prespecified deletion set. The distributional-recovery simulation uses a block-maxima extreme-value construction as one calibration device \parencite{konrad2026testing}. In that simulation, the tested set is the injected set under contamination and a randomly selected size-\(k\) set under the clean design; calibration of the maximising set itself is outside the simulation design.
+Optimisation and statistical calibration answer separate questions. Optimisation identifies the set that maximises the fixed-\(k\) objective, while calibration evaluates the magnitude of influence relative to a reference distribution. Because a maximum is selected over many overlapping deletion sets, its reference distribution differs from that of a prespecified set. The distributional-recovery simulation uses a block-maxima extreme-value construction as one calibration device \parencite{konrad2026testing}. In that simulation, the tested set is the injected set under contamination and a randomly selected size-\(k\) set under the clean design.
 
-The block-maxima construction is reliable only when the deletion budget remains sufficiently small relative to the observations available within each block. Detailed block-size restrictions, GEV diagnostics, numerical checks, and null-calibration results are reported in the appendices. EVT remains conditional on the chosen \(k\), does not determine the deletion budget, and is not required for defining or optimising MIS. The misspecification simulation instead uses independently simulated empirical null distributions.
+The block-maxima construction requires the deletion budget to remain sufficiently small relative to the observations available within each block. Detailed block-size restrictions, GEV diagnostics, numerical checks, and null-calibration results are reported in the appendices. EVT calibration remains conditional on the chosen \(k\); the misspecification simulation uses independently simulated empirical null distributions instead.
 
 \subsection{Role of \texorpdfstring{$k$}{k} in the simulation designs}
 \label{subsec:k_simulation_role}
 
-The simulations use \(k\) in two ways. In the distributional-recovery and robust-estimation studies, the data-generating process supplies an oracle deletion budget equal to the injected-set size. The distributional-recovery study additionally uses the known injected set to resolve the directional ambiguity of the fixed-\(k\) search, while observation identities remain unavailable to the optimiser. These designs therefore provide oracle-assisted localisation benchmarks and deliberately hold empirical selection of \(k\) outside the analysis.
+The simulations use \(k\) in two distinct ways. In the distributional-recovery and robust-estimation studies, the data-generating process supplies an oracle deletion budget equal to the injected-set size. The distributional-recovery study additionally uses the known injected set to resolve the directional ambiguity of the fixed-\(k\) search, while observation identities remain unavailable to the optimiser. These designs therefore evaluate localisation conditional on an oracle-assisted deletion budget and, where applicable, search direction.
 
-The misspecification study assumes no underlying influential-set size and instead evaluates analyst-specified deletion fractions \(k/n\in\{0.01,0.025,0.05,0.10\}\). The implementation rounds the corresponding sample count to a feasible integer, with \(k/n=0.025\) treated as the primary operating point. Each fraction defines a separate sensitivity budget; the analysis does not combine them to estimate a unique value of \(k\).
+The misspecification study instead evaluates analyst-specified deletion fractions \(k/n\in\{0.01,0.025,0.05,0.10\}\). The implementation rounds the corresponding sample count to a feasible integer, with \(k/n=0.025\) treated as the primary operating point. Each fraction defines a separate sensitivity budget and generates its own fixed-\(k\) analysis.
+
+The methodology therefore defines influential-set localisation conditional on a prespecified target coefficient and deletion budget. The simulation evidence next examines how the resulting sensitivity structure changes across contamination mechanisms, estimation objectives, and forms of model misspecification.
 
 \end{document}
