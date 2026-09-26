@@ -1331,23 +1331,21 @@ tab1_display <- tab1_raw %>%
   transmute(
     `Contamination mechanism` = as.character(outlier_label),
     `MIS recovery` = fmt_pct(mis_recovery),
-    `Highest classical recovery` = fmt_pct(highest_classical_recovery),
-    `MIS-EVT rejection` = fmt_pct(mis_evt_rejection),
-    `EVT convergence` = fmt_pct(convergence)
+    `Highest classical recovery` = fmt_pct(highest_classical_recovery)
   )
 
 write_tex_table(
   tab1_display,
   tex_path = file.path(tab_main_dir, "02_tab1_detection_power_summary.tex"),
   caption = paste0(
-    "Injected-set recovery and MIS-EVT rejection across contaminated designs. ",
+    "Injected-set recovery across contaminated designs. ",
     "Each entry gives equal weight to the recorded design-cell summaries. ",
     "The classical recovery benchmark is the highest recovery among Cook's D, ",
     "leverage, and DFBETAS within each design cell before averaging."
   ),
   label = "tab:02-detection-power-summary",
-  resize_width = TABLE_WIDTH_WIDE,
-  align = "lrrrr"
+  resize_width = TABLE_WIDTH_COMPACT,
+  align = "lrr"
 )
 
 # ----------------------------------------------------------------------------

@@ -26,22 +26,15 @@ The simulation therefore supplies oracle \(k\). For contaminated samples, the kn
 
 The three contamination mechanisms differ in how they affect the target slope. Response outliers shift the outcome at ordinary covariate positions, while good-leverage observations move far into predictor space but remain approximately aligned with the regression relation. Bad leverage combines both features: high leverage is paired with a response shift that rotates the fitted slope. All methods are evaluated against the same injected set.
 
-Bad leverage produces the strongest alignment between contamination status and target-coefficient influence. In the equal-weight design-cell summary, MIS recovered \(92.9\%\) of the injected observations, compared with \(86.5\%\) for the highest-recovery classical diagnostic (\autoref{tab:02-detection-power-summary}). Across the sample-size--contamination grid, the target-aware recovery difference remained positive and ranged from \(8.0\) to \(16.0\) percentage points (\autoref{fig:02-mis-advantage}). \autoref{tab:02-detection-power-summary} uses the highest classical recovery throughout, whereas the figure uses the lowest classical benchmark for the two negative-control mechanisms. The bad-leverage design therefore shows close correspondence between the planted contamination mechanism and the set carrying the greatest target-slope influence.
+Bad leverage produces the strongest alignment between contamination status and target-coefficient influence. In the equal-weight design-cell summary, MIS recovered \(92.9\%\) of the injected observations, compared with \(86.5\%\) for the highest-recovery classical diagnostic (\autoref{tab:02-detection-power-summary}). Across the sample-size--contamination grid, the target-aware recovery difference remained positive and ranged from \(8.0\) to \(16.0\) percentage points. Supplementary cell-level comparisons are reported in \autoref{fig:02-mis-advantage}. The bad-leverage design therefore shows close correspondence between the planted contamination mechanism and the set carrying the greatest target-slope influence.
 
 \input{../../output/02_distributional/tables/main/02_tab1_detection_power_summary.tex}
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\linewidth]{../../output/02_distributional/figures/main/02_fig1_mis_advantage_heatmap.pdf}
-	\caption{Target-aware recovery difference between MIS and classical diagnostics across sample sizes, contamination proportions, and contamination mechanisms. For bad leverage, the benchmark is the highest-recovery classical diagnostic and positive values indicate greater recovery by MIS. For response outliers and good leverage, the benchmark is the lowest-recovery classical diagnostic and positive values indicate lower unnecessary recovery by MIS. The cell label identifies the classical diagnostic defining the benchmark.}
-	\label{fig:02-mis-advantage}
-\end{figure}
 
 Response outliers produce substantially weaker alignment between contamination status and target-slope influence. MIS recovered \(26.6\%\) of the injected observations, compared with \(48.4\%\) for the highest-recovery classical diagnostic (\autoref{tab:02-detection-power-summary}). Classical procedures can identify these observations through their residual extremeness, while the MIS objective depends on their contribution to target-coefficient movement. Large residuals therefore need not correspond to large joint influence on the target slope.
 
 Good leverage produces an even larger separation between covariate extremeness and target-slope influence. The highest-recovery classical diagnostic recovered \(70.1\%\) of the injected observations, while MIS recovered \(36.9\%\) (\autoref{tab:02-detection-power-summary}). The injected observations occupy extreme predictor positions but remain approximately aligned with the fitted relation. Their covariate extremeness therefore carries relatively limited information about their joint influence on the target slope. The mechanism diagnostic below examines this separation directly.
 
-A separate mechanism diagnostic examines this result at \(n=1000\), \(k=10\), with normal predictors and \(200\) Monte Carlo iterations per error distribution. MIS-selected observations typically had much lower leverage but substantially larger residual and absolute-DFBETA magnitudes than the injected good-leverage set (\autoref{fig:02-good-leverage-mechanism} and \autoref{tab:02-good-leverage-mechanism}). Under normal errors, for example, the median leverage ratio was \(0.07\), while the corresponding absolute-DFBETA and residual ratios were \(19.19\) and \(131.91\). The diagnostic therefore tracks coefficient influence more closely than covariate extremeness.
+A separate mechanism diagnostic examines this result at \(n=1000\), \(k=10\), with normal predictors and \(200\) Monte Carlo iterations per error distribution. MIS-selected observations typically had much lower leverage but substantially larger residual and absolute-DFBETA magnitudes than the injected good-leverage set (\autoref{fig:02-good-leverage-mechanism}); the distribution-specific summaries are reported in \autoref{tab:02-good-leverage-mechanism}. Under normal errors, for example, the median leverage ratio was \(0.07\), while the corresponding absolute-DFBETA and residual ratios were \(19.19\) and \(131.91\). The diagnostic therefore tracks coefficient influence more closely than covariate extremeness.
 
 \begin{figure}[htbp]
 	\centering
@@ -50,16 +43,7 @@ A separate mechanism diagnostic examines this result at \(n=1000\), \(k=10\), wi
 	\label{fig:02-good-leverage-mechanism}
 \end{figure}
 
-\input{../../output/02_distributional/tables/main/02_tab3_good_leverage_mechanism.tex}
-
 The mechanism-dependent recovery pattern remains stable across most of the recorded error distributions. Under bad leverage, MIS recovery exceeded \(97\%\) for normal, Beta\((2,5)\), mixed-normal, skewed-\(t\), and Pareto errors, but fell to \(78.5\%\) under GPD errors (\autoref{fig:02-distributional-robustness}). The simulated GPD shape parameters are \(\xi\in\{1.5,3,5,10\}\), for which the population mean does not exist. This condition serves as an extreme stress design. Auxiliary MIS-EVT calibration and block-count diagnostics are reported in \autoref{app:detection-results}, with the block-size restriction derived in \autoref{app:deriv-blocks}. Within the GPD stress design, the block-maxima calibration deteriorates sharply as the deletion fraction increases and becomes fully degenerate at \(2.5\%\) and above.
-
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\linewidth]{../../output/02_distributional/figures/main/02_fig2_distributional_robustness.pdf}
-	\caption{Distributional robustness of injected-set top-\(k\) recovery for MIS and the highest-recovery classical diagnostic. Points report mean recovery across the recorded design cells, and intervals report the corresponding 10th--90th percentile range.}
-	\label{fig:02-distributional-robustness}
-\end{figure}
 
 
 The three contamination mechanisms show that alignment between outlyingness and target-coefficient influence depends on how the contamination process affects the target slope. Bad leverage produces close alignment because the planted observations jointly distort the coefficient, while response outliers and good leverage produce weaker alignment between sample unusualness and coefficient movement. Recovery of a planted set therefore has a mechanism-specific interpretation. The next simulation examines what localisation of coefficient influence implies for subsequent coefficient estimation.

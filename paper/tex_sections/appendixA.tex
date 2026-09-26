@@ -11,6 +11,28 @@ The mechanism-level results in \autoref{subsec:detection-performance} remain het
 
 \input{../../output/02_distributional/tables/supplement/02_tabA3_detection_by_error.tex}
 
+The distribution-level pattern is summarised graphically in \autoref{fig:02-distributional-robustness}. The bad-leverage result remains strong across most recorded error distributions, while the GPD condition provides the principal stress case.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{../../output/02_distributional/figures/main/02_fig2_distributional_robustness.pdf}
+	\caption{Distributional robustness of injected-set top-\(k\) recovery for MIS and the highest-recovery classical diagnostic. Points report mean recovery across the recorded design cells, and intervals report the corresponding 10th--90th percentile range.}
+	\label{fig:02-distributional-robustness}
+\end{figure}
+
+Cell-level recovery differences across sample size and contamination proportion are shown in \autoref{fig:02-mis-advantage}. The figure preserves the mechanism-specific benchmark used in the main analysis.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\linewidth]{../../output/02_distributional/figures/main/02_fig1_mis_advantage_heatmap.pdf}
+	\caption{Target-aware recovery difference between MIS and classical diagnostics across sample sizes, contamination proportions, and contamination mechanisms. For bad leverage, the benchmark is the highest-recovery classical diagnostic and positive values indicate greater recovery by MIS. For response outliers and good leverage, the benchmark is the lowest-recovery classical diagnostic and positive values indicate lower unnecessary recovery by MIS. The cell label identifies the classical diagnostic defining the benchmark.}
+	\label{fig:02-mis-advantage}
+\end{figure}
+
+The good-leverage mechanism diagnostic provides the corresponding distribution-specific numerical summaries. \autoref{tab:02-good-leverage-mechanism} compares the MIS-selected and injected sets in recovery, absolute DFBETA, leverage, and residual magnitude.
+
+\input{../../output/02_distributional/tables/main/02_tab3_good_leverage_mechanism.tex}
+
 The EVT component requires a separate qualification. Its numerical convergence does not establish the quality of the block-maxima approximation. As the deletion fraction increases, the ratio of \(k\) to the observations available within each block approaches one, eventually leaving only a single admissible size-\(k\) subset per block. The corresponding block-count diagnostics are reported in \autoref{tab:02A-block-count-summary}; the algebraic restriction is derived in \autoref{app:deriv-blocks}. The substantive injected-set recovery results do not depend on successful GEV fitting.
 
 \input{../../output/02_distributional/tables/supplement/02_tabA5_block_count_summary.tex}
@@ -49,7 +71,7 @@ The complete estimator-by-environment comparisons, coverage results, runtime dia
 
 
 
-\subsubsection{Severity, Calibration, and Detection Boundaries}
+\subsection{Supplementary Misspecification Results}
 \label{app:misspec-definitions}
 
 For the additive misspecification mechanisms, severity is scaled so that the standard deviation of the imposed misspecification component relative to the baseline error standard deviation equals the severity parameter \(\lambda\). Heteroskedasticity, linear endogeneity, and nonlinear confounding use mechanism-specific severity parameters. Detection boundaries are therefore interpreted within the corresponding mechanism-specific scale.

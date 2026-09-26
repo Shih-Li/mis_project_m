@@ -1087,20 +1087,13 @@ write_tex_table(
   size_by_error %>%
     transmute(
       `Error distribution` = unname(error_labels[error_type]),
-      MIS = fmt_pct(MIS, 2),
-      `RESET (cal.)` = fmt_pct(RESET_cal, 2),
-      `RESET (nom.)` = fmt_pct(RESET_nom, 2),
-      `BP (cal.)` = fmt_pct(BP_cal, 2),
-      `BP (nom.)` = fmt_pct(BP_nom, 2)
+      `MIS empirical size` = fmt_pct(MIS, 2)
     ),
   exhibit_path("tabS01_size_error"),
-  caption = paste0(
-    "Empirical size by error distribution at k/n = 2.5 percent for MIS, ",
-    "RESET, and BP."
-  ),
+  caption = "MIS empirical size by error distribution at k/n = 2.5 percent.",
   label = "tab:05-size-by-error",
-  resize_width = TABLE_WIDTH_MEDIUM,
-  align = "lrrrrr",
+  resize_width = TABLE_WIDTH_COMPACT,
+  align = "lr",
   placement = "htbp"
 )
 
@@ -1831,8 +1824,9 @@ fig_boundary <- ggplot(
     colour = NULL,
     linetype = NULL,
     caption = paste0(
-      "Linear endogeneity and omitted variable never reached ",
-      "80% power at any sample size."
+      "Linear endogeneity remains right-censored throughout; ",
+      "the omitted-variable median boundary is also right-censored ",
+      "despite detection in a small subset of environments."
     )
   ) +
   theme_85(base_size = 10.2) +
