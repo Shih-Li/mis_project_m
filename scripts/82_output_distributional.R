@@ -600,7 +600,7 @@ utils::write.csv(
 
 # ----------------------------------------------------------------------------
 # Figure 1: Target-aware MIS advantage over classical diagnostics
-# Bad leverage rewards higher recovery; vertical outliers and good leverage
+# Bad leverage rewards higher recovery; response outliers and good leverage
 # reward lower unnecessary recovery relative to the classical benchmark.
 # ----------------------------------------------------------------------------
 
@@ -650,7 +650,7 @@ heatmap_main <- det_cell %>%
         mis_overlap - highest_classical_overlap,
       
       as.character(outlier_label) %in%
-        c("Vertical outliers", "Good leverage") ~
+        c("Response outliers", "Good leverage") ~
         lowest_classical_overlap - mis_overlap,
       
       TRUE ~ NA_real_
@@ -717,12 +717,13 @@ p_fig1 <- ggplot(
   aes(x = n_label, y = contam_label, fill = mis_advantage)
 ) +
   geom_tile(colour = "white", linewidth = 0.55) +
-  geom_text(aes(label = cell_label, colour = text_color), size = 3.25, 
-            nudge_y = 0.10) +
-  geom_text(aes(label = benchmark_method, colour = text_color),
-    size = 2.05,
-    fontface = "bold",
-    nudge_y = -0.23
+  geom_text(
+    aes(
+      label = paste0(cell_label, "\n", benchmark_method),
+      colour = text_color
+    ),
+    size = 3.0,
+    lineheight = 0.85
   ) +
   facet_wrap(~outlier_label, nrow = 1, drop = TRUE) +
   scale_fill_gradient2(
