@@ -167,6 +167,34 @@ benchmark_letter <- function(cooks, leverage, dfbetas, use_max = TRUE) {
   paste(winners, collapse = "/")
 }
 
+# Mechanism-specific classical benchmark (thesis Section 4.1):
+#   Bad leverage (detection):      highest-recovery classical diagnostic
+#   Response outliers (restraint): Cook's D
+#   Good leverage (restraint):     leverage
+benchmark_overlap_rule <- function(mechanism, cooks, leverage, dfbetas) {
+  mechanism <- as.character(mechanism)
+  dplyr::case_when(
+    mechanism == "Bad leverage"      ~ row_max_na(cooks, leverage, dfbetas),
+    mechanism == "Response outliers" ~ cooks,
+    mechanism == "Good leverage"     ~ leverage,
+    TRUE ~ NA_real_
+  )
+}
+
+# Positive values favour MIS for every mechanism.
+mis_margin_rule <- function(mechanism, mis, benchmark) {
+  ifelse(as.character(mechanism) == "Bad leverage", mis - benchmark, benchmark - mis)
+}
+
+benchmark_label_rule <- function(mechanism, cooks, leverage, dfbetas) {
+  unname(mapply(function(m, cd, lev, dfb) {
+    if (m == "Bad leverage") benchmark_letter(cd, lev, dfb, use_max = TRUE)
+    else if (m == "Response outliers") "CD"
+    else if (m == "Good leverage") "Lev"
+    else ""
+  }, as.character(mechanism), cooks, leverage, dfbetas))
+}
+
 safe_ratio <- function(numerator, denominator) {
   out <- rep(NA_real_, length(numerator))
   valid <- is.finite(numerator) & is.finite(denominator) &
@@ -570,12 +598,14 @@ det_cell <- sim %>%
   ) %>%
   mutate(
     best_classical_overlap = row_max_na(overlap_cooks, overlap_lev, overlap_dfbetas),
-    best_classical_power = row_max_na(power_cooks, power_lev, power_dfbetas),
-    mis_advantage = overlap_mis - best_classical_overlap,
     outlier_label = factor(
       unname(outlier_labels[as.character(outlier_method)]),
       levels = unname(outlier_labels[outlier_levels[-1L]])
     ),
+    best_classical_overlap = benchmark_overlap_rule(
+      outlier_label, overlap_cooks, overlap_lev, overlap_dfbetas
+    ),
+    mis_advantage = mis_margin_rule(outlier_label, overlap_mis, best_classical_overlap),
     error_label = factor(
       unname(error_labels[as.character(error_type)]),
       levels = unname(error_labels[error_levels])
@@ -598,96 +628,25 @@ utils::write.csv(
 # 4. Main-paper figures
 # ==============================================================================
 
-# ----------------------------------------------------------------------------
-# Figure 1: Target-aware MIS advantage over classical diagnostics
-# Bad leverage rewards higher recovery; response outliers and good leverage
-# reward lower unnecessary recovery relative to the classical benchmark.
-# ----------------------------------------------------------------------------
-
+# Figure 1: MIS margin relative to the mechanism-specific classical benchmark.
+# Detection under bad leverage; restraint under response outliers and good
+# leverage. Positive values favour MIS. Margins are computed per design cell
+# in det_cell and then averaged, matching Table 1.
 heatmap_main <- det_cell %>%
-  group_by(
-    n_obs,
-    contam_target,
-    contam_label,
-    outlier_label
-  ) %>%
+  group_by(n_obs, contam_target, contam_label, outlier_label) %>%
   summarise(
-    mis_overlap = safe_mean(overlap_mis),
-    cooks_overlap = safe_mean(overlap_cooks),
+    mis_overlap      = safe_mean(overlap_mis),
+    cooks_overlap    = safe_mean(overlap_cooks),
     leverage_overlap = safe_mean(overlap_lev),
-    dfbetas_overlap = safe_mean(overlap_dfbetas),
+    dfbetas_overlap  = safe_mean(overlap_dfbetas),
+    mis_advantage    = safe_mean(mis_advantage),
     .groups = "drop"
   ) %>%
   mutate(
-    highest_classical_overlap = row_max_na(
-      cooks_overlap,
-      leverage_overlap,
-      dfbetas_overlap
+    benchmark_method = benchmark_label_rule(
+      outlier_label, cooks_overlap, leverage_overlap, dfbetas_overlap
     ),
-    
-    lowest_classical_overlap = row_min_na(
-      cooks_overlap,
-      leverage_overlap,
-      dfbetas_overlap
-    ),
-    
-    # --------------------------------------------------------------
-    # Target-aware comparison
-    #
-    # Bad leverage:
-    #   More recovery is desirable.
-    #   Benchmark = highest-recovery classical method.
-    #
-    # Vertical outliers / good leverage:
-    #   Lower unnecessary recovery is desirable.
-    #   Benchmark = lowest-recovery classical method.
-    #
-    # Positive values always favour MIS.
-    # --------------------------------------------------------------
-    mis_advantage = case_when(
-      
-      as.character(outlier_label) == "Bad leverage" ~
-        mis_overlap - highest_classical_overlap,
-      
-      as.character(outlier_label) %in%
-        c("Response outliers", "Good leverage") ~
-        lowest_classical_overlap - mis_overlap,
-      
-      TRUE ~ NA_real_
-    ),
-    
-    # --------------------------------------------------------------
-    # Identify which classical diagnostic defines the benchmark.
-    #
-    # CD = Cook's D
-    # Lev = Leverage
-    # DFB = DFBETAS
-    # --------------------------------------------------------------
-    benchmark_method = mapply(
-      FUN = function(cooks, leverage, dfbetas, mechanism) {
-        
-        use_max <- mechanism == "Bad leverage"
-        
-        benchmark_letter(
-          cooks = cooks,
-          leverage = leverage,
-          dfbetas = dfbetas,
-          use_max = use_max
-        )
-      },
-      
-      cooks_overlap,
-      leverage_overlap,
-      dfbetas_overlap,
-      as.character(outlier_label),
-      
-      USE.NAMES = FALSE
-    ),
-    
-    n_label = factor(
-      n_obs,
-      levels = sort(unique(n_obs))
-    )
+    n_label = factor(n_obs, levels = sort(unique(n_obs)))
   )
 
 max_heat <- max(
@@ -734,7 +693,7 @@ p_fig1 <- ggplot(
     limits = c(-max_heat, max_heat),
     oob = scales::squish,
     labels = scales::label_number(accuracy = 1, scale = 100, suffix = " pp"),
-    name = "Target-aware recovery difference\nrelative to classical diagnostics"
+    name = "MIS margin relative to classical benchmark\n(positive favours MIS)"
   ) +
   scale_colour_identity() +
   labs(
@@ -774,7 +733,7 @@ distribution_cell <- det_cell %>%
     method = factor(
       method_key,
       levels = c("overlap_mis", "best_classical_overlap"),
-      labels = c("MIS", "Best classical")
+      labels = c("MIS", "Classical benchmark")
     )
   )
 
@@ -816,11 +775,11 @@ p_fig2 <- ggplot(
     expand = expansion(mult = c(0.01, 0.03))
   ) +
   scale_colour_manual(
-    values = c("MIS" = COL_BLUE, "Best classical" = COL_ORANGE),
+    values = c("MIS" = COL_BLUE, "Classical benchmark" = COL_ORANGE),
     name = NULL
   ) +
   scale_shape_manual(
-    values = c("MIS" = 16, "Best classical" = 17),
+    values = c("MIS" = 16, "Classical benchmark" = 17),
     name = NULL
   ) +
   labs(
@@ -1331,7 +1290,7 @@ tab1_display <- tab1_raw %>%
   transmute(
     `Contamination mechanism` = as.character(outlier_label),
     `MIS recovery` = fmt_pct(mis_recovery),
-    `Highest classical recovery` = fmt_pct(highest_classical_recovery)
+    `Classical benchmark recovery` = fmt_pct(highest_classical_recovery)
   )
 
 write_tex_table(
@@ -1340,8 +1299,9 @@ write_tex_table(
   caption = paste0(
     "Injected-set recovery across contaminated designs. ",
     "Each entry gives equal weight to the recorded design-cell summaries. ",
-    "The classical recovery benchmark is the highest recovery among Cook's D, ",
-    "leverage, and DFBETAS within each design cell before averaging."
+    "The classical benchmark is the highest-recovery diagnostic within each ",
+    "design cell for bad leverage, Cook's D for response outliers, and leverage ",
+    "for good leverage."
   ),
   label = "tab:02-detection-power-summary",
   resize_width = TABLE_WIDTH_COMPACT,
@@ -1506,11 +1466,10 @@ write_tex_table(
   tabA1_display,
   tex_path = file.path(tab_supp_dir, "02_tabA1_mis_advantage_grid.tex"),
   caption = paste0(
-    "Target-aware recovery difference, in percentage points, by sample size ",
-    "and contamination proportion. For bad leverage, positive values indicate ",
-    "greater recovery by MIS than the highest-recovery classical diagnostic. ",
-    "For vertical outliers and good leverage, positive values indicate lower ",
-    "unnecessary recovery by MIS than the lowest-recovery classical diagnostic."
+    "MIS margin, in percentage points, by sample size and contamination ",
+    "proportion. Bad leverage: MIS recovery minus the highest-recovery ",
+    "classical diagnostic. Response outliers and good leverage: recovery of ",
+    "Cook's D and leverage, respectively, minus MIS recovery. Positive values favour MIS."
   ),
   label = "tab:02A-mis-advantage-grid",
   resize_width = TABLE_WIDTH_MEDIUM,
@@ -1561,23 +1520,14 @@ write_tex_table(
 # Table A3: Error-distribution-specific detection summary
 # ----------------------------------------------------------------------------
 
-tabA3_raw <- sim %>%
-  filter(as.character(outlier_method) != "none") %>%
+tabA3_raw <- det_cell %>%
   group_by(error_label, outlier_label) %>%
   summarise(
-    mis_overlap = safe_mean(overlap_mis),
-    cooks_overlap = safe_mean(overlap_cooks),
-    leverage_overlap = safe_mean(overlap_lev),
-    dfbetas_overlap = safe_mean(overlap_dfbetas),
-    convergence = safe_mean(converged),
-    n = n(),
+    mis_overlap       = safe_mean(overlap_mis),
+    benchmark_overlap = safe_mean(best_classical_overlap),
+    mis_advantage     = safe_mean(mis_advantage),
+    n_cells           = n(),
     .groups = "drop"
-  ) %>%
-  mutate(
-    best_classical_overlap = row_max_na(
-      cooks_overlap, leverage_overlap, dfbetas_overlap
-    ),
-    mis_advantage = mis_overlap - best_classical_overlap
   )
 
 utils::write.csv(
@@ -1592,18 +1542,17 @@ tabA3_display <- tabA3_raw %>%
     `Error distribution` = as.character(error_label),
     `Outlier mechanism` = as.character(outlier_label),
     `MIS recovery` = fmt_pct(mis_overlap),
-    `Highest classical recovery` = fmt_pct(best_classical_overlap),
-    `Recovery difference` = fmt_pp(mis_advantage),
-    `EVT convergence` = fmt_pct(convergence)
+    `Classical benchmark recovery` = fmt_pct(benchmark_overlap),
+    `MIS margin` = fmt_pp(mis_advantage)
   )
 
 write_tex_table(
   tabA3_display,
   tex_path = file.path(tab_supp_dir, "02_tabA3_detection_by_error.tex"),
-  caption = "Injected-set recovery and EVT convergence by error distribution and contamination mechanism.",
+  caption = "Injected-set recovery and MIS margin by error distribution and contamination mechanism. Positive margins favour MIS.",
   label = "tab:02A-detection-by-error",
   resize_width = TABLE_WIDTH_WIDE,
-  align = "llrrrr"
+  align = "llrrr"
 )
 
 # ----------------------------------------------------------------------------

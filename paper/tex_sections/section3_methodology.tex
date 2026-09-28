@@ -12,25 +12,25 @@ The deletion size \(k\) is prespecified and defines the sensitivity budget. Diff
 
 Consider the linear regression model
 \begin{equation}
-	y_i
-	=
-	x_{ij}\beta_j
-	+
-	\mathbf{z}_i^{\top}\boldsymbol{\gamma}
-	+
-	\varepsilon_i,
-	\qquad i\in[n].
-	\label{eq:regression_target}
+y_i
+=
+x_{ij}\beta_j
++
+\mathbf{z}_i^{\top}\boldsymbol{\gamma}
++
+\varepsilon_i,
+\qquad i\in[n].
+\label{eq:regression_target}
 \end{equation}
 The coefficient $\beta_j$ is the prespecified target of the influence analysis. Here, $[n]=\{1,\ldots,n\}$ denotes the observation index set, $x_{ij}$ is the scalar target regressor, and $\mathbf{z}_i$ contains the remaining nuisance regressors with coefficient vector $\boldsymbol{\gamma}$. All deletion effects examined in this section therefore refer to changes in the estimate of $\beta_j$ within a fixed regression specification.
 
 The Frisch--Waugh--Lovell theorem isolates the target coefficient by partialling the nuisance regressors out of the target regressor and the outcome \parencite{frisch1933partial,lovell1963seasonal}. Let $\widetilde{x}_i$ and $\widetilde{y}_i$ denote the resulting residualised target regressor and outcome, and write $\widehat{\beta}$ for the OLS estimate of the target coefficient $\beta_j$. The full-sample estimate is then
 \begin{equation}
-	\widehat{\beta}
-	=
-	\frac{\sum_{i=1}^{n}\widetilde{x}_i\widetilde{y}_i}
-	{\sum_{i=1}^{n}\widetilde{x}_i^2}.
-	\label{eq:target_beta_residualised}
+\widehat{\beta}
+=
+\frac{\sum_{i=1}^{n}\widetilde{x}_i\widetilde{y}_i}
+{\sum_{i=1}^{n}\widetilde{x}_i^2}.
+\label{eq:target_beta_residualised}
 \end{equation}
 This representation reduces estimation of the target coefficient to a scalar regression once the nuisance regressors have been partialled out. 
 
@@ -40,10 +40,10 @@ Throughout, ``exact'' denotes global optimisation of the fixed-\(k\), fixed-resi
 
 Define the corresponding residual of the residualised target regression by
 \begin{equation}
-	\widetilde{r}_i
-	=
-	\widetilde{y}_i-\widehat{\beta}\widetilde{x}_i.
-	\label{eq:target_residual}
+\widetilde{r}_i
+=
+\widetilde{y}_i-\widehat{\beta}\widetilde{x}_i.
+\label{eq:target_residual}
 \end{equation}
 These residuals record the variation in the residualised outcome that remains after estimation of the target coefficient, and by Frisch--Waugh--Lovell they coincide with the residuals of the full regression of $y_i$ on $x_{ij}$ and $\mathbf{z}_i$. For a deletion set $S\subseteq[n]$, let $\widehat{\beta}_{-S}$ denote the estimate obtained from the residualised regression over the retained observations $[n]\setminus S$. The difference between $\widehat{\beta}$ and $\widehat{\beta}_{-S}$ measures how the deleted observations shift the target coefficient. This difference depends on the deletion set as a whole and therefore defines influence at the level of the set rather than the individual observation.
 
@@ -52,27 +52,27 @@ These residuals record the variation in the residualised outcome that remains af
 
 For a deletion set \(S\subseteq[n]\), define the coefficient-targeted set influence by
 \begin{equation}
-	\Delta(S)
-	=
-	\widehat{\beta}
-	-
-	\widehat{\beta}_{-S}.
-	\label{eq:set_dfbeta}
+\Delta(S)
+=
+\widehat{\beta}
+-
+\widehat{\beta}_{-S}.
+\label{eq:set_dfbeta}
 \end{equation}
 This quantity is referred to throughout the thesis as the \emph{set-DFBETA}. Its sign records the direction of coefficient movement: a positive value indicates that deleting \(S\) lowers the target estimate, while a negative value indicates that deletion raises it.
 
 Using the residualised variables defined in \autoref{subsec:regression_setup}, and substituting \autoref{eq:target_beta_residualised} and \autoref{eq:target_residual}, the set-DFBETA admits the closed-form representation
 \begin{equation}
-	\widehat{\beta}
-	-
-	\widehat{\beta}_{-S}
-	=
-	\frac{
-		\sum_{s\in S}\widetilde{x}_s\widetilde{r}_s
-	}{
-		\sum_{t\notin S}\widetilde{x}_t^2
-	}.
-	\label{eq:set_dfbeta_ratio}
+\widehat{\beta}
+-
+\widehat{\beta}_{-S}
+=
+\frac{
+\sum_{s\in S}\widetilde{x}_s\widetilde{r}_s
+}{
+\sum_{t\notin S}\widetilde{x}_t^2
+}.
+\label{eq:set_dfbeta_ratio}
 \end{equation}
 The numerator collects the score contributions of the deleted observations. The denominator records the residualised design information remaining after deletion \parencite{konrad2026finding}. Set influence therefore depends jointly on the contribution removed from the sample and on the information retained outside the deletion set.
 
@@ -83,15 +83,15 @@ Set influence is a joint property of the selected observations. Changing the mem
 
 For a prespecified deletion size \(k<n\), the fixed-\(k\) MIS is defined by
 \begin{equation}
-	S_k^*
-	\in
-	\arg\max_{\substack{S\subseteq[n]\\|S|=k}}
-	|\Delta(S)|.
-	\label{eq:absolute_fixed_k_influence}
+S_k^*
+\in
+\arg\max_{\substack{S\subseteq[n]\\|S|=k}}
+|\Delta(S)|.
+\label{eq:absolute_fixed_k_influence}
 \end{equation}
 The absolute value allows influential movement in either coefficient direction. Computationally, the two directional problems can be solved separately and compared after optimisation.
 
-Each prespecified value of \(k\) defines a separate deletion-budget question and can produce a different maximising set. Evaluating a sequence of values therefore traces how target-coefficient sensitivity and influential-set membership change with the deletion budget. The analysis does not treat \(k\) as an estimated contamination count.
+Each prespecified value of \(k\) defines a separate deletion-budget question and can produce a different maximising set. In particular, the maximisers need not be nested: nothing in \autoref{eq:absolute_fixed_k_influence} requires \(S_k^\ast\subset S_{k+1}^\ast\), because the optimal size-\((k+1)\) set is chosen afresh rather than by extending the optimal size-\(k\) set. Evaluating a sequence of values therefore traces how target-coefficient sensitivity and influential-set membership change with the deletion budget. The analysis does not treat \(k\) as an estimated contamination count.
 
 Direct enumeration requires evaluation of \(\binom{n}{k}\) subsets. The closed-form set-DFBETA supplies additional structure because both its numerator and denominator are additive in set membership. This yields the linear-fractional optimisation problem used below.
 
@@ -100,43 +100,43 @@ Direct enumeration requires evaluation of \(\binom{n}{k}\) subsets. The closed-f
 
 The leave-set-out representation in \autoref{eq:set_dfbeta_ratio} allows the fixed-$k$ influence problem to be written in a compact linear-fractional form. Define
 \begin{equation}
-	w_i := \widetilde{x}_i\widetilde{r}_i,
-	\qquad
-	c_i := \widetilde{x}_i^2,
-	\qquad
-	T := \sum_{i=1}^{n} c_i,
-	\label{eq:linear_fractional_components}
+w_i := \widetilde{x}_i\widetilde{r}_i,
+\qquad
+c_i := \widetilde{x}_i^2,
+\qquad
+T := \sum_{i=1}^{n} c_i,
+\label{eq:linear_fractional_components}
 \end{equation}
 and, for a deletion set $S$,
 \begin{equation}
-	W(S) := \sum_{i\in S} w_i,
-	\qquad
-	G(S) := T-\sum_{i\in S} c_i.
-	\label{eq:WG_definitions}
+W(S) := \sum_{i\in S} w_i,
+\qquad
+G(S) := T-\sum_{i\in S} c_i.
+\label{eq:WG_definitions}
 \end{equation}
 Here, $W(S)$ collects the deleted score contributions, while $G(S)$ measures the residualised design information remaining after deletion. The set-DFBETA in \autoref{eq:set_dfbeta_ratio} can therefore be written as
 \begin{equation}
-	\Delta(S)
-	=
-	\frac{W(S)}{G(S)}.
-	\label{eq:linear_fractional_objective}
+\Delta(S)
+=
+\frac{W(S)}{G(S)}.
+\label{eq:linear_fractional_objective}
 \end{equation}
 The fixed-$k$ influence objective is therefore a ratio of two quantities that are additive in set membership.
 
 The ratio in \autoref{eq:linear_fractional_objective} requires a positive denominator for every admissible deletion set. For a fixed set size $k$, the analysis therefore assumes
 
 \begin{equation}
-	G(S)>0
-	\qquad
-	\text{for all } S\subseteq[n] \text{ such that } |S|=k.
-	\label{eq:positive_denominator}
+G(S)>0
+\qquad
+\text{for all } S\subseteq[n] \text{ such that } |S|=k.
+\label{eq:positive_denominator}
 \end{equation}
 Under this condition, deleting any admissible size-\(k\) set leaves positive residualised information for estimating the target coefficient. For the positive direction, the fixed-\(k\) problem can be expressed as the linear-fractional optimisation problem.
 
 \begin{equation}
-	\max_{\substack{S\subseteq[n]\\|S|=k}}
-	\frac{W(S)}{G(S)}.
-	\label{eq:fixed_k_fractional_problem}
+\max_{\substack{S\subseteq[n]\\|S|=k}}
+\frac{W(S)}{G(S)}.
+\label{eq:fixed_k_fractional_problem}
 \end{equation}
 The negative-direction problem is obtained by replacing \(W(S)\) with \(-W(S)\). The absolute-value MIS in \autoref{eq:absolute_fixed_k_influence} compares the optimised solutions from the two directions. This formulation preserves the joint dependence of the numerator and denominator on the selected deletion set \parencite{konrad2026finding}.
 
@@ -148,12 +148,12 @@ Conditional on \(\eta\), the maximising candidate consists of the \(k\) observat
 
 For fixed residualised inputs and the positive-denominator condition in \autoref{eq:positive_denominator}, this procedure identifies a global maximiser of each directional fixed-\(k\) linear-fractional objective. Comparing the two directional optima therefore yields a global maximiser of the absolute fixed-\(k\) objective in \autoref{eq:absolute_fixed_k_influence}. This result provides the ``exact'' optimisation terminology defined in \autoref{subsec:regression_setup}. Numerical convergence and computational checks are reported in \autoref{app:numerical}.
 
-\subsection{EVT-based inference for fixed-\texorpdfstring{$k$}{k} MIS}
+\subsection{Optimisation and calibration}
 \label{subsec:evt_fixed_k}
 
-Optimisation and statistical calibration answer separate questions. Optimisation identifies the set that maximises the fixed-\(k\) objective, while calibration evaluates the magnitude of influence relative to a reference distribution. Because a maximum is selected over many overlapping deletion sets, its reference distribution differs from that of a prespecified set. The distributional-recovery simulation uses a block-maxima extreme-value construction as one calibration device \parencite{konrad2026testing}. In that simulation, the tested set is the injected set under contamination and a randomly selected size-\(k\) set under the clean design.
+Optimisation and statistical calibration answer separate questions. Optimisation identifies the set that maximises the fixed-\(k\) objective, while calibration asks whether the attained influence is larger than a reference model would produce. Because the maximum is taken over \(\binom{n}{k}\) overlapping candidate sets, its reference distribution differs from that of a prespecified set, and the attained value cannot be read as though the deletion set had been fixed in advance.
 
-The block-maxima construction requires the deletion budget to remain sufficiently small relative to the observations available within each block. Detailed block-size restrictions, GEV diagnostics, numerical checks, and null-calibration results are reported in the appendices. EVT calibration remains conditional on the chosen \(k\); the misspecification simulation uses independently simulated empirical null distributions instead.
+The conclusions of this thesis do not rest on a formal test of the selected set. The contamination simulations evaluate localisation against the known injected set, and the empirical audits report deletion paths. Where calibration is required, in the misspecification study, the reference distribution of the standardised deletion statistic is obtained from independent null simulations (\autoref{subsec:misspecification}). A block-maxima extreme-value construction \parencite{konrad2026testing} was also evaluated as a candidate calibration device; \autoref{app:evt} documents why it is not used for inference here.
 
 \subsection{Role of \texorpdfstring{$k$}{k} in the simulation designs}
 \label{subsec:k_simulation_role}

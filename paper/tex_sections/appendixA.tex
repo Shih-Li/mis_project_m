@@ -1,43 +1,39 @@
 \documentclass[../main.tex]{subfiles}
 \begin{document}
-	
+
 \section{Supplementary Simulation Results}
 \label{app:simulation}
 
 \subsection{Supplementary Influential-Set Recovery Results}
 \label{app:detection-results}
 
-The mechanism-level results in \autoref{subsec:detection-performance} remain heterogeneous across error distributions. Under bad leverage, MIS recovery remains high across most finite-moment designs, while the GPD stress condition produces the weakest recovery and separation from the classical diagnostics. Response-outlier and good-leverage designs show lower injected-set recovery because injected outlyingness and target-coefficient influence are not generally aligned. The error-distribution breakdown is reported in \autoref{tab:02A-detection-by-error}.
+The mechanism-level results in \autoref{subsec:detection-performance} remain heterogeneous across error distributions. Under bad leverage, MIS recovery remains high across most finite-moment designs, while the GPD stress condition produces the weakest recovery and separation from the classical diagnostics. Response-outlier and good-leverage designs show lower injected-set recovery because injected outlyingness and target-coefficient influence are not generally aligned. The error-distribution breakdown is reported in \autoref{tab:02A-detection-by-error}, using the same benchmark rule as the main text; positive margins favour MIS.
 
 \input{../../output/02_distributional/tables/supplement/02_tabA3_detection_by_error.tex}
 
 The distribution-level pattern is summarised graphically in \autoref{fig:02-distributional-robustness}. The bad-leverage result remains strong across most recorded error distributions, while the GPD condition provides the principal stress case.
 
 \begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\linewidth]{../../output/02_distributional/figures/main/02_fig2_distributional_robustness.pdf}
-	\caption{Distributional robustness of injected-set top-\(k\) recovery for MIS and the highest-recovery classical diagnostic. Points report mean recovery across the recorded design cells, and intervals report the corresponding 10th--90th percentile range.}
-	\label{fig:02-distributional-robustness}
+\centering
+\includegraphics[width=\linewidth]{../../output/02_distributional/figures/main/02_fig2_distributional_robustness.pdf}
+\caption{Distributional robustness of injected-set top-\(k\) recovery for MIS and the classical benchmark defined in \autoref{subsec:detection-performance}. Points report mean recovery across the recorded design cells, and intervals report the corresponding 10th--90th percentile range.}
+\label{fig:02-distributional-robustness}
 \end{figure}
 
-Cell-level recovery differences across sample size and contamination proportion are shown in \autoref{fig:02-mis-advantage}. The figure preserves the mechanism-specific benchmark used in the main analysis.
+Cell-level detection and restraint margins across sample size and contamination proportion are shown in \autoref{fig:02-mis-advantage}. The figure uses the benchmark rule defined in \autoref{subsec:detection-performance}: detection relative to the highest-recovery classical diagnostic in each design cell under bad leverage, and restraint relative to the mechanism-relevant diagnostic under response outliers and good leverage.
 
 \begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\linewidth]{../../output/02_distributional/figures/main/02_fig1_mis_advantage_heatmap.pdf}
-	\caption{Target-aware recovery difference between MIS and classical diagnostics across sample sizes, contamination proportions, and contamination mechanisms. For bad leverage, the benchmark is the highest-recovery classical diagnostic and positive values indicate greater recovery by MIS. For response outliers and good leverage, the benchmark is the lowest-recovery classical diagnostic and positive values indicate lower unnecessary recovery by MIS. The cell label identifies the classical diagnostic defining the benchmark.}
-	\label{fig:02-mis-advantage}
+\centering
+\includegraphics[width=\linewidth]{../../output/02_distributional/figures/main/02_fig1_mis_advantage_heatmap.pdf}
+\caption{Detection and restraint margins of MIS relative to classical diagnostics across sample sizes, contamination proportions, and contamination mechanisms, in percentage points. Under bad leverage, the margin is MIS recovery minus the recovery of the highest-recovery classical diagnostic, chosen separately in each design cell before averaging. Under response outliers and good leverage, the margin is the recovery of the mechanism-relevant diagnostic (Cook's distance and leverage, respectively) minus MIS recovery. Positive values favour MIS in all panels. The cell label identifies the benchmark diagnostic.}
+\label{fig:02-mis-advantage}
 \end{figure}
 
 The good-leverage mechanism diagnostic provides the corresponding distribution-specific numerical summaries. \autoref{tab:02-good-leverage-mechanism} compares the MIS-selected and injected sets in recovery, absolute DFBETA, leverage, and residual magnitude.
 
 \input{../../output/02_distributional/tables/main/02_tab3_good_leverage_mechanism.tex}
 
-The EVT component requires a separate qualification. Its numerical convergence does not establish the quality of the block-maxima approximation. As the deletion fraction increases, the ratio of \(k\) to the observations available within each block approaches one, eventually leaving only a single admissible size-\(k\) subset per block. The corresponding block-count diagnostics are reported in \autoref{tab:02A-block-count-summary}; the algebraic restriction is derived in \autoref{app:deriv-blocks}. The substantive injected-set recovery results do not depend on successful GEV fitting.
-
-\input{../../output/02_distributional/tables/supplement/02_tabA5_block_count_summary.tex}
-
-\subsection{Algorithmic and Calibration Checks}
+\subsection{Algorithmic Checks}
 \label{app:numerical}
 
 The algorithmic study checks the computational components used by fixed-\(k\) MIS. Injected-set overlap and attained coefficient influence are distinct evaluation criteria: two size-\(k\) sets can differ in membership while producing nearly identical target-coefficient movement. Across the refined comparisons, both greedy and Dinkelbach-based search attained a median influence ratio of \(1.00\), while their recovered observation identities sometimes differed. The aggregate results are reported in \autoref{tab:03-algorithm-summary}.
@@ -46,14 +42,27 @@ The algorithmic study checks the computational components used by fixed-\(k\) MI
 
 The Dinkelbach formulation is retained because it globally optimises the stated fixed-residualised objective under the conditions in \autoref{sec:methodology}. Runtime comparisons, architecture-specific overlap, collinearity checks, nestedness traces, and numerical-convergence grids are retained in the repository as implementation diagnostics.
 
-The EVT stress tests provide a separate qualification. GEV fitting can converge numerically while the resulting reference distribution remains poorly calibrated. In the renewed null experiment, rejection is strongly conservative under both fitting procedures, as shown in \autoref{fig:03-null-calibration}. These results support treating EVT as a design-specific calibration device rather than a general inferential property of fixed-\(k\) MIS.
+\subsection{Block-Maxima EVT Calibration}
+\label{app:evt}
+
+A block-maxima extreme-value construction \parencite{konrad2026testing} was evaluated as a candidate calibration device for fixed-\(k\) influence. For a tested set \(S\), the observations outside \(S\) are partitioned into \(B\) blocks, the fixed-\(k\) maximum of the set-DFBETA is computed within each block, a generalised extreme-value (GEV) distribution is fitted to the block maxima, and the p-value is the upper-tail probability of \(|\Delta(S)|\) under the fitted distribution. Three features of the evaluation explain why the construction is not used for inference in this thesis.
+
+First, the tested set differs from the set that would be tested in practice. In the distributional simulation, the tested set is the injected set under contamination and a randomly drawn size-\(k\) set under the clean design. Neither is the data-selected MIS. The recorded rejection rates therefore describe the influence of a known or random set rather than the calibration of a selected maximum.
+
+Second, the block construction degenerates over much of the simulation design. A block value is a maximum only when the block contains more than \(k\) observations. \autoref{tab:02A-block-count-summary} shows that the ratio of \(k\) to block size equals one in \(12\) of the \(20\) sample-size--contamination configurations, including every configuration with contamination of \(2.5\%\) or more. In these configurations each block admits a single size-\(k\) subset, so the fitted distribution describes whole-block deletion effects rather than maxima. \autoref{prop:block-ratio} gives the corresponding bound on the admissible deletion fraction. The aggregate empirical rejection rate of \(4.5\%\) recorded under the clean design averages over these degenerate configurations and is therefore not evidence of calibration.
+
+\input{../../output/02_distributional/tables/supplement/02_tabA5_block_count_summary.tex}
+
+Third, where the construction is well defined it is strongly conservative. In a dedicated null experiment across nine regression architectures, the empirical rejection rate at the nominal \(5\%\) level averaged \(0.2\%\) under constrained GEV fitting and \(0.6\%\) under robust fitting (\autoref{fig:03-null-calibration}), and a Kolmogorov--Smirnov test rejected uniformity of the null p-values at the \(1\%\) level in every design cell. GEV fitting converged in \(93.9\%\) and \(100\%\) of fits, respectively, so numerical convergence does not imply an accurate reference distribution.
 
 \begin{figure}[htbp]
-	\centering
-	\includegraphics[width=0.82\textwidth]{../../output/03_algorithmic/figures/main/03_fig3_null_calibration.pdf}
-	\caption{Empirical null rejection rates across nominal significance levels for constrained and robust GEV fitting. The diagonal denotes equality between nominal and empirical rejection.}
-	\label{fig:03-null-calibration}
+\centering
+\includegraphics[width=0.82\textwidth]{../../output/03_algorithmic/figures/main/03_fig3_null_calibration.pdf}
+\caption{Empirical null rejection rates of the block-maxima EVT test across nominal significance levels for constrained and robust GEV fitting. The diagonal denotes equality between nominal and empirical rejection.}
+\label{fig:03-null-calibration}
 \end{figure}
+
+The injected-set recovery results in \autoref{subsec:detection-performance} do not depend on the EVT step, and calibration in the misspecification study uses independently simulated null distributions instead. Because the thesis treats \(k\) as a sensitivity budget and reports deletion paths, it does not require a p-value for a selected set.
 
 \subsection{Supplementary Robust-Estimation Results}
 \label{app:estimation-results}
@@ -81,11 +90,11 @@ Target-coefficient sensitivity is evaluated using
 T_k
 =
 \frac{
-	\left|
-	\widehat{\beta}_{-S_k}-\widehat{\beta}
-	\right|
+\left|
+\widehat{\beta}_{-S_k}-\widehat{\beta}
+\right|
 }{
-	\widehat{\operatorname{se}}(\widehat{\beta})
+\widehat{\operatorname{se}}(\widehat{\beta})
 },
 \]
 where the selected set is obtained from the fixed-residualised search and \(\widehat{\beta}_{-S_k}\) is evaluated by full-refit validation. The denominator is the standard error from the original fitted model and is held fixed as a reference scale. \(T_k\) is not treated as a Wald statistic because the deletion set is selected adaptively and the full-sample and post-deletion estimates are dependent.
@@ -97,10 +106,10 @@ Independent null simulations provide the environment-specific reference distribu
 For an environment whose fitted power curve reaches \(0.80\), the detection boundary is the interpolated severity at which that level is first attained. Environments that do not reach the criterion within the simulated range are treated as right-censored. The complete sample-size pattern underlying \autoref{fig:05-boundary-by-n} is shown in \autoref{fig:05S-boundary-faceted}. The mechanism-specific differences reinforce the main-text conclusion that misspecification does not translate uniformly into target-coefficient sensitivity.
 
 \begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../output/05_misspecification/figures/supplement/05_figS06_boundary_by_n_faceted.pdf}
-	\caption{Scenario-specific censoring-aware MIS detection boundaries by sample size at \(k/n=0.025\).}
-	\label{fig:05S-boundary-faceted}
+\centering
+\includegraphics[width=\textwidth]{../../output/05_misspecification/figures/supplement/05_figS06_boundary_by_n_faceted.pdf}
+\caption{Scenario-specific censoring-aware MIS detection boundaries by sample size at \(k/n=0.025\).}
+\label{fig:05S-boundary-faceted}
 \end{figure}
 
 Detailed power curves, predictor- and error-distribution breakdowns, diagnostic-comparison grids, deletion-budget summaries, and supplementary estimation comparisons are retained in the repository. They do not alter the two distinctions emphasised in the main text: the MIS response depends on the form of misspecification, and target-coefficient localisation does not constitute model correction.
@@ -114,5 +123,5 @@ Detailed power curves, predictor- and error-distribution breakdowns, diagnostic-
 
 
 
-	
+
 \end{document}
