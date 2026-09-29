@@ -1290,7 +1290,7 @@ tab1_display <- tab1_raw %>%
   transmute(
     `Contamination mechanism` = as.character(outlier_label),
     `MIS recovery` = fmt_pct(mis_recovery),
-    `Classical benchmark recovery` = fmt_pct(highest_classical_recovery)
+    `Mechanism-relevant classical recovery` = fmt_pct(highest_classical_recovery)
   )
 
 write_tex_table(

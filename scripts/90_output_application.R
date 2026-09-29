@@ -2972,16 +2972,20 @@ table_tex <- c(
   
   paste0(
     "\\textit{Notes:} ",
-    "Threshold entries report the fraction of the estimation sample removed, ",
-    "with the corresponding number of deleted observations in parentheses. ",
+    "Threshold entries report the fraction of the complete audit sample selected",
+    "for deletion, with the corresponding MIS deletion budget \(k\) in parentheses.",
     "The normalized coefficient is ",
-    "$R_k=\\widehat{\\beta}_{-S_k}/\\widehat{\\beta}_{\\mathrm{full}}$. ",
-    "A 50\\% attenuation is first reached when $R_k\\leq0.5$; ",
-    "a 50\\% amplification is first reached when $R_k\\geq1.5$; ",
-    "and the coefficient crosses zero when $R_k\\leq0$. ",
-    "``Not reached'' indicates that the threshold is not attained within the ",
-    "study's prespecified deletion budget of at most approximately 5\\% of ",
-    "the estimation sample."
+    "$R_k=\widehat{\beta}_{-S_k}/\widehat{\beta}_{\mathrm{full}}$. ",
+    "A 50\% attenuation is first reached when $R_k\leq0.5$; ",
+    "a 50\% amplification is first reached when $R_k\geq1.5$; and the ",
+    "coefficient crosses zero when $R_k\leq0$. ``Not reached'' indicates that ",
+    "the threshold is not attained within the study's prespecified deletion",
+    "budget of at most approximately 5\% of the complete audit sample. Counts ",
+    "refer to observations explicitly selected for deletion by MIS. ",
+    "In fixed-effects applications, the validation estimator may additionally ",
+    "remove observations that become singleton fixed-effect groups; this occurs",
+    "in the access-to-finance application and is documented in ",
+    "\autoref{app:application-08}."
   ),
   
   "\\end{minipage}",
