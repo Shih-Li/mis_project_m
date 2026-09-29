@@ -32,10 +32,52 @@
 \renewcommand{\equationautorefname}{Equation}
 \providecommand{\appendixautorefname}{Appendix}
 \begin{document}
-\title{MIS}
-\author{Shi Li \\ Supefvised by \\ Dr. Nikolas Kuschnig }
-\date{}
-\maketitle
+\begin{titlepage}
+\centering
+\thispagestyle{empty}
+
+\vspace*{-0.5cm}
+
+\includegraphics[width=0.68\textwidth]
+{\detokenize{Monash_1 line_BLUE_CMYK.jpg}}
+\par
+
+\vspace{2.4cm}
+
+{\LARGE\bfseries
+Most Influential Sets:\\[0.35em]
+Sensitivity in Statistical Models and Applications
+\par}
+
+\vspace{2.3cm}
+
+{\Large\bfseries Shi Li\par}
+
+\vspace{1.3cm}
+
+{\normalsize Supervised by\par}
+
+\vspace{0.45cm}
+
+{\large Dr. Nikolas Kuschnig\par}
+
+\vspace{5.5cm}
+
+{\normalsize
+A thesis submitted for the degree of
+\par}
+
+{Master of Applied Econometrics\par}
+
+{\normalsize at Monash University\par}
+
+{\normalsize
+Department of Econometrics and Business Statistics
+\par}
+
+\vspace*{0.4cm}
+
+\end{titlepage}
 
 \clearpage
 \subfile{tex_sections/abstract.tex}
@@ -44,7 +86,14 @@
 \subfile{tex_sections/acknowledgements.tex}
 
 \clearpage
+\begingroup
+\small
+\setstretch{1.0}
+\setlength{\parskip}{0pt}
 \tableofcontents
+\endgroup
+
+\clearpage
 
 \clearpage
 
@@ -64,6 +113,7 @@
 \printbibliography
 
 \clearpage
+\addtocontents{toc}{\protect\setcounter{tocdepth}{1}}
 \appendix
 \subfile{tex_sections/appendixA.tex}
 
