@@ -10,18 +10,21 @@
 \newtheorem{corollary}[proposition]{Corollary}
 \usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=3.0cm,right=3.0cm]{geometry}
 \usepackage{setspace}
-\setstretch{1.05}
+\setstretch{1.15}
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.65em}
 \usepackage{microtype}
 \usepackage{graphicx}
+\usepackage{placeins}
 \usepackage{float}
 \usepackage{booktabs}
 \usepackage{siunitx}
 \usepackage{subfiles}
 \usepackage[backend=biber, style=apa]{biblatex}
 \addbibresource{ref.bib}
-\usepackage[colorlinks=true, linkcolor=black, citecolor=black, urlcolor=black]{hyperref}
+\usepackage{xcolor}
+\definecolor{linkblue}{RGB}{0,70,140}
+\usepackage[colorlinks=true,linkcolor=linkblue,citecolor=linkblue,urlcolor=linkblue]{hyperref}
 \renewcommand{\sectionautorefname}{Section}
 \renewcommand{\subsectionautorefname}{Section}
 \renewcommand{\figureautorefname}{Figure}
@@ -33,6 +36,17 @@
 \author{Shi Li}
 \date{}
 \maketitle
+
+\clearpage
+\subfile{tex_sections/abstract.tex}
+
+\clearpage
+\subfile{tex_sections/acknowledgements.tex}
+
+\clearpage
+\tableofcontents
+
+\clearpage
 
 \subfile{tex_sections/section1_introduction.tex}
 

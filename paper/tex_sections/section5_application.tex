@@ -6,6 +6,7 @@
 
 The empirical analysis examines the magnitude and structure of target-coefficient sensitivity across ten published studies built around randomized experimental variation. One prespecified target estimand from each study is evaluated under a common deletion protocol. The cross-study analysis measures how far each coefficient can move within a small deletion budget, while selected applications examine how influential-set membership persists, changes with \(k\), or concentrates across observable groups. Each result is conditional on the validated audit specification and realised estimation sample. Study-specific specifications, validation checks, and implementation details are reported in \autoref{app:application-details}.
 
+\FloatBarrier
 \subsection{Audit Design}
 \label{subsec:application-design}
 
@@ -17,6 +18,7 @@ The common search requires an MIS-compatible linear representation of the target
 
 The empirical analysis targets finite-sample point-estimate sensitivity within each validated specification. Randomized assignment supplies the identifying variation in the source studies, while the deletion analysis measures dependence of the audited coefficient on its realised estimation sample. These are separate inferential objects. An experimentally identified effect can therefore exhibit substantial finite-sample coefficient sensitivity within a particular audited specification.
 
+\FloatBarrier
 \subsection{Magnitude of Target-Coefficient Sensitivity}
 \label{subsec:application-sensitivity}
 
@@ -35,6 +37,7 @@ Eight of the ten audited coefficients cross zero along at least one searched del
 
 The vaccine-delivery and self-esteem applications exhibit sensitivity without a sign reversal within the searched range. The vaccine-delivery estimate reaches a \(50\%\) attenuation at approximately \(4.17\%\) deletion, while the self-esteem coefficient also shows material movement within the audit budget. Sign reversal therefore captures one dimension of coefficient sensitivity. Attenuation and amplification provide additional evidence about the magnitude of dependence on selected subsets.
 
+\FloatBarrier
 \subsection{Structure of Influential Sets}
 \label{subsec:application-interpretation}
 
@@ -51,7 +54,7 @@ The access-to-finance audit combines strong coefficient sensitivity with a persi
 
 The health-information audit shows a different structure on its other search direction. \textcite{ciancio2025surviving} study the consequences of learning an HIV-positive diagnosis, and the present audit considers their reported OLS companion specification for survival. The validated full-sample coefficient is \(-0.1566\), and it first crosses zero after deleting \(17\) of \(2{,}332\) observations, approximately \(0.73\%\) of the estimation sample, along a path that remains nested throughout the audit budget. The opposite search direction amplifies the coefficient instead, to more than five times its full-sample magnitude. Along that amplifying path, the maximising set at one budget is repeatedly not contained in the maximising set at the next, with non-nested transitions between \(k=71\) and \(k=93\) (\autoref{fig:application-persistence}). The composition of the most influential set therefore changes with the budget on this path, whereas it accumulates on the sign-reversing path. Refits on the amplifying path are available up to \(k=94\); from \(k=95\) the refitted target coefficient is no longer finite, so the path is reported only up to that point. The source study's preferred IV/GMM causal specification lies outside the current linear MIS audit.
 
-Because each deletion budget defines a separate optimisation problem (\autoref{subsec:fixed_k_mis}), fixed-\(k\) MIS does not require the maximising sets to be nested. Along a nested search path, the selected maximising set at a larger budget extends the selected set at the preceding budget; along a non-nested path, selected maximising-set membership changes with the budget. Neither pattern is by itself evidence of robustness or of diagnostic failure: the nested access-to-finance path crosses zero after only \(20\) deletions. The two applications show that influential-set structure can differ across search directions as well as across studies, so target-coefficient sensitivity has a compositional dimension in addition to the magnitude of coefficient movement.
+Because each deletion budget defines a separate optimisation problem (\autoref{subsec:fixed_k_mis}), fixed-\(k\) MIS does not require the maximising sets to be nested. Along a nested search path, the selected maximising set at a larger budget extends the selected set at the preceding budget; along a non-nested path, selected maximising-set membership changes with the budget. Neither pattern is by itself evidence of robustness or of diagnostic failure: the nested access-to-finance path has a sign-reversing MIS at \(k=20\). The two applications show that influential-set structure can differ across search directions as well as across studies, so target-coefficient sensitivity has a compositional dimension in addition to the magnitude of coefficient movement.
 
 The immunization audit provides a third structural pattern through geographic concentration. \textcite{banerjee2025selecting} evaluate randomized combinations of immunization reminders, incentives, and community ambassadors in Haryana, India. The audit targets the pooled policy coefficient for immunizations per dollar associated with the selected policy specification. Its validated full-sample estimate is \(0.0040\), and the coefficient first crosses zero after deleting \(214\) of \(7{,}370\) village-month observations, approximately \(2.90\%\) of the estimation sample.
 

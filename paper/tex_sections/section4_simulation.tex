@@ -6,6 +6,7 @@
 
 The simulations examine how target-coefficient sensitivity arises, how influence localisation relates to estimation, and how similar sensitivity can emerge from model misspecification. The three studies address these questions sequentially. The first evaluates when conventional contamination outliers coincide with observations carrying substantial joint influence on the target slope. The second examines how localisation of those observations relates to post-deletion coefficient estimation and robust estimation. The third studies whether model misspecification can generate concentrated coefficient sensitivity without a planted contamination set. Algorithmic and calibration checks support these analyses and are reported separately where appropriate.
 
+\FloatBarrier
 \subsection{Outlyingness and Target-Coefficient Influence}
 \label{subsec:detection-performance}
 
@@ -59,7 +60,7 @@ The three contamination mechanisms show that alignment between outlyingness and 
 
 
 
-
+\FloatBarrier
 \subsection{Influence Localisation and Estimation}
 \label{subsec:estimation-performance}
 
@@ -85,7 +86,7 @@ MM regression and LTS produce more concentrated coefficient-error distributions 
 The second simulation gives influence localisation a specific interpretation. Fixed-\(k\) MIS characterises where joint target-coefficient sensitivity is concentrated, while MM regression and LTS characterise coefficient stability under contamination. The mean--median differences in \autoref{fig:04-coefficient-errors} additionally show that typical and average Monte Carlo performance can diverge when coefficient-error distributions are asymmetric or contain infrequent large errors. These findings separate the structure of coefficient sensitivity from the performance of the resulting estimator. The final simulation examines whether concentrated coefficient sensitivity can also arise from model misspecification without a planted contamination set.
 
 
-
+\FloatBarrier
 \subsection{Misspecification and Concentrated Coefficient Sensitivity}
 \label{subsec:misspecification}
 
@@ -105,7 +106,7 @@ T_k
 \]
 The statistic \(T_k\) measures full-refit coefficient movement in standard-error units. Here, \(\widehat{\beta}_{-S_k}\) is the full-refit target coefficient after deleting the selected set. Independent null simulations provide the reference distribution for \(T_k\). For each environment, defined by sample size, predictor distribution, and error distribution, the \(95\%\) cutoff is taken from separate draws of the correctly specified data-generating process, and the evaluation draws never contribute to a cutoff. This calibration requires knowledge of the null data-generating process and is therefore available only in simulation. The results characterise what fixed-\(k\) MIS can detect when its null distribution is known, rather than the operating characteristics of a test that an analyst could apply directly to observed data. For each mechanism--environment combination, the detection boundary is the smallest simulated severity at which the fitted rejection probability reaches \(80\%\); combinations that do not reach this criterion within the simulated severity range are treated as right-censored. The remaining deletion fractions are treated as alternative sensitivity budgets rather than estimates of an underlying influential-set size.
 
-The strength of concentrated coefficient sensitivity varies sharply across misspecification mechanisms. At the primary deletion fraction, nonlinear confounding, heterogeneous slopes, nonlinear functional form, and threshold behaviour reached the \(80\%\) detection criterion in all \(96\) environments, while the omitted-variable design reached it in \(8.3\%\) of environments. Linear endogeneity did not reach the criterion within the simulated severity range. The severity required to attain the criterion also differs across mechanisms. These patterns show that the form of misspecification determines whether coefficient sensitivity becomes strongly concentrated under the stated deletion budget.
+The strength of concentrated coefficient sensitivity varies sharply across misspecification mechanisms. At the primary deletion fraction, nonlinear confounding, heterogeneous slopes, nonlinear functional form, and threshold behaviour reached the \(80\%\) detection criterion in all \(96\) environments, while the omitted-variable design reached it in \(8.3\%\) of environments. Linear endogeneity did not reach the criterion within the simulated severity range. The severity required to attain the criterion also differs across mechanisms. These patterns show that the emergence of strongly concentrated coefficient sensitivity is mechanism specific under the stated deletion budget.
 
 A complementary respecification check supports interpreting these responses as specification dependent. For the five mechanisms with an explicit correctly respecified model, each corrected specification is evaluated against its own independently calibrated null distribution. At \(k/n=0.025\), the resulting false-positive rates range only from \(4.9\%\) to \(5.1\%\), close to the nominal \(5\%\) level, whereas rejection under the corresponding misspecified models ranges from \(11.1\%\) for the omitted-variable design to \(81.9\%\) for nonlinear functional form. The concentrated sensitivity signal therefore largely disappears after the relevant model departure is incorporated into the fitted specification. The weak omitted-variable response remains an important exception on the misspecified side rather than a calibration failure after correction (\autoref{tab:05-specificity}).
 
