@@ -67,9 +67,13 @@ The injected-set recovery results in \autoref{subsec:detection-performance} do n
 \subsection{Supplementary Robust-Estimation Results}
 \label{app:estimation-results}
 
-The robust-estimation simulation uses MIS as an oracle-assisted localisation benchmark. The deletion budget and direction are supplied from the data-generating process, while observation identities remain unknown to the search. The oracle audit confirms that deleting the injected set produces a much larger target-coefficient shift under bad leverage than under response-outlier or good-leverage contamination (\autoref{tab:robust-oracle-audit}). This difference explains why localisation and post-deletion estimation are most closely aligned under bad leverage.
+The robust-estimation simulation uses MIS as an oracle-assisted localisation benchmark. The deletion budget and direction are supplied from the data-generating process, while observation identities remain unknown to the search. The oracle audit confirms that deleting the injected set produces a much larger target-coefficient shift under bad leverage than under response-outlier or good-leverage contamination (\autoref{tab:robust-oracle-audit}). This difference explains why localisation and post-deletion estimation are most closely aligned under bad leverage. The corresponding mean absolute bias and RMSE summaries are reported in \autoref{tab:robust-mean-absolute-bias} and \autoref{tab:robust-rmse}.
 
 \input{../../output/04_robust/tables/supplement/04_tab_oracle_audit.tex}
+
+\input{../../output/04_robust/tables/main/04_tab2a_mean_absolute_bias.tex}
+
+\input{../../output/04_robust/tables/main/04_tab2b_rmse.tex}
 
 The complete estimator-by-environment comparisons, coverage results, runtime diagnostics, and predictor/error-distribution breakdowns are retained in the repository. They support the same distinction developed in \autoref{subsec:estimation-performance}: influential-set localisation and robust coefficient estimation are separate statistical objectives.
 
@@ -102,6 +106,10 @@ where the selected set is obtained from the fixed-residualised search and \(\wid
 Independent null simulations provide the environment-specific reference distribution. At the primary deletion fraction, empirical null rejection remains close to the nominal \(5\%\) level across the evaluated error distributions (\autoref{tab:05-size-by-error}).
 
 \input{../../output/05_misspecification/tables/supplement/05_tabS01_size_by_error.tex}
+
+The respecification check evaluates whether the MIS response persists after the corresponding model departure is incorporated into the fitted specification. Because the corrected models contain different regressors, each is evaluated against its own independently simulated null distribution.
+
+\input{../../output/05_misspecification/tables/main/05_tab06_specificity.tex}
 
 For an environment whose fitted power curve reaches \(0.80\), the detection boundary is the interpolated severity at which that level is first attained. Environments that do not reach the criterion within the simulated range are treated as right-censored. The complete sample-size pattern underlying \autoref{fig:05-boundary-by-n} is shown in \autoref{fig:05S-boundary-faceted}. The mechanism-specific differences reinforce the main-text conclusion that misspecification does not translate uniformly into target-coefficient sensitivity.
 
