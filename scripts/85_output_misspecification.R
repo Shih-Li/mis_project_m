@@ -628,6 +628,15 @@ write_tex_table <- function(
   escaped_data <- lapply(data, escape_latex)
   escaped_data <- as.data.frame(escaped_data, stringsAsFactors = FALSE)
   
+  escaped_names <- gsub(
+    "DFBETAS", "\\dfbetas{}", escaped_names,
+    fixed = TRUE
+  )
+  escaped_data[] <- lapply(
+    escaped_data,
+    function(x) gsub("DFBETAS", "\\dfbetas{}", x, fixed = TRUE)
+  )
+  
   body_rows <- apply(escaped_data, 1L, function(row) {
     paste0(paste(row, collapse = " & "), " \\\\")
   })
@@ -659,7 +668,11 @@ write_tex_table <- function(
   latex <- c(
     paste0("\\begin{table}[", placement, "]"),
     "\\centering",
-    paste0("\\caption{", escape_latex(caption), "}"),
+    paste0(
+      "\\caption{",
+      gsub("DFBETAS", "\\dfbetas{}", escape_latex(caption), fixed = TRUE),
+      "}"
+    ),
     paste0("\\label{", label, "}"),
     paste0("\\resizebox{", resize_width, "}{!}{%"),
     paste0("\\begin{tabular}{@{}", align, "@{}}"),
@@ -1420,8 +1433,28 @@ fig_power <- ggplot(
     scales = "free_x",
     drop = FALSE
   ) +
-  scale_colour_manual(values = METHOD_COLOURS) +
-  scale_linetype_manual(values = METHOD_LINETYPES) +
+  scale_colour_manual(
+    values = METHOD_COLOURS,
+    labels = c(
+      "MIS" = "MIS",
+      "Cook's D" = "Cook's D",
+      "DFBETAS" = "DfBetas",
+      "Leverage" = "Leverage",
+      "RESET" = "RESET",
+      "BP" = "BP"
+    )
+  ) +
+  scale_linetype_manual(
+    values = METHOD_LINETYPES,
+    labels = c(
+      "MIS" = "MIS",
+      "Cook's D" = "Cook's D",
+      "DFBETAS" = "DfBetas",
+      "Leverage" = "Leverage",
+      "RESET" = "RESET",
+      "BP" = "BP"
+    )
+  ) +
   scale_y_continuous(
     limits = c(0, 1),
     breaks = seq(0, 1, by = 0.2),
@@ -3052,7 +3085,16 @@ if (HAS_FROZEN_05) {
     scale_y_continuous(
       transform = scales::pseudo_log_trans(base = 10, sigma = 0.20)
     ) +
-    scale_colour_manual(values = arm_colours) +
+    scale_colour_manual(
+      values = arm_colours,
+      labels = c(
+        "Full OLS" = "Full OLS",
+        "MIS deletion" = "MIS deletion",
+        "Cook deletion" = "Cook deletion",
+        "DFBETAS deletion" = "DfBetas deletion",
+        "Leverage deletion" = "Leverage deletion"
+      )
+    ) +
     scale_linetype_manual(
       values = c(
         "Full OLS" = "dashed",
@@ -3060,6 +3102,13 @@ if (HAS_FROZEN_05) {
         "Cook deletion" = "22",
         "DFBETAS deletion" = "42",
         "Leverage deletion" = "13"
+      ),
+      labels = c(
+        "Full OLS" = "Full OLS",
+        "MIS deletion" = "MIS deletion",
+        "Cook deletion" = "Cook deletion",
+        "DFBETAS deletion" = "DfBetas deletion",
+        "Leverage deletion" = "Leverage deletion"
       )
     ) +
     labs(

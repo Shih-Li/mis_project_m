@@ -342,6 +342,15 @@ write_tex_table <- function(
     check.names = FALSE
   )
   
+  escaped_names <- gsub(
+    "DFBETAS", "\\dfbetas{}", escaped_names,
+    fixed = TRUE
+  )
+  escaped_data[] <- lapply(
+    escaped_data,
+    function(x) gsub("DFBETAS", "\\dfbetas{}", x, fixed = TRUE)
+  )
+  
   body_rows <- apply(escaped_data, 1L, function(row) {
     paste0(paste(row, collapse = " & "), " \\\\")
   })
@@ -350,7 +359,11 @@ write_tex_table <- function(
     paste0("\\begin{table}[", placement, "]"),
     "\\centering",
     if (!is.null(font_command)) font_command else character(0),
-    paste0("\\caption{", escape_latex(caption), "}"),
+    paste0(
+      "\\caption{",
+      gsub("DFBETAS", "\\dfbetas{}", escape_latex(caption), fixed = TRUE),
+      "}"
+    ),
     paste0("\\label{", label, "}"),
     paste0("\\resizebox{", resize_width, "}{!}{%"),
     paste0("\\begin{tabular}{@{}", align, "@{}}"),
@@ -886,7 +899,7 @@ estimator_meta <- data.frame(
     "OLS",
     "Leverage",
     "Cook's distance",
-    "DFBETAS",
+    "DfBetas",
     "MIS with oracle k",
     "MM",
     "LTS"
@@ -3868,7 +3881,7 @@ classical_advantage_heatmap <- estimation_cell %>%
         cd / mis_oracle
       ),
     
-    DFBETAS =
+    DfBetas =
       log2(
         dfb / mis_oracle
       )
@@ -3879,7 +3892,7 @@ classical_advantage_heatmap <- estimation_cell %>%
       c(
         "Leverage",
         "Cook's distance",
-        "DFBETAS"
+        "DfBetas"
       )
     ),
     names_to = "benchmark_label",
@@ -3892,7 +3905,7 @@ classical_advantage_heatmap <- estimation_cell %>%
       levels = c(
         "Leverage",
         "Cook's distance",
-        "DFBETAS"
+        "DfBetas"
       )
     ),
     

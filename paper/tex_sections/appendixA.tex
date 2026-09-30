@@ -30,7 +30,7 @@ Cell-level detection and restraint margins across sample size and contamination 
 \label{fig:02-mis-advantage}
 \end{figure}
 
-The good-leverage mechanism diagnostic provides the corresponding distribution-specific numerical summaries. \autoref{tab:02-good-leverage-mechanism} compares the MIS-selected and injected sets in recovery, absolute DFBETA, leverage, and residual magnitude.
+The good-leverage mechanism diagnostic provides the corresponding distribution-specific numerical summaries. \autoref{tab:02-good-leverage-mechanism} compares the MIS-selected and injected sets in recovery, absolute \dfbetas{}, leverage, and residual magnitude.
 
 \input{../../output/02_distributional/tables/main/02_tab3_good_leverage_mechanism.tex}
 
@@ -48,7 +48,7 @@ The Dinkelbach formulation is retained because it globally optimises the stated 
 \subsection{Block-Maxima EVT Calibration}
 \label{app:evt}
 
-A block-maxima extreme-value construction \parencite{konrad2026testing} was evaluated as a candidate calibration device for fixed-\(k\) influence. For a tested set \(S\), the observations outside \(S\) are partitioned into \(B\) blocks, the fixed-\(k\) maximum of the set-DFBETA is computed within each block, a generalised extreme-value (GEV) distribution is fitted to the block maxima, and the p-value is the upper-tail probability of \(|\Delta(S)|\) under the fitted distribution. Three features of the evaluation explain why the construction is not used for inference in this thesis.
+A block-maxima extreme-value construction \parencite{konrad2026testing} was evaluated as a candidate calibration device for fixed-\(k\) influence. For a tested set \(S\), the observations outside \(S\) are partitioned into \(B\) blocks, the fixed-\(k\) maximum of the set-\dfbetas{} is computed within each block, a generalised extreme-value (GEV) distribution is fitted to the block maxima, and the p-value is the upper-tail probability of \(|\Delta(S)|\) under the fitted distribution. Three features of the evaluation explain why the construction is not used for inference in this thesis.
 
 First, the tested set differs from the set that would be tested in practice. In the distributional simulation, the tested set is the injected set under contamination and a randomly drawn size-\(k\) set under the clean design. Neither is the data-selected MIS. The recorded rejection rates therefore describe the influence of a known or random set rather than the calibration of a selected maximum.
 

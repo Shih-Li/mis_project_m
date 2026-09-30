@@ -344,6 +344,15 @@ write_tex_table <- function(
   escaped_data <- lapply(data, escape_latex)
   escaped_data <- as.data.frame(escaped_data, stringsAsFactors = FALSE)
   
+  escaped_names <- gsub(
+    "DFBETAS", "\\dfbetas{}", escaped_names,
+    fixed = TRUE
+  )
+  escaped_data[] <- lapply(
+    escaped_data,
+    function(x) gsub("DFBETAS", "\\dfbetas{}", x, fixed = TRUE)
+  )
+  
   body_rows <- apply(escaped_data, 1L, function(row) {
     paste0(paste(row, collapse = " & "), " \\\\")
   })
@@ -509,12 +518,12 @@ error_labels <- c(
 method_metric_levels <- c(
   "overlap_mis", "overlap_cooks", "overlap_lev", "overlap_dfbetas"
 )
-method_levels <- c("MIS", "Cook's D", "Leverage", "DFBETAS")
+method_levels <- c("MIS", "Cook's D", "Leverage", "DfBetas")
 
 coverage_metric_levels <- c(
   "cover_evd", "cover_cooks", "cover_lev", "cover_dfbetas"
 )
-coverage_method_levels <- c("MIS-EVT", "Cook's D", "Leverage", "DFBETAS")
+coverage_method_levels <- c("MIS-EVT", "Cook's D", "Leverage", "DfBetas")
 
 contam_values <- NOMINAL_CONTAM_LEVELS
 contam_labels <- format_contamination(contam_values)
