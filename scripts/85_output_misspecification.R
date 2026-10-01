@@ -890,7 +890,7 @@ error_labels <- c(
   "normal" = "Normal",
   "mixed_normal" = "Mixed normal",
   "skewed_t" = "Skewed t",
-  "golm" = "GOLM",
+  "golm" = "Log-normal mixture",
   "beta_logistic" = "Beta-logistic",
   "gpd" = "GPD",
   "contaminated" = "Contaminated",
@@ -1313,6 +1313,9 @@ fig_reach <- ggplot(
     colour = COL_GREY_DARK
   ) +
   scale_fill_manual(values = METHOD_COLOURS, guide = "none") +
+  scale_y_discrete(
+    labels = function(x) ifelse(x == "DFBETAS", "DfBetas", x)
+  ) +
   scale_x_continuous(
     limits = c(0, max(reach_counts$total) * 1.10),
     breaks = seq(0, max(reach_counts$total), by = 100),
@@ -1568,7 +1571,10 @@ make_exclusive_plot <- function(data, rivals, exhibit_id, width) {
     facet_wrap(
       ~ rival,
       nrow = 1,
-      scales = "free_x"
+      scales = "free_x",
+      labeller = labeller(
+        rival = function(x) ifelse(x == "DFBETAS", "DfBetas", x)
+      )
     ) +
     scale_fill_manual(
       values = c(

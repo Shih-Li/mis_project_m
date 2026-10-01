@@ -76,14 +76,15 @@ set.seed(123)
 # 2. DGP
 # ------------------------------------------------------------------
 # Total N = 400
-# Bad-leverage set = observations 1:10
-# 10 / 400 = 2.5%
+# Bad-leverage set = observations 1:20
+# 20 / 400 = 5%
 #
-# Three highlighted contamination types:
-#   1:10  = bad leverage
-#   11:20 = good leverage
-#   21:30 = response outliers
-#   31:400 = regular observations
+# Highlighted contamination types:
+#   1:10   = bad leverage cluster 1
+#   11:20  = bad leverage cluster 2
+#   21:30  = good leverage
+#   31:40  = response outliers
+#   41:400 = regular observations
 # ------------------------------------------------------------------
 
 n <- 400L
@@ -111,7 +112,9 @@ ids_response  <- 31:40
 ids_regular   <- 41:n
 
 # ------------------------------------------------------------
-# Bad leverage: observations 1:10
+# Bad leverage: observations 1:20
+#   cluster 1 = 1:10
+#   cluster 2 = 11:20
 #
 # Moderately displaced X values, all pushing the slope in the
 # same direction. Individually they are kept below the usual
@@ -126,7 +129,7 @@ x_bad2 <- rnorm(k_cluster, mean = 2.75, sd = 0.05)
 y_bad2 <- rnorm(k_cluster, mean = -1.00, sd = 0.05)
 
 # ------------------------------------------------------------
-# Good leverage: observations 11:20
+# Good leverage: observations 21:30
 #
 # Very large |X| but exactly on the true regression line.
 # These should be obvious to leverage but should not distort beta.
@@ -135,7 +138,7 @@ x_good <- rnorm(k_cluster, mean = 8.8, sd = 0.10)
 y_good <- 1.5 * x_good + rnorm(k_cluster, sd = 0.05)
 
 # ------------------------------------------------------------
-# Response outliers: observations 21:30
+# Response outliers: observations 31:40
 #
 # X remains near the centre of the design, while Y is moved
 # strongly away from the regression line.
@@ -145,7 +148,7 @@ x_response <- rnorm(k_cluster, mean = 0.0, sd = 0.08)
 y_response <- rnorm(k_cluster, mean = 20.0, sd = 0.20)
 
 # ------------------------------------------------------------
-# Regular observations: 31:400
+# Regular observations: 41:400
 # ------------------------------------------------------------
 n_regular <- n - 4L * k_cluster
 
@@ -537,7 +540,7 @@ draw_base <- function(main_title, xlim = NULL, ylim = NULL) {
     ylab = "Y",
     pch = 16,
     col = point_cols,
-    cex = 0.9,
+    cex = 1.8,
     xlim = xlim,
     ylim = ylim
   )
@@ -557,27 +560,31 @@ draw_panels <- function() {
   
   par(
     mfrow = c(1, 2),
-    mar = c(5, 5, 4, 1.5)
+    cex.axis = 1.00,
+    cex.lab  = 1.08,
+    cex.main = 1.05
   )
-  
   
   # ============================================================
   # Panel 1
-  # Cluster geometry
+  # Contamination geometry
   # ============================================================
+  
+  par(
+    mar = c(5.0, 5.0, 4.3, 1.0)
+  )
   
   draw_base(
     "Illustrative Contamination Configuration"
   )
   
-  # Highlight the contamination clusters
   points(
     df$x[ids_good],
     df$y[ids_good],
     pch = 21,
     bg = truth_cols["Good leverage"],
     col = "black",
-    cex = 1.5,
+    cex = 2.5,
     lwd = 1.1
   )
   
@@ -587,7 +594,7 @@ draw_panels <- function() {
     pch = 21,
     bg = truth_cols["Bad leverage 1"],
     col = "black",
-    cex = 1.5,
+    cex = 2.5,
     lwd = 1.1
   )
   
@@ -597,7 +604,7 @@ draw_panels <- function() {
     pch = 21,
     bg = truth_cols["Bad leverage 2"],
     col = "black",
-    cex = 1.5,
+    cex = 2.5,
     lwd = 1.1
   )
   
@@ -607,12 +614,14 @@ draw_panels <- function() {
     pch = 21,
     bg = truth_cols["Response outlier"],
     col = "black",
-    cex = 1.5,
+    cex = 2.5,
     lwd = 1.1
   )
   
+  # Put the legend in an empty region.
+  # "topleft" hides the response-outlier cluster near y = 20.
   legend(
-    "topleft",
+    "bottomright",
     legend = c(
       "Regular",
       "Good leverage",
@@ -620,95 +629,118 @@ draw_panels <- function() {
       "Bad leverage 2",
       "Response outlier"
     ),
-    pch = 16,
-    col = truth_cols[
-      c(
-        "Regular",
-        "Good leverage",
-        "Bad leverage 1",
-        "Bad leverage 2",
-        "Response outlier"
-      )
-    ],
-    pt.cex = 1.1,
+    pch = c(16, 21, 21, 21, 21),
+    col = c(
+      truth_cols["Regular"],
+      "black",
+      "black",
+      "black",
+      "black"
+    ),
+    pt.bg = c(
+      NA,
+      truth_cols["Good leverage"],
+      truth_cols["Bad leverage 1"],
+      truth_cols["Bad leverage 2"],
+      truth_cols["Response outlier"]
+    ),
+    pt.cex = 1.15,
     cex = 0.82,
-    bg = "white"
+    bg = "white",
+    inset = 0.02
   )
   
   # ============================================================
   # Panel 2
-  # Coefficient change after deleting different 10-point sets
+  # Target-slope error after deletion
   # ============================================================
   
-  bp <- barplot(
-    coef_compare$error,
-    names.arg = coef_compare$set,
-    las = 1,
-    ylim = c(
-      0,
-      max(coef_compare$error) * 1.25
-    ),
-    col = c(
-      "gray60",
-      "gray75",
-      "gray75",
-      "gray75",
-      truth_cols["Bad leverage"],
-      "gray90"
-    ),
-    border = "gray30",
-    ylab = "Absolute target-slope error",
-    main = "Target-Slope Error After Deletion",
-    cex.names = 0.78
+  par(
+    mar = c(5.0, 8.0, 4.3, 1.0)
   )
   
-  bar_labels <- ifelse(
-    is.na(recovery_compare),
+  bar_names <- c(
+    "Contaminated OLS",
     sprintf(
-      "error = %.3f",
-      coef_compare$error
+      "Cook's D  (%d/%d BL)",
+      recovery_compare[2],
+      k_bad
     ),
     sprintf(
-      "error = %.3f\nBL recovered\n= %d/%d",
-      coef_compare$error,
-      recovery_compare,
+      "Leverage  (%d/%d BL)",
+      recovery_compare[3],
+      k_bad
+    ),
+    sprintf(
+      "DFBETAS  (%d/%d BL)",
+      recovery_compare[4],
+      k_bad
+    ),
+    sprintf(
+      "MIS  (%d/%d BL)",
+      recovery_compare[5],
+      k_bad
+    ),
+    sprintf(
+      "Oracle  (%d/%d BL)",
+      recovery_compare[6],
       k_bad
     )
   )
   
-  text(
-    x = bp,
-    y = coef_compare$error,
-    labels = bar_labels,
-    pos = 3,
-    cex = 0.75
+  # Neutral colours for diagnostic methods.
+  # Keep the contamination colours exclusive to Panel 1.
+  bar_cols <- c(
+    "gray60",
+    "gray80",
+    "gray80",
+    "gray80",
+    "gray35",
+    "white"
   )
   
+  # Reverse so contaminated OLS appears at the top.
+  ord <- rev(
+    seq_len(nrow(coef_compare))
+  )
+  
+  bp <- barplot(
+    coef_compare$error[ord],
+    names.arg = bar_names[ord],
+    horiz = TRUE,
+    las = 1,
+    xlim = c(
+      0,
+      max(coef_compare$error) * 1.25
+    ),
+    col = bar_cols[ord],
+    border = "gray25",
+    xlab = "Absolute target-slope error",
+    main = "Target-Slope Error After Deletion",
+    cex.names = 0.82,
+    space = 0.35
+  )
+  
+  # Only report the quantity actually represented by the bar length.
   text(
-    x = bp,
-    y = coef_compare$beta,
-    labels = sprintf("%.3f", coef_compare$beta),
-    pos = 3,
+    x = coef_compare$error[ord],
+    y = bp,
+    labels = sprintf(
+      "%.3f",
+      coef_compare$error[ord]
+    ),
+    pos = 4,
     cex = 0.82
-  )
-  
-  text(
-    x = max(bp),
-    y = 1.5,
-    labels = "True slope = 1.500",
-    pos = 3,
-    cex = 0.82,
-    col = "gray35"
   )
   
   mtext(
     sprintf(
-      "Each diagnostic deletes %d observations; bars show resulting target-slope error",
+      "Common deletion budget: k = %d; parentheses show bad-leverage recovery",
       k_select
     ),
     side = 3,
-    line = 0.4,
-    cex = 0.80
+    line = 0.35,
+    cex = 0.76
   )
 }
 
@@ -735,7 +767,8 @@ cat(
 pdf(
   pdf_file,
   width = 14,
-  height = 6
+  height = 6,
+  pointsize = 18
 )
 
 draw_panels()
@@ -754,7 +787,8 @@ png(
   width = 14,
   height = 6,
   units = "in",
-  res = 300
+  res = 300,
+  pointsize = 11
 )
 
 draw_panels()

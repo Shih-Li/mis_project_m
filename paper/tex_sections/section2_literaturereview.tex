@@ -34,7 +34,7 @@ Searching directly over deletion sets is computationally difficult because a fix
 \subsubsection{Fixed-\texorpdfstring{$k$}{k} most influential sets}
 \label{subsubsec:fixed_k_most_influential_sets}
 
-Most Influential Sets provide a coefficient-targeted formulation of joint deletion. \textcite{kuschnig2021hidden} show that groups of observations can remain concealed under conventional diagnostics while exerting substantial joint influence on an estimated coefficient. Fixed-\(k\) MIS searches jointly over deletion sets of a prespecified size, and subsequent work exploits linear-regression structure to obtain global optimisation of the stated fixed-residualised objective under appropriate conditions \parencite{konrad2026finding}. The resulting set has an objective-specific interpretation: among admissible sets of size \(k\), it maximises movement in the prespecified target coefficient under that formulation.
+Most Influential Sets provide a coefficient-targeted formulation of joint deletion. \textcite{kuschnig2021hidden} show that groups of observations can remain concealed under conventional diagnostics while exerting substantial joint influence on an estimated coefficient. Related work on group influence similarly emphasises that the effect of removing several observations need not be well characterised by observation-level or first-order approximations \parencite{koh2019accuracy,basu2020second}. Fixed-\(k\) MIS searches jointly over deletion sets of a prespecified size, and subsequent work exploits linear-regression structure to obtain global optimisation of the stated fixed-residualised objective under appropriate conditions \parencite{konrad2026finding}. The resulting set has an objective-specific interpretation: among admissible sets of size \(k\), it maximises movement in the prespecified target coefficient under that formulation.
 
 For a prespecified subset size \(k\), the fixed-\(k\) MIS objective can be represented conceptually as
 \[
@@ -42,12 +42,12 @@ S_k^*
 \in
 \arg\max_{\substack{S\subseteq\{1,\ldots,n\}\\ |S|=k}}
 \left|
-\widehat{\beta}_{j,-S}
+\widetilde{\beta}_{j,-S}
 -
 \widehat{\beta}_{j}
 \right|.
 \]
-The parameter \(k\) specifies the deletion budget. Different values of \(k\) therefore define different sensitivity questions and can produce different influential sets. The fixed-residualisation convention, scope of global optimisation, and relationship to full-refit validation are defined in \autoref{sec:methodology}.
+Because the objective is expressed in absolute value, this representation does not distinguish whether deletion increases or decreases the target coefficient. The two coefficient directions are treated separately in the optimisation and compared after optimisation, as detailed in \autoref{subsec:dinkelbach_optimisation}. Here, \(\widetilde{\beta}_{j,-S}\) denotes the fixed-residualised deletion coefficient used by the MIS search; the full-refit coefficient \(\widehat{\beta}_{j,-S}\) is defined separately in \autoref{sec:methodology}. The parameter \(k\) specifies the deletion budget. Different values of \(k\) therefore define different sensitivity questions and can produce different influential sets. The fixed-residualisation convention, scope of global optimisation, and relationship to full-refit validation are defined in \autoref{sec:methodology}.
 
 Optimisation and statistical calibration are separate tasks. A fixed-\(k\) maximum is selected from many candidate subsets, so its magnitude cannot generally be interpreted as though the deletion set had been prespecified. Where calibration is required in the simulations, the reference distribution is constructed separately from the optimisation step.
 
@@ -61,7 +61,9 @@ Coefficient-targeted influence analysis and robust regression characterise diffe
 \subsection{Model misspecification and coefficient sensitivity}
 \label{subsec:model_misspecification}
 
-Model misspecification provides a potential source of target-coefficient sensitivity without requiring a conventional contamination set. Under conditional-mean misspecification, least squares can converge to a well-defined linear approximation even when the fitted regression differs from the population regression function \parencite{white1980using}. The finite-sample influence of particular observations then depends on how the departure interacts with the covariate distribution and the target coefficient. Misspecification can therefore alter both the coefficient itself and the way its sensitivity is distributed across observations.
+Model misspecification provides a potential source of target-coefficient sensitivity without requiring a conventional contamination set \parencite{bonhomme2022minimizing}. Under conditional-mean misspecification, least squares can converge to a well-defined linear approximation even when the fitted regression differs from the population regression function \parencite{white1980using}. The finite-sample influence of particular observations then depends on how the departure interacts with the covariate distribution and the target coefficient. Misspecification can therefore alter both the coefficient itself and the way its sensitivity is distributed across observations.
+
+A broader econometric literature studies sensitivity by perturbing maintained assumptions or the inputs to estimation. \textcite{kline2013sensitivity} examine sensitivity to departures from missing-at-random assumptions, while \textcite{andrews2017measuring} measure how parameter estimates respond locally to the estimation moments on which they depend. \textcite{bonhomme2022minimizing} study estimation and inference under local model misspecification, and \textcite{christensen2023counterfactual} analyse the sensitivity of counterfactual conclusions to parametric assumptions in structural models. These approaches characterise sensitivity to assumptions, moments, or model neighbourhoods. The present analysis takes a complementary finite-sample perspective by asking whether model departures are expressed through concentrated deletion sensitivity in a prespecified regression coefficient.
 
 Different departures can generate different patterns of coefficient sensitivity. Omitted variables, nonlinear functional form, missing interactions, heterogeneous slopes, and threshold behaviour alter the conditional-mean relationship, while endogeneity changes the relation between regressors and disturbances and heteroskedasticity changes the conditional variance. Specification-focused procedures such as RESET and the Breusch--Pagan test target particular implications of these departures \parencite{ramsey1969tests,breusch1979simple}. Coefficient-targeted deletion instead asks whether the departure is expressed through concentrated influence on the prespecified coefficient.
 

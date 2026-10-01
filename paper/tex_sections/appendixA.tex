@@ -4,6 +4,42 @@
 \section{Supplementary Simulation Results}
 \label{app:simulation}
 
+\subsection{Simulation DGPs}
+\label{app:simulation-dgps}
+
+The simulation studies use related distributional environments but differ in their substantive perturbations. This subsection records the principal data-generating-process definitions used in the simulation analyses.
+
+For the robust-estimation and misspecification studies, sample size takes values
+\[
+n\in\{500,1000,2500,5000\}.
+\]
+The predictor distribution is one of three designs. The normal design draws \(X\sim N(0,1)\). The mixed-normal design draws \(90\%\) of observations from \(N(0,1)\) and \(10\%\) from \(N(0,10^2)\). The contaminated-normal design begins with \(N(0,1)\) draws and adds an independent \(N(0,50^2)\) perturbation to \(10\%\) of observations.
+
+Eight error-distribution families are considered. Normal errors follow \(N(0,1)\). Mixed-normal errors combine \(90\%\) \(N(0,1)\) draws with \(10\%\) \(N(0,10^2)\) draws. Skewed-\(t\) errors use skewness parameter \(5\) and \(5\) degrees of freedom. The log-normal-mixture design combines \(70\%\) log-normal draws with log-scale parameters \((0,0.5)\) and \(30\%\) with parameters \((1,1.5)\). Beta errors follow Beta\((2,5)\). Generalised Pareto errors use location \(0\), scale \(1\), and shape \(0.25\) in the misspecification study. Contaminated-normal errors add an independent \(N(0,50^2)\) perturbation to \(10\%\) of otherwise standard-normal draws. Pareto errors use scale \(1\) and shape \(3\). Error draws are centred before construction of the regression outcome.
+
+The contamination studies introduce three observation-level mechanisms. Response outliers shift the outcome while retaining ordinary predictor positions. Good-leverage observations occupy extreme predictor positions while remaining close to the fitted regression relation. Bad-leverage observations are displaced in both predictor and outcome space so that the planted observations jointly distort the target slope. The contamination proportion determines the planted-set size, with the exact simulation grids described in \autoref{subsec:detection-performance} and \autoref{subsec:estimation-performance}.
+
+The misspecification study instead introduces departures from the fitted regression without planting a contamination set. The baseline fitted model targets the coefficient on \(x\). The eight mechanisms are defined as follows:
+\begin{enumerate}
+	\item \emph{Nonlinear functional form}: a centred quadratic component in \(x\) is added to the conditional mean while the fitted model remains linear.
+	
+	\item \emph{Threshold behaviour}: a hinge component \((x-c_0)_+\) is added above the \(75\)th percentile \(c_0\) of the predictor distribution.
+	
+	\item \emph{Omitted variable}: an auxiliary variable \(z\), correlated with \(x\) at approximately \(0.5\), enters the outcome but is omitted from the fitted regression.
+	
+	\item \emph{Heterogeneous slopes}: a randomly selected \(25\%\) subgroup receives an additional slope component through an \(x\)-by-group interaction.
+	
+	\item \emph{Missing interaction}: the fitted model includes \(x\) and \(z\) but omits an \(x z\) interaction that enters the data-generating process.
+	
+	\item \emph{Linear endogeneity}: the structural error is constructed to have a prespecified correlation with the standardised target regressor \(x\).
+	
+	\item \emph{Nonlinear confounding}: the structural error is related to the centred and standardised quadratic transformation of \(x\), breaking the fitted-span structure of the linear-endogeneity design.
+	
+	\item \emph{Heteroskedasticity}: the error scale increases with the absolute standardised value of \(x\), while the conditional mean remains correctly specified.
+\end{enumerate}
+
+For additive conditional-mean departures, severity scales the misspecification component relative to the dispersion of the baseline error. Linear and nonlinear endogeneity instead vary the dependence between the regressor transformation and the structural error, while the heteroskedastic design varies the conditional-error scale gradient. The exact severity grids used for the detection-boundary calculations are fixed independently of the MIS deletion fraction.
+
 \FloatBarrier
 \subsection{Supplementary Influential-Set Recovery Results}
 \label{app:detection-results}
@@ -71,7 +107,7 @@ The injected-set recovery results in \autoref{subsec:detection-performance} do n
 \subsection{Supplementary Robust-Estimation Results}
 \label{app:estimation-results}
 
-The robust-estimation simulation uses MIS as an oracle-assisted localisation benchmark. The deletion budget and direction are supplied from the data-generating process, while observation identities remain unknown to the search. The oracle audit confirms that deleting the injected set produces a much larger target-coefficient shift under bad leverage than under response-outlier or good-leverage contamination (\autoref{tab:robust-oracle-audit}). This difference explains why localisation and post-deletion estimation are most closely aligned under bad leverage. The corresponding mean absolute bias and RMSE summaries are reported in \autoref{tab:robust-mean-absolute-bias} and \autoref{tab:robust-rmse}.
+The robust-estimation simulation uses MIS as an oracle-assisted localisation benchmark. The deletion budget and direction are supplied from the data-generating process, while observation identities remain unknown to the search. The oracle audit confirms that deleting the injected set produces a much larger target-coefficient shift under bad leverage than under response-outlier or good-leverage contamination (\autoref{tab:robust-oracle-audit}). This difference explains why localisation and post-deletion estimation are most closely aligned under bad leverage. The corresponding mean absolute error and RMSE summaries are reported in \autoref{tab:robust-mean-absolute-bias} and \autoref{tab:robust-rmse}.
 
 \input{../../output/04_robust/tables/supplement/04_tab_oracle_audit.tex}
 

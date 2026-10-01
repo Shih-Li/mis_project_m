@@ -25,7 +25,7 @@
 # Statistical reporting rules:
 #   - Arithmetic means are the primary summaries.
 #   - No median-based headline results are produced.
-#   - Mean coefficient, mean absolute bias, RMSE, empirical coverage,
+#   - Mean coefficient, mean absolute error, RMSE, empirical coverage,
 #     selection-size ratio, injected-set recovery, precision, and mean runtime
 #     are reported.
 #   - Monte Carlo standard errors are calculated whenever appropriate.
@@ -58,7 +58,7 @@
 # 0. Packages, paths, and configuration
 # ==============================================================================
 
-required_packages <- c("dplyr", "tidyr", "ggplot2", "scales")
+required_packages <- c("dplyr", "tidyr", "ggplot2", "scales", "ggrastr")
 missing_packages <- required_packages[
   !vapply(required_packages, requireNamespace, logical(1), quietly = TRUE)
 ]
@@ -76,6 +76,7 @@ suppressPackageStartupMessages({
   library(tidyr)
   library(ggplot2)
   library(scales)
+  library(ggrastr)
 })
 
 
@@ -346,9 +347,16 @@ write_tex_table <- function(
     "DFBETAS", "\\dfbetas{}", escaped_names,
     fixed = TRUE
   )
+  escaped_names <- gsub(
+    "DfBetas", "\\dfbetas{}", escaped_names,
+    fixed = TRUE
+  )
   escaped_data[] <- lapply(
     escaped_data,
-    function(x) gsub("DFBETAS", "\\dfbetas{}", x, fixed = TRUE)
+    function(x) {
+      x <- gsub("DFBETAS", "\\dfbetas{}", x, fixed = TRUE)
+      gsub("DfBetas", "\\dfbetas{}", x, fixed = TRUE)
+    }
   )
   
   body_rows <- apply(escaped_data, 1L, function(row) {
@@ -854,7 +862,7 @@ error_labels_plot <- c(
   "beta_logistic" = "Beta(2,5)",
   "skewed_t" = "Skewed t",
   "contaminated" = "Contaminated\nnormal",
-  "golm" = "GOLM",
+  "golm" = "Log-normal mixture",
   "pareto" = "Pareto",
   "gpd" = "GPD"
 )
@@ -1595,17 +1603,20 @@ fig1_coef <- ggplot(
     colour = COL_BLUE_LIGHT
   ) +
   
-  # Iteration-level coefficient errors
-  geom_point(
+  # Iteration-level coefficient errors.
+  # Rasterised to avoid storing every Monte Carlo draw as a separate
+  # vector object in the publication PDF.
+  ggrastr::geom_point_rast(
     aes(shape = "Monte Carlo draw"),
     position = position_jitter(
       width = 0,
       height = 0.11,
       seed = 84
     ),
-    alpha = 0.12,
-    size = 0.40,
-    colour = COL_BLUE
+    alpha = 0.08,
+    size = 0.35,
+    colour = COL_BLUE,
+    raster.dpi = 300
   ) +
   
   # Arithmetic mean across Monte Carlo draws
@@ -1648,18 +1659,19 @@ fig1_coef <- ggplot(
   scale_x_continuous(
     trans = scales::pseudo_log_trans(
       base = 10,
-      sigma = 0.05
+      sigma = 0.025
     ),
     breaks = c(
-      -3, -1, -0.3, -0.1, -0.03,
+      -3, -1, -0.1,
       0,
-      0.03, 0.1, 0.3, 1, 3
+      0.1, 1, 3
     ),
     labels = c(
-      "-3", "-1", "-0.3", "-0.1", "-0.03",
+      "-3", "-1", "-0.1",
       "0",
-      "0.03", "0.1", "0.3", "1", "3"
-    )
+      "0.1", "1", "3"
+    ),
+    expand = expansion(mult = c(0.06, 0.06))
   ) +
   
   scale_shape_manual(
@@ -1682,8 +1694,8 @@ fig1_coef <- ggplot(
       nrow = 1,
       byrow = TRUE,
       override.aes = list(
-        alpha = c(0.30, 1, 1),
-        size = c(1.7, 3.0, 3.0),
+        alpha = c(0.55, 1, 1),
+        size = c(3.4, 3.4, 3.4),
         colour = c(
           COL_BLUE,
           COL_BLACK,
@@ -1706,24 +1718,26 @@ fig1_coef <- ggplot(
     y = NULL
   ) +
   
-  theme_distribution(base_size = 9.5) +
+  theme_distribution(base_size = 12.5) +
   
   theme(
     legend.position = "top",
     legend.justification = "center",
     legend.direction = "horizontal",
-    legend.text = element_text(size = 8.5),
+    legend.text = element_text(size = 11.0),
     legend.margin = margin(b = 3),
     legend.box.margin = margin(b = 2),
     panel.grid.major.y = element_blank(),
     panel.grid.minor = element_blank(),
+    panel.spacing = grid::unit(1.2, "lines"),
     
     axis.text.x = element_text(
-      size = 8,
-      margin = margin(t = 4)
+      size = 10.5,
+      margin = margin(t = 5)
     ),
     
     axis.title.x = element_text(
+      size = 11.5,
       margin = margin(t = 10)
     ),
     
@@ -1742,8 +1756,8 @@ save_plot(
     fig_main_dir,
     "04_fig1_coefficient_error_distributions.pdf"
   ),
-  width = 12.0,
-  height = 8.0
+  width = 8.3,
+  height = 5.5
 )
 
 
@@ -1781,17 +1795,17 @@ FIG2_MAIN_NCOL <- 2L
 
 FIG2_MAIN_TILE_WIDTH  <- 0.96
 FIG2_MAIN_TILE_HEIGHT <- 0.92
-FIG2_MAIN_TILE_TEXT_SIZE <- 3.0
+FIG2_MAIN_TILE_TEXT_SIZE <- 3.6
 
-FIG2_MAIN_X_TEXT_SIZE <- 8.2
-FIG2_MAIN_Y_TEXT_SIZE <- 8.8
-FIG2_MAIN_STRIP_TEXT_SIZE <- 10.5
+FIG2_MAIN_X_TEXT_SIZE <- 10.5
+FIG2_MAIN_Y_TEXT_SIZE <- 10.5
+FIG2_MAIN_STRIP_TEXT_SIZE <- 12.0
 
 FIG2_MAIN_LEGEND_WIDTH_CM  <- 9.5
-FIG2_MAIN_LEGEND_HEIGHT_CM <- 0.45
+FIG2_MAIN_LEGEND_HEIGHT_CM <- 0.55
 
-FIG2_MAIN_WIDTH_IN  <- 11.2
-FIG2_MAIN_HEIGHT_IN <- 7.4
+FIG2_MAIN_WIDTH_IN  <- 11.5
+FIG2_MAIN_HEIGHT_IN <- 7.8
 
 
 # ------------------------------------------------------------------------------
@@ -2230,7 +2244,7 @@ fig2_mis_oracle_tail <- ggplot(
     )
   ) +
   
-  theme_heatmap(base_size = 10) +
+  theme_heatmap(base_size = 12) +
   
   theme(
     legend.position = "bottom",
@@ -2270,13 +2284,13 @@ fig2_mis_oracle_tail <- ggplot(
     ),
     
     legend.title = element_text(
-      size = 9.5,
+      size = 11.0,
       colour = COL_BLACK,
       hjust = 0.5
     ),
     
     legend.text = element_text(
-      size = 8.5,
+      size = 10.5,
       colour = COL_BLACK
     ),
     
@@ -2821,8 +2835,10 @@ write_tex_table(
     "mechanism. The true coefficient is beta0 = 1. Results give equal ",
     "weight to each sample-size, contamination-proportion, ",
     "predictor-distribution, and finite-moment error-distribution design cell. ",
-    "Under no contamination, oracle k = 0, so MIS coincides with OLS by ",
-    "construction. Monte Carlo standard errors are in parentheses."
+    "Under no contamination, oracle k = 0 applies only to MIS, so MIS ",
+    "coincides with OLS by construction; the other estimators retain their ",
+    "usual deletion or resistant fitting rules. Monte Carlo standard errors ",
+    "are in parentheses."
   ),
   label = "tab:robust-mean-coefficients",
   resize_width = TABLE_WIDTH_MEDIUM,
@@ -2830,7 +2846,7 @@ write_tex_table(
 )
 
 
-# Table 2a: mean absolute bias.
+# Table 2a: mean absolute error.
 tab2a_bias <- make_metric_wide_table(
   data = estimation_broad_main,
   mean_column = "mean_abs_bias",
@@ -2846,12 +2862,15 @@ write_tex_table(
     "04_tab2a_mean_absolute_bias.tex"
   ),
   caption = paste0(
-    "Mean absolute coefficient bias by estimator and contamination mechanism. ",
-    "Results give equal weight to each sample-size, ",
-    "contamination-proportion, predictor-distribution, and finite-moment ",
-    "error-distribution design cell. Under no contamination, oracle k = 0, ",
-    "so MIS coincides with OLS by construction. Monte Carlo standard errors ",
-    "are in parentheses."
+    "Mean absolute coefficient error (MAE) by estimator and contamination ",
+    "mechanism. Within each design cell, MAE is the Monte Carlo mean of ",
+    "the absolute difference between the estimated and true coefficients. ",
+    "Results give equal weight to each sample-size, contamination-proportion, ",
+    "predictor-distribution, and finite-moment error-distribution design cell. ",
+    "Under no contamination, oracle k = 0 applies only to MIS, which therefore ",
+    "coincides with OLS. Leverage, Cook's distance, and DFBETAS retain their ",
+    "threshold-based deletion rules, while MM and LTS retain their resistant ",
+    "fitting rules. Monte Carlo standard errors are in parentheses."
   ),
   label = "tab:robust-mean-absolute-bias",
   resize_width = TABLE_WIDTH_MEDIUM,
@@ -2878,9 +2897,10 @@ write_tex_table(
     "Root mean squared error by estimator and contamination mechanism. ",
     "Results give equal weight to each sample-size, ",
     "contamination-proportion, predictor-distribution, and finite-moment ",
-    "error-distribution design cell. Under no contamination, oracle k = 0, ",
-    "so MIS coincides with OLS by construction. Delta-method Monte Carlo ",
-    "standard errors are in parentheses."
+    "error-distribution design cell. Under no contamination, oracle k = 0 ",
+    "applies only to MIS, so MIS coincides with OLS by construction; the ",
+    "other estimators retain their usual deletion or resistant fitting rules. ",
+    "Delta-method Monte Carlo standard errors are in parentheses."
   ),
   label = "tab:robust-rmse",
   resize_width = TABLE_WIDTH_MEDIUM,
@@ -3301,7 +3321,7 @@ figA2_bias_error <- ggplot(
   ) +
   labs(
     x = "Error distribution",
-    y = "Mean absolute bias",
+    y = "Mean absolute error",
     colour = "Estimator",
     shape = "Estimator",
     linetype = "Estimator"
@@ -3752,7 +3772,7 @@ figA5_oracle_advantage <- ggplot(
     labels = scales::label_number(
       accuracy = 0.1
     ),
-    name = "log2(OLS MAB /\nMIS-oracle MAB)"
+    name = "log2(OLS MAE /\nMIS-oracle MAE)"
   ) +
   scale_x_discrete(
     drop = FALSE
@@ -3765,8 +3785,8 @@ figA5_oracle_advantage <- ggplot(
     y = "Predictor distribution",
     caption = paste(
       "Positive values favour MIS-oracle;",
-      "+1 means OLS mean absolute bias is twice",
-      "MIS-oracle mean absolute bias."
+      "+1 means OLS mean absolute error is twice",
+      "MIS-oracle mean absolute error."
     )
   ) +
   guides(
@@ -4224,7 +4244,7 @@ tabA3_bad_leverage <- bad_leverage_predictor %>%
   transmute(
     Predictor,
     Estimator,
-    `Mean absolute bias` =
+    `Mean absolute error` =
       fmt_num(
         mean_abs_bias,
         digits = 3L
@@ -4238,7 +4258,7 @@ write_tex_table(
     "04_tabA3_bad_leverage_by_predictor.tex"
   ),
   caption = paste0(
-    "Bad-leverage mean absolute coefficient bias by predictor distribution. ",
+    "Bad-leverage mean absolute coefficient error by predictor distribution. ",
     "Results give equal weight to the recorded sample-size, contamination-",
     "proportion, and finite-moment error-distribution design cells."
   ),

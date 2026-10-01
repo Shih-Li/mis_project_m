@@ -1105,7 +1105,11 @@ write_tex_table(
   tex_path = file.path(tab_main_dir, "03_tab1_algorithm_summary.tex"),
   caption = paste0(
     "Detection accuracy, captured influence, and runtime across algorithmic ",
-    "design cells. Brackets report the indicated between-cell percentiles."
+    "design cells. The influence ratio is the absolute set-DFBETA of the detected ",
+    "set divided by the absolute set-DFBETA of the planted set; a value of 1 ",
+    "therefore indicates equal influence magnitude, while values above 1 indicate ",
+    "that the detected set is more influential than the planted set. Brackets ",
+    "report the indicated between-cell percentiles."
   ),
   label = "tab:03-algorithm-summary",
   resize_width = TABLE_WIDTH_MEDIUM,

@@ -510,7 +510,7 @@ error_labels <- c(
   "mixed_normal" = "Mixed normal",
   "skewed_t" = "Skewed t",
   "contaminated" = "Contaminated",
-  "golm" = "GOLM",
+  "golm" = "Log-normal mixture",
   "pareto" = "Pareto",
   "gpd" = "GPD"
 )
@@ -1298,19 +1298,24 @@ utils::write.csv(
 tab1_display <- tab1_raw %>%
   transmute(
     `Contamination mechanism` = as.character(outlier_label),
-    `MIS recovery` = fmt_pct(mis_recovery),
-    `Mechanism-relevant classical recovery` = fmt_pct(highest_classical_recovery)
+    `MIS injected-set overlap` = fmt_pct(mis_recovery),
+    `Classical injected-set overlap` = fmt_pct(highest_classical_recovery)
   )
 
 write_tex_table(
   tab1_display,
   tex_path = file.path(tab_main_dir, "02_tab1_detection_power_summary.tex"),
   caption = paste0(
-    "Injected-set recovery across contaminated designs. ",
+    "Injected-set overlap across contaminated designs. ",
+    "For a selected size-k set S and injected set S_inj of the same size, ",
+    "overlap is the fraction |S intersect S_inj|/k. ",
     "Each entry gives equal weight to the recorded design-cell summaries. ",
-    "The classical benchmark is the highest-recovery diagnostic within each ",
-    "design cell for bad leverage, Cook's D for response outliers, and leverage ",
-    "for good leverage."
+    "Overlap measures agreement with the planted set and should not be interpreted ",
+    "as a common performance criterion across mechanisms: under response-outlier ",
+    "and good-leverage contamination, the planted observations carry little joint ",
+    "target-slope influence. The classical comparator is the highest-overlap ",
+    "classical diagnostic within each design cell for bad leverage, Cook's D for ",
+    "response outliers, and leverage for good leverage."
   ),
   label = "tab:02-detection-power-summary",
   resize_width = TABLE_WIDTH_COMPACT,

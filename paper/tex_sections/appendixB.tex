@@ -83,29 +83,36 @@ For fixed \(B\), the bound depends on \(n\) only through \(c\). In the implement
 \subsection{Fitted-Span Invariance}
 \label{app:deriv-invariance}
 
-Linear-endogeneity invariance has an exact algebraic basis for the boundary case discussed in \autoref{subsec:misspecification}. Let \(D=[\mathbf{x},\mathbf{Z}]\) denote the fitted design with target column \(\mathbf{x}\) and nuisance columns \(\mathbf{Z}\), with the intercept included among the nuisance columns, and assume that \(D\) has full column rank. Consider severity-indexed outcomes of the form
+This subsection proves \autoref{prop:span-invariance} and records its extension to full-refit validation. Let \(D=[\mathbf{x},\mathbf{Z}]\) denote the fitted design with target column \(\mathbf{x}\) and nuisance columns \(\mathbf{Z}\), with the intercept included among the nuisance columns, and assume that \(D\) has full column rank. Consider severity-indexed outcomes of the form
 \begin{equation}
-\mathbf{y}_\lambda
-=
-D\boldsymbol{\theta}_\lambda
-+
-b_\lambda\mathbf{v},
-\qquad
-b_\lambda\neq0,
-\label{eq:span-outcome}
+	\mathbf{y}_\lambda
+	=
+	D\boldsymbol{\theta}_\lambda
+	+
+	b_\lambda\mathbf{v},
+	\qquad
+	b_\lambda\neq0,
+	\label{eq:span-outcome}
 \end{equation}
-where \(\mathbf{v}\in\mathbb{R}^n\) does not depend on \(\lambda\). Severity then enters only through a fitted-span coefficient and a common residual scale.
+where \(\mathbf{v}\in\mathbb{R}^n\) does not depend on \(\lambda\). Severity therefore enters only through a fitted-span coefficient and a common residual scale.
 
-\begin{proposition}
-\label{prop:span-invariance}
-Under \autoref{eq:span-outcome}, for every \(S\) with \(G(S)>0\),
+For every \(S\) with \(G(S)>0\),
 \[
 \Delta_\lambda(S)=b_\lambda\,\Delta_{\mathbf{v}}(S),
 \qquad
-\widehat{\operatorname{se}}_\lambda=|b_\lambda|\,\widehat{\operatorname{se}}_{\mathbf{v}},
+\widehat{\operatorname{se}}_\lambda
+=
+|b_\lambda|\,\widehat{\operatorname{se}}_{\mathbf{v}},
 \]
-where \(\Delta_{\mathbf{v}}\) and \(\widehat{\operatorname{se}}_{\mathbf{v}}\) are computed with outcome \(\mathbf{v}\). Consequently, \(|\Delta_\lambda(S)|/\widehat{\operatorname{se}}_\lambda\) does not depend on \(\lambda\) for any admissible \(S\), and the set of maximisers of absolute standardised influence is the same for every \(\lambda\). When \(b_\lambda<0\), the positive and negative directional problems exchange roles.
-\end{proposition}
+so
+\[
+\frac{|\Delta_\lambda(S)|}
+{\widehat{\operatorname{se}}_\lambda}
+=
+\frac{|\Delta_{\mathbf{v}}(S)|}
+{\widehat{\operatorname{se}}_{\mathbf{v}}}.
+\]
+The following calculation establishes these identities and hence \autoref{prop:span-invariance}.
 
 \begin{proof}
 Write \(\boldsymbol{\theta}_\lambda=(\theta_{\lambda,x},\boldsymbol{\theta}_{\lambda,z}^{\top})^{\top}\). Since \(M_{\mathbf{Z}}\mathbf{Z}=\mathbf{0}\),

@@ -34,9 +34,22 @@ The Frisch--Waugh--Lovell theorem isolates the target coefficient by partialling
 \end{equation}
 This representation reduces estimation of the target coefficient to a scalar regression once the nuisance regressors have been partialled out. 
 
-The search objective uses a fixed-residualised deletion convention. The residualised quantities $\widetilde{x}_i$ and $\widetilde{y}_i$ are computed on the full sample and held fixed when observations are deleted. The resulting leave-set-out coefficient is therefore obtained from the retained observations without re-estimating the nuisance projection. This convention defines the linear-fractional objective used below. Global optimisation through the Dinkelbach procedure applies to this fixed-residualised objective \parencite{konrad2026finding}.
+The search objective uses a fixed-residualised deletion convention. The residualised quantities $\widetilde{x}_i$ and $\widetilde{y}_i$ are computed on the full sample and held fixed when observations are deleted. For a deletion set \(S\subseteq[n]\), define the fixed-residualised leave-set-out coefficient as
+\begin{equation}
+	\widetilde{\beta}_{-S}
+	=
+	\frac{
+		\sum_{i\notin S}\widetilde{x}_i\widetilde{y}_i
+	}{
+		\sum_{i\notin S}\widetilde{x}_i^2
+	}.
+	\label{eq:fixed_residualised_beta}
+\end{equation}
+The nuisance projection is therefore not re-estimated when computing \(\widetilde{\beta}_{-S}\). This convention defines the linear-fractional objective used below, and global optimisation through the Dinkelbach procedure applies to this fixed-residualised objective \parencite{konrad2026finding}.
 
-Throughout, ``exact'' denotes global optimisation of the fixed-\(k\), fixed-residualised MIS objective. \emph{Full-refit validation} refers separately to re-estimating the original multivariate specification after deleting a selected set. The two coefficients can differ because full-refit validation re-estimates the nuisance projection. This terminology is used throughout the simulation and empirical analyses.
+By contrast, let \(\widehat{\beta}_{-S}\) denote the target coefficient obtained by refitting the original multivariate regression after deleting \(S\). Thus, \(\widetilde{\beta}_{-S}\) holds the full-sample nuisance projection fixed, whereas \(\widehat{\beta}_{-S}\) recomputes that projection using only the retained observations. When there are no nuisance regressors, the two coefficients coincide. With additional regressors, they can differ because deletion changes the retained-sample cross-product, or equivalently covariance, structure that determines the partialling-out projection. The discrepancy is therefore small when deletion leaves this covariance structure largely unchanged and can become larger when the deleted observations materially alter the relationship between the target and nuisance regressors.
+
+Throughout, ``exact'' refers to global optimisation of the fixed-\(k\), fixed-residualised MIS objective. \emph{Full-refit validation} refers separately to evaluating a selected set using \(\widehat{\beta}_{-S}\). This distinction is maintained throughout the simulation and empirical analyses.
 
 Define the corresponding residual of the residualised target regression by
 \begin{equation}
@@ -45,7 +58,7 @@ Define the corresponding residual of the residualised target regression by
 \widetilde{y}_i-\widehat{\beta}\widetilde{x}_i.
 \label{eq:target_residual}
 \end{equation}
-These residuals record the variation in the residualised outcome that remains after estimation of the target coefficient, and by Frisch--Waugh--Lovell they coincide with the residuals of the full regression of $y_i$ on $x_{ij}$ and $\mathbf{z}_i$. For a deletion set $S\subseteq[n]$, let $\widehat{\beta}_{-S}$ denote the estimate obtained from the residualised regression over the retained observations $[n]\setminus S$. The difference between $\widehat{\beta}$ and $\widehat{\beta}_{-S}$ measures how the deleted observations shift the target coefficient. This difference depends on the deletion set as a whole and therefore defines influence at the level of the set rather than the individual observation.
+These residuals record the variation in the residualised outcome that remains after estimation of the target coefficient, and by Frisch--Waugh--Lovell they coincide with the residuals of the full regression of $y_i$ on $x_{ij}$ and $\mathbf{z}_i$. The difference between the full-sample coefficient \(\widehat{\beta}\) and the fixed-residualised deletion coefficient \(\widetilde{\beta}_{-S}\) measures the coefficient movement used by the MIS search. This difference depends on the deletion set as a whole and therefore defines influence at the level of the set rather than the individual observation.
 
 \subsection{Set influence and set-DFBETA}
 \label{subsec:set_influence}
@@ -56,7 +69,7 @@ For a deletion set \(S\subseteq[n]\), define the coefficient-targeted set influe
 =
 \widehat{\beta}
 -
-\widehat{\beta}_{-S}.
+\widetilde{\beta}_{-S}.
 \label{eq:set_dfbeta}
 \end{equation}
 This quantity is referred to throughout the thesis as the \emph{set-DFBETA}. Its sign records the direction of coefficient movement: a positive value indicates that deleting \(S\) lowers the target estimate, while a negative value indicates that deletion raises it.
@@ -65,18 +78,18 @@ Using the residualised variables defined in \autoref{subsec:regression_setup}, a
 \begin{equation}
 \widehat{\beta}
 -
-\widehat{\beta}_{-S}
+\widetilde{\beta}_{-S}
 =
 \frac{
-\sum_{s\in S}\widetilde{x}_s\widetilde{r}_s
+	\sum_{s\in S}\widetilde{x}_s\widetilde{r}_s
 }{
-\sum_{t\notin S}\widetilde{x}_t^2
+	\sum_{t\notin S}\widetilde{x}_t^2
 }.
 \label{eq:set_dfbeta_ratio}
 \end{equation}
 The numerator collects the score contributions of the deleted observations. The denominator records the residualised design information remaining after deletion \parencite{konrad2026finding}. Set influence therefore depends jointly on the contribution removed from the sample and on the information retained outside the deletion set.
 
-Set influence is a joint property of the selected observations. Changing the membership of $S$ alters the numerator and the denominator of \autoref{eq:set_dfbeta_ratio} at the same time. Each deleted observation also removes design information from the denominator. The set-DFBETA is therefore not generally equal to the sum of the individual DFBETAs of its members. This joint dependence provides one mechanism through which observation-level rankings can fail to reveal influential groups, including configurations associated with masking. It therefore motivates selecting deletion sets jointly rather than constructing them from individual diagnostic rankings. The following subsection formalises that selection problem for a fixed set size $k$.
+Set influence is a joint property of the selected observations. Changing the membership of $S$ alters the numerator and the denominator of \autoref{eq:set_dfbeta_ratio} at the same time. Each deleted observation also removes design information from the denominator. The set-DFBETA is therefore not generally equal to the sum of the individual \dfbetas{} of its members. This joint dependence provides one mechanism through which observation-level rankings can fail to reveal influential groups, including configurations associated with masking. It therefore motivates selecting deletion sets jointly rather than constructing them from individual diagnostic rankings. The following subsection formalises that selection problem for a fixed set size $k$.
 
 \subsection{Fixed-\texorpdfstring{$k$}{k} most influential sets}
 \label{subsec:fixed_k_mis}
