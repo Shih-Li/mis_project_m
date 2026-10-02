@@ -35,6 +35,12 @@
 #
 #   R_k = beta_after / beta_original
 #
+#   T_k = abs(beta_after - beta_original) / se_original
+#
+#   T_k measures full-refit coefficient movement in units of the
+#   original-model standard error. It is a descriptive movement statistic,
+#   not a Wald t statistic.
+#
 #   50% attenuation:
 #       R_k <= 0.5
 #
@@ -482,6 +488,7 @@ first_threshold <- function(
         fraction = NA_real_,
         direction = NA_character_,
         ratio = NA_real_,
+        beta_after = NA_real_,
         mis_ids = NA_character_
       )
     )
@@ -516,48 +523,39 @@ first_threshold <- function(
     fraction = as.numeric(row$removal_fraction[[1L]]),
     direction = as.character(row$direction[[1L]]),
     ratio = as.numeric(row$normalized_ratio[[1L]]),
+    beta_after = as.numeric(row$beta_after[[1L]]),
     mis_ids = as.character(row$mis_ids[[1L]])
   )
 }
 
 
-format_beta <- function(x) {
+format_sig3 <- function(x) {
   
   if (is.na(x)) {
     return("")
   }
   
-  ax <- abs(x)
-  
-  if (ax >= 10) {
-    return(
-      sprintf(
-        "%.2f",
-        x
-      )
-    )
+  if (x == 0) {
+    return("0.00")
   }
   
-  if (ax >= 1) {
-    return(
-      sprintf(
-        "%.3f",
-        x
+  decimal_places <- max(
+    0L,
+    3L -
+      1L -
+      floor(
+        log10(
+          abs(x)
+        )
       )
-    )
-  }
-  
-  if (ax >= 0.01) {
-    return(
-      sprintf(
-        "%.4f",
-        x
-      )
-    )
-  }
+  )
   
   sprintf(
-    "%.5f",
+    paste0(
+      "%.",
+      decimal_places,
+      "f"
+    ),
     x
   )
 }
@@ -571,32 +569,43 @@ format_fraction_percent <- function(x) {
   
   pct <- 100 * x
   
-  if (pct < 0.1) {
-    
-    return(
-      paste0(
-        sprintf(
-          "%.3f",
-          pct
-        ),
-        "\\%"
-      )
-    )
-  }
-  
   paste0(
-    sprintf(
-      "%.2f",
+    format_sig3(
       pct
     ),
     "\\%"
   )
 }
 
+format_beta_se <- function(
+    beta,
+    se
+) {
+  
+  if (
+    is.na(beta) ||
+    is.na(se)
+  ) {
+    return("")
+  }
+  
+  paste0(
+    format_sig3(
+      beta
+    ),
+    " (",
+    format_sig3(
+      se
+    ),
+    ")"
+  )
+}
+
 
 format_threshold <- function(
     fraction,
-    k
+    k,
+    T_k
 ) {
   
   if (
@@ -606,12 +615,25 @@ format_threshold <- function(
     return("Not reached")
   }
   
+  if (
+    is.na(T_k) ||
+    !is.finite(T_k)
+  ) {
+    stop(
+      "Reached threshold is missing a finite T_k."
+    )
+  }
+  
   paste0(
     format_fraction_percent(
       fraction
     ),
     " (",
     as.integer(k),
+    "; ",
+    format_sig3(
+      T_k
+    ),
     ")"
   )
 }
@@ -757,7 +779,9 @@ require_columns(
     "study_id",
     "n",
     "p",
-    "beta_original"
+    "beta_original",
+    "se_original",
+    "t_original"
   ),
   "Combined audit_baseline.csv"
 )
@@ -961,6 +985,9 @@ threshold_rows <- lapply(
       attenuation_ratio =
         attenuation$ratio,
       
+      attenuation_beta_after =
+        attenuation$beta_after,
+      
       amplification_reached =
         amplification$reached,
       
@@ -976,6 +1003,9 @@ threshold_rows <- lapply(
       amplification_ratio =
         amplification$ratio,
       
+      amplification_beta_after =
+        amplification$beta_after,
+      
       cross_zero_reached =
         cross_zero$reached,
       
@@ -990,6 +1020,9 @@ threshold_rows <- lapply(
       
       cross_zero_ratio =
         cross_zero$ratio,
+      
+      cross_zero_beta_after =
+        cross_zero$beta_after,
       
       cross_zero_mis_ids =
         cross_zero$mis_ids,
@@ -1011,7 +1044,7 @@ thresholds <- bind_rows(
 
 
 # ==============================================================================
-# 9. Add baseline N, p and beta
+# 9. Add baseline N, p, beta and inference
 # ==============================================================================
 
 baseline_compact <- audit_baseline %>%
@@ -1021,8 +1054,16 @@ baseline_compact <- audit_baseline %>%
   summarise(
     N = first(n),
     p = first(p),
+    
     beta_original_baseline =
       first(beta_original),
+    
+    se_original_baseline =
+      first(se_original),
+    
+    t_original_baseline =
+      first(t_original),
+    
     .groups = "drop"
   )
 
@@ -1033,6 +1074,119 @@ thresholds <- thresholds %>%
     by = "study_id"
   )
 
+if (
+  any(
+    !is.finite(
+      thresholds$se_original_baseline
+    ) |
+    thresholds$se_original_baseline <= 0
+  )
+) {
+  
+  stop(
+    "At least one study has a missing, non-finite, or non-positive ",
+    "baseline standard error."
+  )
+}
+
+
+if (
+  any(
+    !is.finite(
+      thresholds$t_original_baseline
+    )
+  )
+) {
+  
+  stop(
+    "At least one study has a missing or non-finite baseline t statistic."
+  )
+}
+
+
+t_check <- (
+  thresholds$beta_original_baseline /
+    thresholds$se_original_baseline
+)
+
+
+if (
+  any(
+    abs(
+      t_check -
+      thresholds$t_original_baseline
+    ) > 1e-8
+  )
+) {
+  
+  stop(
+    "At least one imported t_original does not equal ",
+    "beta_original / se_original."
+  )
+}
+
+thresholds <- thresholds %>%
+  mutate(
+    attenuation_T_k =
+      if_else(
+        attenuation_reached,
+        abs(
+          attenuation_beta_after -
+            beta_original_baseline
+        ) /
+          se_original_baseline,
+        NA_real_
+      ),
+    
+    amplification_T_k =
+      if_else(
+        amplification_reached,
+        abs(
+          amplification_beta_after -
+            beta_original_baseline
+        ) /
+          se_original_baseline,
+        NA_real_
+      ),
+    
+    cross_zero_T_k =
+      if_else(
+        cross_zero_reached,
+        abs(
+          cross_zero_beta_after -
+            beta_original_baseline
+        ) /
+          se_original_baseline,
+        NA_real_
+      )
+  )
+
+bad_T_k <- (
+  thresholds$attenuation_reached &
+    !is.finite(
+      thresholds$attenuation_T_k
+    )
+) |
+  (
+    thresholds$amplification_reached &
+      !is.finite(
+        thresholds$amplification_T_k
+      )
+  ) |
+  (
+    thresholds$cross_zero_reached &
+      !is.finite(
+        thresholds$cross_zero_T_k
+      )
+  )
+
+
+if (any(bad_T_k)) {
+  
+  stop(
+    "At least one reached sensitivity threshold is missing a finite T_k."
+  )
+}
 
 # Validate path beta against baseline beta.
 path_beta_check <- audit_path_clean %>%
@@ -2676,21 +2830,22 @@ render_appendix_panel <- function(
     dpi = 180
 ) {
   
-  tmp_png <- tempfile(
-    fileext = ".png"
+  tmp_pattern <- paste0(
+    tempfile(),
+    "_%d.%s"
   )
   
-  pdftools::pdf_convert(
+  tmp_png <- pdftools::pdf_convert(
     pdf = pdf_file,
     format = "png",
     pages = 1,
-    filenames = tmp_png,
+    filenames = tmp_pattern,
     dpi = dpi,
     verbose = FALSE
   )
   
   img <- magick::image_read(
-    tmp_png
+    tmp_png[[1L]]
   )
   
   # Remove redundant outer white space from the original PDF.
@@ -2845,6 +3000,7 @@ table_data <- thresholds %>%
   transmute(
     study_id,
     study_no,
+    
     Study =
       study_label,
     
@@ -2857,14 +3013,23 @@ table_data <- thresholds %>%
     beta_original =
       beta_original_baseline,
     
+    se_original =
+      se_original_baseline,
+    
+    t_original =
+      t_original_baseline,
+    
     attenuation_k,
     attenuation_fraction,
+    attenuation_T_k,
     
     amplification_k,
     amplification_fraction,
+    amplification_T_k,
     
     cross_zero_k,
-    cross_zero_fraction
+    cross_zero_fraction,
+    cross_zero_T_k
   )
 
 
@@ -2901,23 +3066,27 @@ table_rows <- vapply(
         scientific = FALSE
       ),
       " & ",
-      format_beta(
-        row$beta_original[[1L]]
+      format_beta_se(
+        row$beta_original[[1L]],
+        row$se_original[[1L]]
       ),
       " & ",
       format_threshold(
         row$attenuation_fraction[[1L]],
-        row$attenuation_k[[1L]]
+        row$attenuation_k[[1L]],
+        row$attenuation_T_k[[1L]]
       ),
       " & ",
       format_threshold(
         row$amplification_fraction[[1L]],
-        row$amplification_k[[1L]]
+        row$amplification_k[[1L]],
+        row$amplification_T_k[[1L]]
       ),
       " & ",
       format_threshold(
         row$cross_zero_fraction[[1L]],
-        row$cross_zero_k[[1L]]
+        row$cross_zero_k[[1L]],
+        row$cross_zero_T_k[[1L]]
       ),
       " \\\\"
     )
@@ -2949,7 +3118,7 @@ table_tex <- c(
   paste0(
     "Study",
     " & $N$",
-    " & $\\widehat{\\beta}_{\\mathrm{full}}$",
+    " & $\\widehat{\\beta}_{\\mathrm{full}}$ (s.e.)",
     " & 50\\% attenuation",
     " & 50\\% amplification",
     " & Cross zero",
@@ -2972,20 +3141,29 @@ table_tex <- c(
   
   paste0(
     "\\textit{Notes:} ",
+    "The baseline column reports ",
+    "$\\widehat{\\beta}_{\\mathrm{full}}$, with its original-model standard error ",
+    "in parentheses. ",
     "Threshold entries report the fraction of the complete audit sample selected ",
-    "for deletion, with the corresponding MIS deletion budget \\(k\\) in parentheses. ",
+    "for deletion, followed by $(k;T_k)$ in parentheses, where $k$ is the MIS ",
+    "deletion budget and ",
+    "$T_k=\\frac{|\\widehat{\\beta}_{-S_k}-\\widehat{\\beta}_{\\mathrm{full}}|}",
+    "{\\widehat{\\operatorname{se}}(\\widehat{\\beta}_{\\mathrm{full}})}$. ",
+    "Thus, $T_k$ measures full-refit coefficient movement in units of the ",
+    "original-model standard error; it is not interpreted as a Wald t statistic. ",
     "The normalized coefficient is ",
     "$R_k=\\widehat{\\beta}_{-S_k}/\\widehat{\\beta}_{\\mathrm{full}}$. ",
     "A 50\\% attenuation is first reached when $R_k\\leq0.5$; ",
     "a 50\\% amplification is first reached when $R_k\\geq1.5$; and the ",
-    "coefficient crosses zero when $R_k\\leq0$. ``Not reached'' indicates that ",
-    "the threshold is not attained within the study's prespecified deletion ",
-    "budget of at most approximately 5\\% of the complete audit sample. Counts ",
-    "refer to observations explicitly selected for deletion by MIS. ",
-    "In fixed-effects applications, the validation estimator may additionally ",
-    "remove observations that become singleton fixed-effect groups; this occurs ",
-    "in the access-to-finance application and is documented in ",
-    "\\autoref{app:application-08}."
+    "coefficient crosses zero when $R_k\\leq0$. ",
+    "Continuous quantities are reported to three significant digits. ",
+    "``Not reached'' indicates that the threshold is not attained within the ",
+    "study's prespecified deletion budget of at most approximately 5\\% of the ",
+    "complete audit sample. Counts refer to observations explicitly selected ",
+    "for deletion by MIS. In fixed-effects applications, the validation estimator ",
+    "may additionally remove observations that become singleton fixed-effect ",
+    "groups; this occurs in the access-to-finance application and is documented ",
+    "in \\autoref{app:application-08}."
   ),
   
   "\\end{minipage}",

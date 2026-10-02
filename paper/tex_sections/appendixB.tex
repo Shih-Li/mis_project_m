@@ -124,18 +124,18 @@ Write \(\boldsymbol{\theta}_\lambda=(\theta_{\lambda,x},\boldsymbol{\theta}_{\la
 \end{align}
 For any \(S\) with \(G(S)>0\), using \(\sum_{t\notin S}\widetilde{x}_t^2=G(S)\),
 \begin{align*}
-\widehat{\beta}_{\lambda,-S}
+\widetilde{\beta}_{\lambda,-S}
 =\frac{\sum_{t\notin S}\widetilde{x}_t\widetilde{y}_{\lambda,t}}{G(S)}
 =\theta_{\lambda,x}\,\frac{\sum_{t\notin S}\widetilde{x}_t^2}{G(S)}
 +b_\lambda\,\frac{\sum_{t\notin S}\widetilde{x}_t\widetilde{v}_t}{G(S)}
-=\theta_{\lambda,x}+b_\lambda\,\widehat{\beta}_{\mathbf{v},-S}.
+=\theta_{\lambda,x}+b_\lambda\,\widetilde{\beta}_{\mathbf{v},-S}.
 \end{align*}
 Setting \(S=\varnothing\) gives \(\widehat{\beta}_\lambda=\theta_{\lambda,x}+b_\lambda\widehat{\beta}_{\mathbf{v}}\), and therefore
 \begin{align*}
-\Delta_\lambda(S)
-=\widehat{\beta}_\lambda-\widehat{\beta}_{\lambda,-S}
-=b_\lambda\bigl(\widehat{\beta}_{\mathbf{v}}-\widehat{\beta}_{\mathbf{v},-S}\bigr)
-=b_\lambda\,\Delta_{\mathbf{v}}(S).
+	\Delta_\lambda(S)
+	=\widehat{\beta}_\lambda-\widetilde{\beta}_{\lambda,-S}
+	=b_\lambda\bigl(\widehat{\beta}_{\mathbf{v}}-\widetilde{\beta}_{\mathbf{v},-S}\bigr)
+	=b_\lambda\,\Delta_{\mathbf{v}}(S).
 \end{align*}
 The residuals and the standard error follow from \autoref{eq:inv-resid-outcome}:
 \begin{align*}
