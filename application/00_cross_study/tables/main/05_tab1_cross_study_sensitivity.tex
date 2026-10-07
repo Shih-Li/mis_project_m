@@ -8,21 +8,21 @@
 \toprule
 Study & $N$ & $\widehat{\beta}_{\mathrm{full}}$ (s.e.) & 50\% attenuation & 50\% amplification & Cross zero \\
 \midrule
-01  Mobile money & 2,639 & 69.2 (23.9) & 0.531\% (14; 1.45) & 0.493\% (13; 1.48) & 1.55\% (41; 2.92) \\
-02  Vaccine delivery & 12,096 & 0.293 (0.0227) & 4.17\% (505; 6.45) & Not reached & Not reached \\
-03  Self-esteem & 634 & 0.232 (0.0703) & 2.52\% (16; 1.72) & 2.84\% (18; 1.70) & Not reached \\
-04  HIV information & 2,332 & -0.157 (0.0820) & 0.386\% (9; 0.978) & 0.214\% (5; 1.11) & 0.729\% (17; 2.01) \\
-05  Cash vs in-kind & 10,985 & -0.886 (19.1) & 0.00910\% (1; 0.0816) & 0.00910\% (1; 0.111) & 0.00910\% (1; 0.0816) \\
-06  Workforce grant & 1,770 & 0.0231 (0.0332) & 0.282\% (5; 0.388) & 0.226\% (4; 0.370) & 0.565\% (10; 0.711) \\
-07  Sanitation spillovers & 3,757 & -0.00976 (0.00655) & 0.426\% (16; 0.776) & 0.399\% (15; 0.746) & 0.878\% (33; 1.49) \\
-08  Access to finance & 8,612 & -0.0855 (0.0410) & 0.0581\% (5; 1.14) & 0.0929\% (8; 1.15) & 0.232\% (20; 2.12) \\
-09  Immunization nudge & 7,370 & 0.00402 (0.000686) & 1.42\% (105; 2.94) & 0.746\% (55; 2.95) & 2.90\% (214; 5.86) \\
-10  Electricity information & 1,819 & -0.117 (0.0290) & 1.87\% (34; 2.05) & 1.76\% (32; 2.06) & 3.46\% (63; 4.11) \\
+01  Mobile money & 2,639 & 69.2072 (23.8681) & 0.5305\% (14; 1.4531) & 0.4926\% (13; 1.4766) & 1.5536\% (41; 2.9155) \\
+02  Vaccine delivery & 12,096 & 0.2935 (0.0227) & 4.1749\% (505; 6.4526) & Not reached & Not reached \\
+03  Self-esteem & 634 & 0.2317 (0.0703) & 2.5237\% (16; 1.7236) & 2.8391\% (18; 1.6986) & Not reached \\
+04  HIV information & 2,332 & -0.1566 (0.0820) & 0.3859\% (9; 0.9776) & 0.2144\% (5; 1.1127) & 0.7290\% (17; 2.0136) \\
+05  Cash vs in-kind & 10,985 & -0.8861 (19.1190) & 0.0091\% (1; 0.0816) & 0.0091\% (1; 0.1113) & 0.0091\% (1; 0.0816) \\
+06  Workforce grant & 1,770 & 0.0231 (0.0332) & 0.2825\% (5; 0.3876) & 0.2260\% (4; 0.3696) & 0.5650\% (10; 0.7108) \\
+07  Sanitation spillovers & 3,757 & -0.0098 (0.0066) & 0.4259\% (16; 0.7758) & 0.3993\% (15; 0.7458) & 0.8784\% (33; 1.4942) \\
+08  Access to finance & 8,612 & -0.0855 (0.0410) & 0.0581\% (5; 1.1350) & 0.0929\% (8; 1.1520) & 0.2322\% (20; 2.1249) \\
+09  Immunization nudge & 7,370 & 0.0040 (0.0007) & 1.4247\% (105; 2.9359) & 0.7463\% (55; 2.9507) & 2.9037\% (214; 5.8645) \\
+10  Electricity information & 1,819 & -0.1168 (0.0290) & 1.8692\% (34; 2.0532) & 1.7592\% (32; 2.0610) & 3.4634\% (63; 4.1067) \\
 \bottomrule
 \end{tabular}%
 }
 \begin{minipage}{0.98\textwidth}
 \footnotesize
-\textit{Notes:} The baseline column reports $\widehat{\beta}_{\mathrm{full}}$, with its original-model standard error in parentheses. Threshold entries report the fraction of the complete audit sample selected for deletion, followed by $(k;T_k)$ in parentheses, where $k$ is the MIS deletion budget and $T_k=\frac{|\widehat{\beta}_{-S_k}-\widehat{\beta}_{\mathrm{full}}|}{\widehat{\operatorname{se}}(\widehat{\beta}_{\mathrm{full}})}$. Thus, $T_k$ measures full-refit coefficient movement in units of the original-model standard error; it is not interpreted as a Wald t statistic. The normalized coefficient is $R_k=\widehat{\beta}_{-S_k}/\widehat{\beta}_{\mathrm{full}}$. A 50\% attenuation is first reached when $R_k\leq0.5$; a 50\% amplification is first reached when $R_k\geq1.5$; and the coefficient crosses zero when $R_k\leq0$. Continuous quantities are reported to three significant digits. ``Not reached'' indicates that the threshold is not attained within the study's prespecified deletion budget of at most approximately 5\% of the complete audit sample. Counts refer to observations explicitly selected for deletion by MIS. In fixed-effects applications, the validation estimator may additionally remove observations that become singleton fixed-effect groups; this occurs in the access-to-finance application and is documented in \autoref{app:application-08}.
+\textit{Notes:} The baseline column reports $\widehat{\beta}_{\mathrm{full}}$, with its original-model standard error in parentheses. Threshold entries report the fraction of the complete audit sample selected for deletion, followed by $(k;T_k)$ in parentheses, where $k$ is the MIS deletion budget and $T_k=\frac{|\widehat{\beta}_{-S_k}-\widehat{\beta}_{\mathrm{full}}|}{\widehat{\operatorname{se}}(\widehat{\beta}_{\mathrm{full}})}$. Thus, $T_k$ measures full-refit coefficient movement in units of the original-model standard error; it is not interpreted as a Wald t statistic. The normalized coefficient is $R_k=\widehat{\beta}_{-S_k}/\widehat{\beta}_{\mathrm{full}}$. A 50\% attenuation is first reached when $R_k\leq0.5$; a 50\% amplification is first reached when $R_k\geq1.5$; and the coefficient crosses zero when $R_k\leq0$. Continuous quantities are reported to four decimal places. ``Not reached'' indicates that the threshold is not attained within the study's prespecified deletion budget of at most approximately 5\% of the complete audit sample. Counts refer to observations explicitly selected for deletion by MIS. In fixed-effects applications, the validation estimator may additionally remove observations that become singleton fixed-effect groups; this occurs in the access-to-finance application and is documented in \autoref{app:application-08}.
 \end{minipage}
 \end{table}

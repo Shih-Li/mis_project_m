@@ -64,6 +64,7 @@ suppressPackageStartupMessages({
   library(tidyr)
   library(ggplot2)
   library(scales)
+  library(ggh4x)
 })
 
 
@@ -1105,7 +1106,7 @@ write_tex_table(
   exhibit_path("tabS01_size_error"),
   caption = "MIS empirical size by error distribution at k/n = 2.5 percent.",
   label = "tab:05-size-by-error",
-  resize_width = TABLE_WIDTH_COMPACT,
+  resize_width = "0.45\\columnwidth",
   align = "lr",
   placement = "htbp"
 )
@@ -2986,10 +2987,6 @@ if (HAS_FROZEN_05) {
     "Leverage deletion" = COL_LEVERAGE
   )
   
-  rmse_axis_breaks <- c(
-    0.05, 0.1, 0.2, 0.5,
-    1, 2, 5, 10, 20, 50, 100
-  )
   
   fig_ladder <- ggplot(
     deletion_ladder,
@@ -3008,17 +3005,45 @@ if (HAS_FROZEN_05) {
       nrow = 1,
       scales = "free_y"
     ) +
+    ggh4x::facetted_pos_scales(
+      y = list(
+        x_display == "Normal X" ~ scale_y_continuous(
+          transform = scales::pseudo_log_trans(base = 10, sigma = 0.20),
+          breaks = c(
+            0.2, 0.3, 0.35,
+            0.40,
+            0.45, 0.55, 0.65, 0.90
+          ),
+          labels = scales::label_number(accuracy = 0.01),
+          expand = expansion(mult = c(0.04, 0.05))
+        ),
+        
+        x_display == "Mixed-normal X" ~ scale_y_continuous(
+          transform = scales::pseudo_log_trans(base = 10, sigma = 0.20),
+          breaks = c(
+            0.20, 0.30, 0.45,
+            0.65,
+            1.25, 2.00, 2.50, 3.00
+          ),
+          labels = scales::label_number(accuracy = 0.01),
+          expand = expansion(mult = c(0.04, 0.05))
+        ),
+        
+        x_display == "Contaminated X" ~ scale_y_continuous(
+          transform = scales::pseudo_log_trans(base = 10, sigma = 0.20),
+          breaks = c(
+            0.20, 0.50, 1.00,
+            2.00,
+            5.00, 10.00, 15.00, 20.00
+          ),
+          labels = scales::label_number(accuracy = 0.01),
+          expand = expansion(mult = c(0.04, 0.05))
+        )
+      )
+    ) +
     scale_x_continuous(
       breaks = sort(unique(deletion_ladder$k_fraction)),
       labels = function(x) scales::percent(x, accuracy = 0.1)
-    ) +
-    scale_y_continuous(
-      transform = scales::pseudo_log_trans(base = 10, sigma = 0.20),
-      breaks = rmse_axis_breaks,
-      labels = scales::label_number(
-        accuracy = 0.01,
-        trim = TRUE
-      )
     ) +
     scale_colour_manual(
       values = arm_colours,
@@ -3062,7 +3087,7 @@ if (HAS_FROZEN_05) {
     fig_ladder,
     exhibit_path("fig09_post_deletion_rmse"),
     width = 9.4,
-    height = 4.8
+    height = 5.8
   )
   
 } else {

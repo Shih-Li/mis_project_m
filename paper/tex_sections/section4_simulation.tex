@@ -77,7 +77,7 @@ The design varies sample size \(n\in\{500,1000,2500,5000\}\), contamination prop
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{../../output/04_robust/figures/main/04_fig1_coefficient_error_distributions.pdf}
-\caption{Empirical distributions of signed target-coefficient error across methods and contamination mechanisms in the primary finite-moment designs. Monte Carlo draws are shown on a signed pseudo-logarithmic scale; filled circles denote arithmetic means and open diamonds denote medians. Separation between the two summaries can indicate asymmetry or the influence of infrequent large coefficient errors on average performance.}
+\caption{Empirical distributions of signed target-coefficient error across methods and contamination mechanisms in the primary finite-moment designs. Monte Carlo draws are shown on a signed pseudo-logarithmic scale, which is approximately linear near zero and compresses larger positive and negative values; filled circles denote arithmetic means and open diamonds denote medians. Separation between the two summaries can indicate asymmetry or the influence of infrequent large coefficient errors on average performance.}
 \label{fig:04-coefficient-errors}
 \end{figure}
 
@@ -154,7 +154,7 @@ Post-deletion refitting can leave the underlying misspecification unresolved and
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=\linewidth]{../../output/05_misspecification/figures/main/05_fig06_post_deletion_rmse.pdf}
-\caption{Post-deletion coefficient error across fixed deletion fractions. Points report mean cell-level coefficient RMSE for full-sample OLS and post-deletion OLS refits. Predictor environments are displayed separately with different vertical ranges. The y-axes use a pseudo-logarithmic transformation, which is approximately linear near zero and logarithmic at larger values, to accommodate the differing RMSE ranges; tick labels report RMSE in the original units.}
+\caption{Post-deletion coefficient error across fixed deletion fractions. Points report mean cell-level coefficient RMSE for full-sample OLS and post-deletion OLS refits. Predictor environments are displayed separately with different vertical ranges. The y-axes use a pseudo-logarithmic transformation, which is approximately linear near zero and logarithmic at larger values, to accommodate the differing RMSE ranges. Tick labels provide reference values in the original RMSE units.}
 \label{fig:05-post-deletion-rmse}
 \end{figure}
 

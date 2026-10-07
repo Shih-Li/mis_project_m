@@ -560,6 +560,17 @@ format_sig3 <- function(x) {
   )
 }
 
+format_fixed4 <- function(x) {
+  
+  if (is.na(x)) {
+    return("")
+  }
+  
+  sprintf(
+    "%.4f",
+    x
+  )
+}
 
 format_fraction_percent <- function(x) {
   
@@ -570,7 +581,7 @@ format_fraction_percent <- function(x) {
   pct <- 100 * x
   
   paste0(
-    format_sig3(
+    format_fixed4(
       pct
     ),
     "\\%"
@@ -590,11 +601,11 @@ format_beta_se <- function(
   }
   
   paste0(
-    format_sig3(
+    format_fixed4(
       beta
     ),
     " (",
-    format_sig3(
+    format_fixed4(
       se
     ),
     ")"
@@ -631,7 +642,7 @@ format_threshold <- function(
     " (",
     as.integer(k),
     "; ",
-    format_sig3(
+    format_fixed4(
       T_k
     ),
     ")"
@@ -3156,14 +3167,14 @@ table_tex <- c(
     "A 50\\% attenuation is first reached when $R_k\\leq0.5$; ",
     "a 50\\% amplification is first reached when $R_k\\geq1.5$; and the ",
     "coefficient crosses zero when $R_k\\leq0$. ",
-    "Continuous quantities are reported to three significant digits. ",
+    "Continuous quantities are reported to four decimal places. ",
     "``Not reached'' indicates that the threshold is not attained within the ",
     "study's prespecified deletion budget of at most approximately 5\\% of the ",
     "complete audit sample. Counts refer to observations explicitly selected ",
     "for deletion by MIS. In fixed-effects applications, the validation estimator ",
     "may additionally remove observations that become singleton fixed-effect ",
-    "groups; this occurs in the access-to-finance application and is documented ",
-    "in \\autoref{app:application-08}."
+    "groups; this occurs in the access-to-finance application; see ",
+    "\\autoref{app:application-details} for application-specific validation details."
   ),
   
   "\\end{minipage}",
