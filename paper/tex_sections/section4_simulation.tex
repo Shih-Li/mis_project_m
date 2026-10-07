@@ -10,13 +10,13 @@ The simulations examine how target-coefficient sensitivity arises, how influence
 \subsection{Outlyingness and Target-Coefficient Influence}
 \label{subsec:detection-performance}
 
-The first simulation examines how conventional outlyingness aligns with target-coefficient influence under different contamination mechanisms. Response outliers, good leverage, and bad leverage generate distinct relationships between sample unusualness and target-slope movement. Classical diagnostics rank observations using residual extremeness, leverage, or single-observation influence, while fixed-\(k\) MIS searches jointly for the size-\(k\) set that maximises target-coefficient movement. For a selected size-\(k\) set \(S\) and the injected set \(S_{\mathrm{inj}}\), also of size \(k\), injected-set overlap is defined as
+The first simulation examines how outlyingness aligns with target-coefficient influence under different contamination mechanisms. Response outliers, good leverage, and bad leverage generate distinct relationships between unusualness and target-slope movement. Classical diagnostics rank observations using residual extremeness, leverage, or single-observation influence, while fixed-\(k\) MIS searches jointly for the size-\(k\) set that maximises target-coefficient movement. For a selected set \(S\) and injected set \(S_{\mathrm{inj}}\), each of size \(k\), injected-set overlap is defined as
 \[
 \operatorname{Overlap}(S,S_{\mathrm{inj}})
 =
 \frac{|S\cap S_{\mathrm{inj}}|}{k}.
 \]
-This quantity measures agreement with the planted contamination set rather than statistical performance in itself. Its interpretation is mechanism specific. Under bad leverage, the injected set itself carries substantial joint target-coefficient influence, so higher overlap indicates closer localisation of the influential contamination set. Under response outliers and good leverage, deleting the injected set as a whole produces little target-slope movement, so higher overlap instead indicates greater agreement with observations that are unusual in the mechanism-specific sense but need not be the most influential observations for the target coefficient.
+This quantity is the proportion of the injected set recovered by \(S\). Its interpretation is mechanism specific. Under bad leverage, the injected set itself carries substantial joint target-coefficient influence, so higher overlap indicates closer localisation of the influential contamination set. Under response outliers and good leverage, deleting the injected set produces comparatively limited target-slope movement. Higher overlap in these designs therefore indicates greater agreement with the planted contamination set, although those observations need not form the most influential set for the target coefficient.
 
 \begin{figure}[htbp]
 \centering

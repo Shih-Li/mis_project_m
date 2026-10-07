@@ -22,43 +22,41 @@ where \(\widehat{\beta}_{\mathrm{full}}\) is the validated full-sample coefficie
 
 \autoref{fig:application-all-paths} displays the complete audit paths for all ten applications using a common normalisation. Each panel reports \(R_k\) against the deleted share of the estimation sample, with common reference lines for the full-sample coefficient and zero crossing.
 
-\begin{figure}[htbp]
-	\centering
-	\includegraphics[width=\textwidth]{../../application/00_cross_study/figures/supplement/05_figA1_all_audit_paths.pdf}
-	\caption{Target-coefficient sensitivity paths for the ten empirical applications. Panels A--J correspond to Studies 01--10. The horizontal axis reports the deleted share of the estimation sample and the vertical axis reports the full-refit coefficient normalised by its full-sample value. The two paths correspond to the two directional MIS searches.}
-	\label{fig:application-all-paths}
-\end{figure}
-
 
 \FloatBarrier
-\subsection{Study 01: Mobile Money}
-\label{app:application-01}
+\subsection{Study-Specific Audit Details}
+
+\paragraph*{Study 01: Mobile Money}
 
 The mobile-money audit targets the Mobile Disburse coefficient, \texttt{treatment3}, in the fixed-effects OLS specification of \textcite{riley2024resisting}. The validated sample contains \(N=2{,}639\) observations, with \(\widehat{\beta}_{\mathrm{full}}=69.2072\). The MIS representation replaces the absorbed randomization-strata fixed effects with explicit indicators, while full-refit validation uses the original fixed-effects estimator. The first searched zero crossing occurs after deleting \(41\) observations, approximately \(1.55\%\) of the estimation sample.
 
-\FloatBarrier
-\subsection{Study 02: Vaccine Delivery}
-\label{app:application-02}
+\paragraph*{Study 02: Vaccine Delivery}
 
-The vaccine-delivery audit targets the door-to-door treatment coefficient \texttt{treat\_dtd} in Table 1, column (1), of \textcite{meriggi2024last}. The validated fixed-effects sample contains \(N=12{,}096\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.2935\); the alternative treatment arm remains in the regression as a nuisance regressor. The search uses explicit fixed-effect indicators and full-refit validation preserves the paper's fixed-effects estimator. The coefficient does not cross zero within the approximately \(5\%\) audit budget, although a \(50\%\) attenuation is first reached after \(505\) deletions, approximately \(4.17\%\) of the sample.
+The vaccine-delivery audit targets the door-to-door treatment coefficient \texttt{treat\_dtd} in Table 1, column (1), of \textcite{meriggi2024last}. The validated fixed-effects sample contains \(N=12{,}096\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.2935\); the alternative treatment arm remains in the regression as a nuisance regressor. The search uses explicit fixed-effect indicators and full-refit validation preserves the paper's fixed-effects estimator. The coefficient does not cross zero within the approximately \(5\%\) audit budget, although a 
 
-\FloatBarrier
-\subsection{Study 03: Self-Esteem}
-\label{app:application-03}
+\begin{landscape}
+\begin{figure}[p]
+\centering
+\includegraphics[width=\linewidth]{../../application/00_cross_study/figures/supplement/05_figA1_all_audit_paths.pdf}
+\caption{Target-coefficient sensitivity paths for the ten empirical applications. Panels A--J correspond to Studies 01--10. The horizontal axis reports the deleted share of the estimation sample and the vertical axis reports the full-refit coefficient normalised by its full-sample value. The two paths correspond to the two directional MIS searches.}
+\label{fig:application-all-paths}
+\end{figure}
+\end{landscape}
+
+\(50\%\) attenuation is first reached after \(505\) deletions, approximately \(4.17\%\) of the sample.
+
+
+\paragraph*{Study 03: Self-Esteem}
 
 The self-esteem audit uses the first-follow-up full-sample specification from Table 5 of \textcite{gallego2024s} and targets the treatment coefficient for standardized Rosenberg self-esteem. The validated sample contains \(N=634\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.2317\). Heteroskedasticity-robust covariance estimation does not alter the OLS point estimate, so the same linear specification is used for the search and full-refit validation. The coefficient does not cross zero within the audit budget; a \(50\%\) attenuation is first reached after \(16\) deletions, approximately \(2.52\%\) of the sample.
 
-\FloatBarrier
-\subsection{Study 04: Health Information and Survival}
-\label{app:application-04}
+\paragraph*{Study 04: Health Information and Survival}
 
 The health-information audit targets \texttt{learnhivpos} in the reported OLS companion specification for survival in \textcite{ciancio2025surviving}. The validated sample contains \(N=2{,}332\) observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.1566\). The first searched zero crossing occurs after deleting \(17\) observations, approximately \(0.73\%\) of the estimation sample.
 
 The source study's preferred causal specifications use instrumental variables and efficient linear GMM. Those estimators lie outside the current linear MIS search framework. The audit therefore characterises sensitivity of the reported OLS companion coefficient and does not constitute a deletion audit of the preferred IV/GMM estimate.
 
-\FloatBarrier
-\subsection{Study 05: Cash versus In-Kind Transfers}
-\label{app:application-05}
+\paragraph*{Study 05: Cash versus In-Kind Transfers}
 
 The cash-versus-in-kind audit considers the aggregate food-consumption analysis of \textcite{cunha2014testing}. The target is the contrast between the in-kind and equal-value cash treatment effects, represented directly by \texttt{ik\_minus\_eq\_cash}. The validated no-village-controls specification contains \(N=10{,}985\) household-wave observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.8861\). The algebraic reparameterization leaves the model span, fitted values, residuals, and estimation sample unchanged. The first searched zero crossing occurs at \(k=1\), approximately \(0.009\%\) of the complete audit sample.
 
@@ -68,35 +66,25 @@ The baseline clustered standard error of the audited contrast is approximately \
 
 The fully controlled aggregate-consumption replication retains unresolved differences from the reported benchmark. The audit therefore uses the validated no-village-controls specification, and its sensitivity results apply to that contrast.
 
-\FloatBarrier
-\subsection{Study 06: Workforce Grant}
-\label{app:application-06}
+\paragraph*{Study 06: Workforce Grant}
 
 The workforce-grant audit targets \texttt{treat\_HD} in the intent-to-treat employment specification of \textcite{mcintosh2022using}. The validated fixed-weight sample contains \(N=1{,}770\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.0231\). The search represents weighted least squares through the exact square-root-weight transformation \(y_i^*=\sqrt{w_i}y_i\) and \(X_i^*=\sqrt{w_i}X_i\), while full-refit validation uses the original weighted estimator. The first searched zero crossing occurs after deleting \(10\) observations, approximately \(0.56\%\) of the estimation sample.
 
-\FloatBarrier
-\subsection{Study 07: Sanitation Spillovers}
-\label{app:application-07}
+\paragraph*{Study 07: Sanitation Spillovers}
 
 The sanitation-spillover audit targets \texttt{neighbor\_high} in the treated-household specification of \textcite{deutschmann2024spillovers}. The validated sample contains \(N=3{,}757\) observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.00976\). The source specification uses post-double-selection LASSO for nuisance-control selection; the audit reproduces this step on the full sample and freezes the selected controls throughout the deletion path. Re-running selection after each deletion would define a different sensitivity problem. The first searched zero crossing occurs after \(33\) deletions, approximately \(0.88\%\) of the estimation sample.
 
-\FloatBarrier
-\subsection{Study 08: Access to Finance}
-\label{app:application-08}
+\paragraph*{Study 08: Access to Finance}
 
 The access-to-finance audit targets the competitor-treatment exposure coefficient \texttt{inter4post} for firm log sales in Table 3 of \textcite{cai2024indirect}. The complete validated audit sample contains \(N=8{,}612\) observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.08555\). The MIS representation uses explicit firm fixed effects, while full-refit validation uses the paper-specific fixed-effects estimator. The first sign-reversing MIS contains \(20\) selected observations, approximately \(0.23\%\) of the complete audit sample, and changes the validated coefficient to \(0.00154\).
 
 The \(20\) selected observations are distributed across \(16\) firms. Three firms contribute more than one selected observation, and no firm contributes more than three. The selected set therefore does not consist primarily of observations from a single firm. The fixed-effects refit requires an additional qualification. The baseline fixed-effects estimator uses \(8{,}220\) observations after its standard singleton removal. After the \(20\) MIS-selected observations are deleted, two additional firms become singleton groups, so the validated refit uses \(8{,}198\) observations. The explicit deletion budget remains \(k=20\), while the effective fixed-effects estimation sample is therefore \(22\) observations smaller than at baseline. Re-estimation reproduces the audited post-deletion coefficient exactly.
 
-\FloatBarrier
-\subsection{Study 09: Immunization Nudges}
-\label{app:application-09}
+\paragraph*{Study 09: Immunization Nudges}
 
 The immunization audit targets the pooled immunizations-per-dollar policy coefficient in \textcite{banerjee2025selecting}. The validated village-month sample contains \(N=7{,}370\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.004016\). The audit reconstructs variable selection and policy pooling on the full sample and freezes the resulting specification throughout the deletion path. Fixed village-population weights are represented through the same square-root-weight transformation used in Study 06, and full-refit validation uses the validated weighted model. The first searched zero crossing occurs after deleting \(214\) observations, approximately \(2.90\%\) of the estimation sample; the geographic composition of this set is examined in \autoref{fig:application-spatial-concentration}.
 
-\FloatBarrier
-\subsection{Study 10: Electricity Information}
-\label{app:application-10}
+\paragraph*{Study 10: Electricity Information}
 
 The electricity-information audit targets \texttt{T1} in the Table A5 linear-probability robustness specification of \textcite{westberg2025power}. The validated sample contains \(N=1{,}819\) observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.1168\). The first searched zero crossing occurs after deleting \(63\) observations, approximately \(3.46\%\) of the estimation sample.
 

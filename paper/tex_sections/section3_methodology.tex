@@ -45,11 +45,15 @@ The search objective uses a fixed-residualised deletion convention. The residual
 	}.
 	\label{eq:fixed_residualised_beta}
 \end{equation}
-The nuisance projection is therefore not re-estimated when computing \(\widetilde{\beta}_{-S}\). This convention defines the linear-fractional objective used below, and global optimisation through the Dinkelbach procedure applies to this fixed-residualised objective \parencite{konrad2026finding}.
+The nuisance projection is therefore not re-estimated when computing \(\widetilde{\beta}_{-S}\). The MIS search therefore optimises a fixed-residualised deletion coefficient, and the Dinkelbach procedure applies to this linear-fractional objective \parencite{konrad2026finding}.
 
-By contrast, let \(\widehat{\beta}_{-S}\) denote the target coefficient obtained by refitting the original multivariate regression after deleting \(S\). Thus, \(\widetilde{\beta}_{-S}\) holds the full-sample nuisance projection fixed, whereas \(\widehat{\beta}_{-S}\) recomputes that projection using only the retained observations. When there are no nuisance regressors, the two coefficients coincide. With additional regressors, they can differ because deletion changes the retained-sample cross-product, or equivalently covariance, structure that determines the partialling-out projection. The discrepancy is therefore small when deletion leaves this covariance structure largely unchanged and can become larger when the deleted observations materially alter the relationship between the target and nuisance regressors.
+Let \(\widehat{\beta}_{-S}\) denote the target coefficient obtained by refitting the original multivariate regression after deleting \(S\). The fixed-residualised coefficient \(\widetilde{\beta}_{-S}\) approximates the coefficient obtained after deletion and full refitting: it holds the full-sample nuisance projection fixed, while \(\widehat{\beta}_{-S}\) recomputes that projection using the retained observations. Frisch--Waugh--Lovell remains exact in both cases; the approximation arises because the MIS search holds the full-sample residualisation fixed. Hence, in general,
+\[
+\widetilde{\beta}_{-S}\neq\widehat{\beta}_{-S}.
+\]
+The two coefficients coincide when there are no nuisance regressors and can differ when deletion materially changes the partialling-out projection.
 
-Throughout, ``exact'' refers to global optimisation of the fixed-\(k\), fixed-residualised MIS objective. \emph{Full-refit validation} refers separately to evaluating a selected set using \(\widehat{\beta}_{-S}\). This distinction is maintained throughout the simulation and empirical analyses.
+Throughout, \(\widetilde{\beta}_{-S}\) denotes the fixed-residualised search coefficient, while \(\widehat{\beta}_{-S}\) denotes the full-refit deletion coefficient. ``Exact'' refers to global optimisation of the fixed-\(k\), fixed-residualised objective, while \emph{full-refit validation} refers to evaluation using \(\widehat{\beta}_{-S}\).
 
 Define the corresponding residual of the residualised target regression by
 \begin{equation}
@@ -72,7 +76,7 @@ For a deletion set \(S\subseteq[n]\), define the coefficient-targeted set influe
 \widetilde{\beta}_{-S}.
 \label{eq:set_dfbeta}
 \end{equation}
-This quantity is referred to throughout the thesis as the \emph{set-DFBETA}. Its sign records the direction of coefficient movement: a positive value indicates that deleting \(S\) lowers the target estimate, while a negative value indicates that deletion raises it.
+This quantity is referred to throughout the thesis as the \emph{set-DFBETA}. Its sign records the direction of movement under the fixed-residualised objective: a positive value indicates a lower fixed-residualised deletion coefficient, while a negative value indicates a higher one.
 
 Using the residualised variables defined in \autoref{subsec:regression_setup}, and substituting \autoref{eq:target_beta_residualised} and \autoref{eq:target_residual}, the set-DFBETA admits the closed-form representation
 \begin{equation}
@@ -108,10 +112,10 @@ Each prespecified value of \(k\) defines a separate deletion-budget question and
 
 Direct enumeration requires evaluation of \(\binom{n}{k}\) subsets. The closed-form set-DFBETA supplies additional structure because both its numerator and denominator are additive in set membership. This yields the linear-fractional optimisation problem used below.
 
-\subsection{Linear-fractional reduction and Dinkelbach-based fixed-\texorpdfstring{$k$}{k} optimisation}
+\subsection{Linear-fractional reduction and Dinkelbach optimisation}
 \label{subsec:dinkelbach_optimisation}
 
-The leave-set-out representation in \autoref{eq:set_dfbeta_ratio} allows the fixed-$k$ influence problem to be written in a compact linear-fractional form. Define
+The fixed-residualised representation in \autoref{eq:set_dfbeta_ratio} allows the fixed-$k$ influence problem to be written in a compact linear-fractional form. Define
 \begin{equation}
 w_i := \widetilde{x}_i\widetilde{r}_i,
 \qquad
