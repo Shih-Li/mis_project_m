@@ -3,18 +3,18 @@
 \caption{MIS localisation at k/n = 2.5 percent for mechanisms with a well-defined observation-level affected subset.}
 \label{tab:05-localisation}
 \resizebox{0.70\columnwidth}{!}{%
-\begin{tabular}{@{}lrr@{}}
+\begin{tabular}{@{}lrrrr@{}}
 \toprule
-Scenario & Precision & Lift \\
+Scenario & Precision & Chance & Lift & Reference \\
 \midrule
-Heterogeneous slope & 0.274 & 1.10 \\
-Threshold & 0.606 & 2.43 \\
+Heterogeneous slope & 0.274 & 0.250 & 1.10 & 1.00 \\
+Threshold & 0.606 & 0.250 & 2.43 & 1.00 \\
 \bottomrule
 \end{tabular}%
 }
 \par\smallskip
 \begin{minipage}{0.96\linewidth}
 \footnotesize
-\textit{Note:} Localisation is reported only for heterogeneous-slope and threshold misspecification because these mechanisms define a binary affected subset. The affected fraction is approximately 25 percent. Lift is precision divided by the affected fraction, so a lift of 1 is the no-enrichment benchmark.
+\textit{Note:} Chance is the affected fraction and therefore the expected precision under random selection. Lift is precision divided by this chance level; a reference value of 1 denotes no enrichment.
 \end{minipage}
 \end{table}

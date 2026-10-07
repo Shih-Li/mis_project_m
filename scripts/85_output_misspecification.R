@@ -170,7 +170,7 @@ exhibit_registry <- data.frame(
     "fig06_boundary",
     "fig07_budget",
     "fig08_specificity",
-    "fig09_targeting_localisation",
+    "fig09_post_deletion_rmse",
     "figS02_environment",
     "tab01_size",
     "tabS01_size_error",
@@ -210,7 +210,7 @@ exhibit_registry <- data.frame(
     "05_fig03_boundary_by_n.pdf",
     "05_fig04_budget_reach.pdf",
     "05_fig05_specificity.pdf",
-    "05_fig06_targeting_localisation.pdf",
+    "05_fig06_post_deletion_rmse.pdf",
     "05_figS05_environment_heterogeneity.pdf",
     "05_tab01_size_by_k.tex",
     "05_tabS01_size_by_error.tex",
@@ -278,7 +278,7 @@ exhibit_registry <- data.frame(
     "MIS 80% boundary by scenario and sample size.",
     "Deletion-budget reach heatmap.",
     "Wrong-model power versus correct-model false-positive rate.",
-    "Localisation paired with the frozen-05 deletion-arm ladder.",
+    "Post-deletion coefficient RMSE across fixed deletion fractions and predictor environments.",
     "MIS power heterogeneity over X, error distribution, and n.",
     "Empirical size by deletion fraction.",
     "Empirical size by error distribution.",
@@ -2622,24 +2622,9 @@ save_plot(
 )
 
 
-write_tex_table(
-  spec_summary %>%
-    transmute(
-      Scenario = as.character(scenario_display),
-      `Wrong-model rejection` = fmt_pct(wrong_power, 1),
-      `Correct-model FPR (own-model cal.)` = fmt_pct(correct_fpr, 1)
-    ),
-  exhibit_path("tab06_specificity"),
-  caption = paste0(
-    "MIS rejection probability under the wrong specification and false-positive ",
-    "rate under the corresponding correctly specified model at k/n = 2.5 percent. ",
-    "Wrong and correct model classes use their own empirically calibrated null cutoffs."
-  ),
-  label = "tab:05-specificity",
-  resize_width = TABLE_WIDTH_MEDIUM,
-  align = "lrr",
-  placement = "htbp"
-)
+# ------------------------------------------------------------------------------
+# Invariance / blind-set diagnostics
+# ------------------------------------------------------------------------------
 
 
 # ------------------------------------------------------------------------------
@@ -2836,7 +2821,9 @@ write_tex_table(
     transmute(
       Scenario = as.character(scenario_display),
       Precision = fmt_num(precision, 3),
-      Lift = fmt_num(lift, 2)
+      Chance = fmt_num(affected_fraction, 3),
+      Lift = fmt_num(lift, 2),
+      Reference = "1.00"
     ),
   exhibit_path("tab08_localisation"),
   caption = paste0(
@@ -2845,83 +2832,15 @@ write_tex_table(
   ),
   label = "tab:05-localisation",
   resize_width = TABLE_WIDTH_COMPACT,
-  align = "lrr",
+  align = "lrrrr",
   placement = "htbp",
   note = paste0(
-    "Localisation is reported only for heterogeneous-slope and threshold ",
-    "misspecification because these mechanisms define a binary affected subset. ",
-    "The affected fraction is approximately 25 percent. Lift is precision divided ",
-    "by the affected fraction, so a lift of 1 is the no-enrichment benchmark."
+    "Chance is the affected fraction and therefore the expected precision under ",
+    "random selection. Lift is precision divided by this chance level; a reference ",
+    "value of 1 denotes no enrichment."
   )
 )
 
-
-loc_plot_data <- bind_rows(
-  localisation %>%
-    transmute(
-      scenario_display,
-      metric = "Precision",
-      value = precision,
-      reference = affected_fraction
-    ),
-  localisation %>%
-    transmute(
-      scenario_display,
-      metric = "Lift",
-      value = lift,
-      reference = 1
-    )
-)
-
-fig_localisation <- ggplot(
-  loc_plot_data,
-  aes(
-    x = value,
-    y = scenario_display
-  )
-) +
-  geom_segment(
-    aes(
-      x = reference,
-      xend = value,
-      yend = scenario_display
-    ),
-    linewidth = 1.4,
-    colour = COL_BLUE_PALE
-  ) +
-  geom_point(
-    size = 3.0,
-    shape = 21,
-    fill = COL_MIS,
-    colour = COL_BLUE_DARK,
-    stroke = 0.55
-  ) +
-  geom_point(
-    aes(x = reference),
-    size = 2.4,
-    shape = 23,
-    fill = COL_NEUTRAL,
-    colour = COL_GREY_DARK,
-    stroke = 0.5
-  ) +
-  facet_wrap(
-    ~ metric,
-    nrow = 1,
-    scales = "free_x"
-  ) +
-  labs(
-    x = "Observed value; diamond marks chance/reference level",
-    y = NULL
-  ) +
-  theme_85() +
-  theme(
-    axis.line.y = element_blank(),
-    axis.ticks.y = element_blank()
-  )
-
-# fig_localisation is intentionally not saved alone. It is combined with the
-# deletion-arm ladder in Section 10; if frozen 05 is unavailable, Section 10
-# falls back to saving this panel by itself.
 
 
 # ==============================================================================
@@ -3067,6 +2986,11 @@ if (HAS_FROZEN_05) {
     "Leverage deletion" = COL_LEVERAGE
   )
   
+  rmse_axis_breaks <- c(
+    0.05, 0.1, 0.2, 0.5,
+    1, 2, 5, 10, 20, 50, 100
+  )
+  
   fig_ladder <- ggplot(
     deletion_ladder,
     aes(
@@ -3089,7 +3013,12 @@ if (HAS_FROZEN_05) {
       labels = function(x) scales::percent(x, accuracy = 0.1)
     ) +
     scale_y_continuous(
-      transform = scales::pseudo_log_trans(base = 10, sigma = 0.20)
+      transform = scales::pseudo_log_trans(base = 10, sigma = 0.20),
+      breaks = rmse_axis_breaks,
+      labels = scales::label_number(
+        accuracy = 0.01,
+        trim = TRUE
+      )
     ) +
     scale_colour_manual(
       values = arm_colours,
@@ -3119,7 +3048,7 @@ if (HAS_FROZEN_05) {
     ) +
     labs(
       x = "Deletion fraction k/n",
-      y = "Mean cell-level RMSE (pseudo-log scale)",
+      y = "Mean cell-level coefficient RMSE",
       colour = NULL,
       linetype = NULL
     ) +
@@ -3129,25 +3058,19 @@ if (HAS_FROZEN_05) {
       legend.text = element_text(size = 8.5)
     )
   
-  save_stacked_plots(
-    top_plot = fig_localisation,
-    bottom_plot = fig_ladder,
-    pdf_path = exhibit_path("fig09_targeting_localisation"),
+  save_plot(
+    fig_ladder,
+    exhibit_path("fig09_post_deletion_rmse"),
     width = 9.4,
-    height = 8.4,
-    top_share = 0.36
+    height = 4.8
   )
   
 } else {
   F05 <- NULL
   
-  # The formal localisation panel remains useful even if the frozen-05
-  # estimation summary is unavailable.
-  save_plot(
-    fig_localisation,
-    exhibit_path("fig09_targeting_localisation"),
-    width = 8.0,
-    height = 3.5
+  warning(
+    "Frozen Script 05 summary unavailable; ",
+    "post-deletion RMSE figure skipped."
   )
 }
 
