@@ -32,7 +32,7 @@ The Frisch--Waugh--Lovell theorem isolates the target coefficient by partialling
 {\sum_{i=1}^{n}\widetilde{x}_i^2}.
 \label{eq:target_beta_residualised}
 \end{equation}
-This representation reduces estimation of the target coefficient to a scalar regression once the nuisance regressors have been partialled out. 
+This representation isolates the target coefficient in a scalar regression, allowing the subsequent deletion analysis to use residualised variables rather than the full multivariate specification. 
 
 The search objective uses a fixed-residualised deletion convention. The residualised quantities $\widetilde{x}_i$ and $\widetilde{y}_i$ are computed on the full sample and held fixed when observations are deleted. For a deletion set \(S\subseteq[n]\), define the fixed-residualised leave-set-out coefficient as
 \begin{equation}
@@ -93,7 +93,7 @@ Using the residualised variables defined in \autoref{subsec:regression_setup}, a
 \end{equation}
 The numerator collects the score contributions of the deleted observations. The denominator records the residualised design information remaining after deletion \parencite{konrad2026finding}. Set influence therefore depends jointly on the contribution removed from the sample and on the information retained outside the deletion set.
 
-Set influence is a joint property of the selected observations. Changing the membership of $S$ alters the numerator and the denominator of \autoref{eq:set_dfbeta_ratio} at the same time. Each deleted observation also removes design information from the denominator. The set-DFBETA is therefore not generally equal to the sum of the individual \dfbetas{} of its members. This joint dependence provides one mechanism through which observation-level rankings can fail to reveal influential groups, including configurations associated with masking. It therefore motivates selecting deletion sets jointly rather than constructing them from individual diagnostic rankings. The following subsection formalises that selection problem for a fixed set size $k$.
+Set influence is a joint property of the selected observations. Changing the membership of $S$ alters the numerator and the denominator of \autoref{eq:set_dfbeta_ratio} at the same time. Each deleted observation also removes design information from the denominator. The set-DFBETA is therefore not generally equal to the sum of the corresponding single-observation deletion effects. When score contributions have the same sign, joint deletion can amplify their combined effect, as formalised in \autoref{lem:superadditive}. This dependence can contribute to masking and motivates searching for influential sets jointly rather than relying solely on observation-level rankings. The following subsection formalises that selection problem for a fixed set size $k$.
 
 \subsection{Fixed-\texorpdfstring{$k$}{k} most influential sets}
 \label{subsec:fixed_k_mis}
@@ -110,7 +110,7 @@ The absolute value allows influential movement in either coefficient direction. 
 
 Each prespecified value of \(k\) defines a separate deletion-budget question and can produce a different maximising set. In particular, the maximisers need not be nested: nothing in \autoref{eq:absolute_fixed_k_influence} requires \(S_k^\ast\subset S_{k+1}^\ast\), because the optimal size-\((k+1)\) set is chosen afresh rather than by extending the optimal size-\(k\) set. Evaluating a sequence of values therefore traces how target-coefficient sensitivity and influential-set membership change with the deletion budget. The analysis does not treat \(k\) as an estimated contamination count.
 
-Direct enumeration requires evaluation of \(\binom{n}{k}\) subsets. The closed-form set-DFBETA supplies additional structure because both its numerator and denominator are additive in set membership. This yields the linear-fractional optimisation problem used below.
+Direct enumeration requires evaluation of \(\binom{n}{k}\) subsets. The closed-form set-DFBETA provides additional structure: its numerator sums the deleted observations' score contributions, while its denominator subtracts their design contributions from the full-sample total. This structure yields the linear-fractional optimisation problem used below.
 
 \subsection{Linear-fractional reduction and Dinkelbach optimisation}
 \label{subsec:dinkelbach_optimisation}
@@ -161,7 +161,7 @@ Under the positive-denominator condition, each directional fixed-\(k\) problem i
 \[
 s_i(\eta)=w_i+\eta c_i.
 \]
-Conditional on \(\eta\), the maximising candidate consists of the \(k\) observations with the largest transformed scores. The ratio is then updated using \(\eta=W(S)/G(S)\), and the top-\(k\) problem is resolved. Under exact arithmetic and exact top-\(k\) selection, the sequence terminates finitely \parencite{dinkelbach1967nonlinear,konrad2026finding}.
+For a fixed \(\eta\), selecting the \(k\) largest transformed scores maximises the corresponding Dinkelbach objective, reducing the subset-selection step to a top-\(k\) ranking. The ratio is then updated using \(\eta=W(S)/G(S)\), and the top-\(k\) problem is resolved. Under exact arithmetic and exact top-\(k\) selection, the sequence terminates finitely \parencite{dinkelbach1967nonlinear,konrad2026finding}.
 
 For fixed residualised inputs and the positive-denominator condition in \autoref{eq:positive_denominator}, this procedure identifies a global maximiser of each directional fixed-\(k\) linear-fractional objective. Comparing the two directional optima therefore yields a global maximiser of the absolute fixed-\(k\) objective in \autoref{eq:absolute_fixed_k_influence}. This result provides the ``exact'' optimisation terminology defined in \autoref{subsec:regression_setup}. Numerical convergence and computational checks are reported in \autoref{app:numerical}.
 

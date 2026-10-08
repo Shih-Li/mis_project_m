@@ -4,7 +4,7 @@
 \section{Derivations}
 \label{app:derivations}
 
-This appendix collects derivations for claims in the main text that are constructed in this thesis. The closed-form set-\dfbetas{}, the Dinkelbach reduction to top-\(k\) selection and its global optimality, and the block-maxima testing framework are established by \textcite{konrad2026finding} and \textcite{konrad2026testing}, so they are cited in \autoref{sec:methodology} and not reproduced here. The derivations use the fixed-residualised deletion convention unless stated otherwise. In the misspecification study, the deletion set is selected under this convention and its coefficient change is evaluated by refitting the full model, and \autoref{app:deriv-invariance} treats both steps. Notation follows \autoref{eq:linear_fractional_components} and \autoref{eq:WG_definitions}. All three results are exact consequences of the definitions and the simulation design.
+This appendix collects derivations for claims in the main text that are constructed in this thesis. The closed-form set-\dfbetas{}, the Dinkelbach reduction to top-\(k\) selection and its global optimality, and the block-maxima testing framework are established by \textcite{konrad2026finding} and \textcite{konrad2026testing}, so they are cited in \autoref{sec:methodology} and not reproduced here. The derivations use the fixed-residualised deletion convention unless stated otherwise. In the misspecification study, the deletion set is selected under this convention, while its coefficient change is evaluated by refitting the full model. \autoref{app:deriv-invariance} addresses both steps. Notation follows \autoref{eq:linear_fractional_components} and \autoref{eq:WG_definitions}. All three results are exact consequences of the definitions and the simulation design.
 
 \subsection{Joint Deletion and the Set-\dfbetas{}}
 \label{app:deriv-joint}
@@ -41,12 +41,12 @@ If \(w_i\geq0\) for every \(i\in S\), multiplying by \(w_i\) and summing over \(
 If \(w_i\leq0\) for every \(i\in S\), multiplication reverses the inequality.
 \end{proof}
 
-The shared denominator is the channel of amplification. Every member of \(S\) removes residualised design information from a denominator that the whole set shares, so each contribution \(w_i\) is evaluated against less remaining information than in its single-deletion counterpart. Summed single-deletion effects therefore understate a same-signed joint effect. The lemma concerns sums of effects and implies no ordering of diagnostic rankings. With mixed signs no general inequality holds, so the result formalises one source of non-additivity that can contribute to masking.
+The shared denominator is the channel of amplification. Each member of \(S\) contributes to the reduction in the shared denominator, so every \(w_i\) is evaluated against no more residualised design information than in its single-deletion counterpart. Consequently, the sum of single-deletion effects can understate the magnitude of the joint effect when the score contributions have the same sign. The lemma concerns sums of effects and implies no ordering of diagnostic rankings. With mixed signs no general inequality holds, so the result formalises one source of non-additivity that can contribute to masking.
 
 \subsection{Block-Maxima Configuration}
 \label{app:deriv-blocks}
 
-The ratio of the deletion budget to block size determines whether blockwise values are maxima. Write \(m=\lfloor(n-k)/B\rfloor\) for the block size when the \(n-k\) observations outside the tested set form \(B\) blocks, and write \(c=k/n\) for the deletion fraction. A ratio of one leaves a single admissible subset per block.
+The ratio of the deletion budget to block size determines whether blockwise values are maxima. Write \(m=\lfloor(n-k)/B\rfloor\) for the block size when the \(n-k\) observations outside the tested set form \(B\) blocks, and write \(c=k/n\) for the deletion fraction. A block containing exactly \(k\) observations admits only one size-\(k\) subset.
 
 \begin{proposition}
 \label{prop:block-ratio}
@@ -78,12 +78,12 @@ r\;\geq\;\frac{k}{m}\;\geq\;\frac{cB}{1-c}\;\geq\;\frac{cB_{\min}}{1-c}
 \end{align*}
 \end{proof}
 
-For fixed \(B\), the bound depends on \(n\) only through \(c\). In the implementation, \(B\) may itself change with \(n\) and \(k\), and the exact ratio additionally reflects integer rounding in \(m\). With \(B_{\min}=10\), the bound gives \(c\leq0.048\) at \(r=1/2\) and \(c\leq0.024\) at \(r=1/4\). These bounds quantify why block-maxima calibration becomes restrictive as the deletion fraction increases.
+For fixed \(B\), the bound depends on \(n\) only through \(c\). In the implementation, \(B\) may itself change with \(n\) and \(k\), and the exact ratio additionally reflects integer rounding in \(m\). With \(B_{\min}=10\), the bound gives \(c\leq 1/21\approx0.0476\) at \(r=1/2\) and \(c\leq 1/41\approx0.0244\) at \(r=1/4\). These bounds quantify why block-maxima calibration becomes restrictive as the deletion fraction increases.
 
 \subsection{Fitted-Span Invariance}
 \label{app:deriv-invariance}
 
-This subsection proves \autoref{prop:span-invariance} and records its extension to full-refit validation. Let \(D=[\mathbf{x},\mathbf{Z}]\) denote the fitted design with target column \(\mathbf{x}\) and nuisance columns \(\mathbf{Z}\), with the intercept included among the nuisance columns, and assume that \(D\) has full column rank. Consider severity-indexed outcomes of the form
+This subsection proves \autoref{prop:span-invariance} and records its extension to full-refit validation. Let \(D=[\mathbf{x},\mathbf{Z}]\) denote the fitted design, where \(\mathbf{x}\) is the target column and \(\mathbf{Z}\) contains the nuisance regressors, including the intercept. Assume that \(D\) has full column rank. Consider severity-indexed outcomes of the form
 \begin{equation}
 	\mathbf{y}_\lambda
 	=
@@ -96,7 +96,7 @@ This subsection proves \autoref{prop:span-invariance} and records its extension 
 \end{equation}
 where \(\mathbf{v}\in\mathbb{R}^n\) does not depend on \(\lambda\). Severity therefore enters only through a fitted-span coefficient and a common residual scale.
 
-For every \(S\) with \(G(S)>0\),
+Assume that \(\widehat{\operatorname{se}}_{\mathbf v}>0\). For every deletion set \(S\) with \(G(S)>0\),
 \[
 \Delta_\lambda(S)=b_\lambda\,\Delta_{\mathbf{v}}(S),
 \qquad
