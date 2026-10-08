@@ -702,7 +702,7 @@ p_fig1 <- ggplot(
     limits = c(-max_heat, max_heat),
     oob = scales::squish,
     labels = scales::label_number(accuracy = 1, scale = 100, suffix = " pp"),
-    name = "MIS margin relative to classical benchmark\n(positive favours MIS)"
+    name = "Mechanism-specific MIS margin (pp)"
   ) +
   scale_colour_identity() +
   labs(
@@ -1563,7 +1563,7 @@ tabA3_display <- tabA3_raw %>%
 write_tex_table(
   tabA3_display,
   tex_path = file.path(tab_supp_dir, "02_tabA3_detection_by_error.tex"),
-  caption = "Injected-set recovery and MIS margin by error distribution and contamination mechanism. Positive margins favour MIS.",
+  caption = "Injected-set recovery and mechanism-specific MIS margins. The margin is MIS recovery minus classical benchmark recovery for bad leverage, and the reverse for response outliers and good leverage; positive values favour MIS.",
   label = "tab:02A-detection-by-error",
   resize_width = TABLE_WIDTH_WIDE,
   align = "llrrr"

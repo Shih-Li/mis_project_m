@@ -892,7 +892,7 @@ error_labels <- c(
   "mixed_normal" = "Mixed normal",
   "skewed_t" = "Skewed t",
   "golm" = "Log-normal mixture",
-  "beta_logistic" = "Beta-logistic",
+  "beta_logistic" = "Beta(2,5)",
   "gpd" = "GPD",
   "contaminated" = "Contaminated",
   "pareto" = "Pareto"

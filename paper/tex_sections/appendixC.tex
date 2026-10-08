@@ -32,7 +32,7 @@ The mobile-money audit targets the Mobile Disburse coefficient, \texttt{treatmen
 
 \paragraph*{Study 02: Vaccine Delivery}
 
-The vaccine-delivery audit targets the door-to-door treatment coefficient \texttt{treat\_dtd} in Table 1, column (1), of \textcite{meriggi2024last}. The validated fixed-effects sample contains \(N=12{,}096\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.2935\); the alternative treatment arm remains in the regression as a nuisance regressor. The search uses explicit fixed-effect indicators and full-refit validation preserves the paper's fixed-effects estimator. The coefficient does not cross zero within the approximately \(5\%\) audit budget, although a 
+The vaccine-delivery audit targets the door-to-door treatment coefficient \texttt{treat\_dtd} in Table 1, column (1), of \textcite{meriggi2024last}. The validated fixed-effects sample contains \(N=12{,}096\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.2935\); the alternative treatment arm remains in the regression as a nuisance regressor. The search uses explicit fixed-effect indicators and full-refit validation preserves the 
 
 \begin{landscape}
 \begin{figure}[p]
@@ -43,7 +43,7 @@ The vaccine-delivery audit targets the door-to-door treatment coefficient \textt
 \end{figure}
 \end{landscape}
 
-\(50\%\) attenuation is first reached after \(505\) deletions, approximately \(4.17\%\) of the sample.
+paper's  fixed-effects estimator. The coefficient does not cross zero within the approximately \(5\%\) audit budget, although a \(50\%\) attenuation is first reached after \(505\) deletions, approximately \(4.17\%\) of the sample.
 
 
 \paragraph*{Study 03: Self-Esteem}
@@ -96,7 +96,7 @@ The source study's headline specification uses ordered logit. The current MIS se
 \subsection{Interpretation of the Study-Specific Audits}
 \label{app:application-interpretation-summary}
 
-The ten audits apply a common coefficient-sensitivity question to validated paper-specific estimands. Fixed effects are represented explicitly where required, fixed weights are handled through exact transformed regressions, and model-selection steps are frozen when repeated selection would change the nuisance specification. Full-refit validation then evaluates each selected deletion set using the corresponding frozen audit specification.
+The ten audits apply a common coefficient-sensitivity question to validated paper-specific estimands. Fixed effects are represented explicitly where required, fixed weights are handled through exact transformed regressions, and model-selection steps are frozen when repeated selection would change the nuisance specification. Subsequently, full-refit validation evaluate each selected deletion set using the corresponding frozen audit specification.
 
 The paths in \autoref{fig:application-all-paths} describe finite-sample dependence of these audited coefficients on selected observations. Early threshold crossings indicate sensitivity to small subsets, while later or absent crossings indicate greater stability over the searched deletion range. These results do not evaluate the source experiments as a whole, and they do not extend beyond the audited estimand and specification.
 
