@@ -1863,11 +1863,8 @@ fig_boundary <- ggplot(
     y = "Censoring-aware median severity at 80% power",
     colour = NULL,
     linetype = NULL,
-    caption = paste0(
-      "Linear endogeneity remains right-censored throughout; ",
-      "the omitted-variable median boundary is also right-censored ",
-      "despite detection in a small subset of environments."
-    )
+    caption =
+      "Linear endogeneity remains right-censored throughout;\nThe omitted-variable median boundary is also right-censored despite detection in a small subset of environments."
   ) +
   theme_85(base_size = 10.2) +
   theme(
@@ -1878,8 +1875,10 @@ fig_boundary <- ggplot(
     plot.caption = element_text(
       size = 8.5,
       colour = COL_GREY_DARK,
-      hjust = 0
-    )
+      hjust = 0.5,
+      margin = margin(t = 8)
+    ),
+    plot.caption.position = "plot"
   )
 
 save_plot(

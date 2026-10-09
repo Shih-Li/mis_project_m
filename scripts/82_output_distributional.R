@@ -1307,8 +1307,8 @@ write_tex_table(
   tex_path = file.path(tab_main_dir, "02_tab1_detection_power_summary.tex"),
   caption = paste0(
     "Injected-set overlap across contaminated designs. ",
-    "For a selected size-k set S and injected set S_inj of the same size, ",
-    "overlap is the fraction |S intersect S_inj|/k. ",
+    "For equally sized selected and injected sets, overlap is the ",
+    "proportion of injected observations recovered by the selected set. ",
     "Each entry gives equal weight to the recorded design-cell summaries. ",
     "Overlap measures agreement with the planted set and should not be interpreted ",
     "as a common performance criterion across mechanisms: under response-outlier ",

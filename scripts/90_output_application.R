@@ -3162,7 +3162,7 @@ table_tex <- c(
     "{\\widehat{\\operatorname{se}}(\\widehat{\\beta}_{\\mathrm{full}})}$. ",
     "Thus, $T_k$ measures full-refit coefficient movement in units of the ",
     "original-model standard error; it is not interpreted as a Wald t statistic. ",
-    "The normalized coefficient is ",
+    "The normalised coefficient is ",
     "$R_k=\\widehat{\\beta}_{-S_k}/\\widehat{\\beta}_{\\mathrm{full}}$. ",
     "A 50\\% attenuation is first reached when $R_k\\leq0.5$; ",
     "a 50\\% amplification is first reached when $R_k\\geq1.5$; and the ",

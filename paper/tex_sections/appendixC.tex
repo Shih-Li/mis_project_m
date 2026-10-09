@@ -5,7 +5,7 @@
 \section{Empirical Application Details}
 \label{app:application-details}
 
-This appendix documents the ten empirical audits summarized in \autoref{sec:application}. Each application fixes one target estimand, validates its full-sample coefficient, constructs an MIS-compatible linear representation, and searches deletion sets in both directions of coefficient movement. The default deletion budget is
+This appendix documents the ten empirical audits summarised in \autoref{sec:application}. Each application fixes one target estimand, validates its full-sample coefficient, constructs an MIS-compatible linear representation, and searches deletion sets in both directions of coefficient movement. The default deletion budget is
 \[
 k=1,\ldots,\lfloor 0.05N\rfloor,
 \]
@@ -28,7 +28,7 @@ where \(\widehat{\beta}_{\mathrm{full}}\) is the validated full-sample coefficie
 
 \paragraph*{Study 01: Mobile Money}
 
-The mobile-money audit targets the Mobile Disburse coefficient, \texttt{treatment3}, in the fixed-effects OLS specification of \textcite{riley2024resisting}. The validated sample contains \(N=2{,}639\) observations, with \(\widehat{\beta}_{\mathrm{full}}=69.2072\). The MIS representation replaces the absorbed randomization-strata fixed effects with explicit indicators, while full-refit validation uses the original fixed-effects estimator. The first searched zero crossing occurs after deleting \(41\) observations, approximately \(1.55\%\) of the estimation sample.
+The mobile-money audit targets the Mobile Disburse coefficient, \texttt{treatment3}, in the fixed-effects OLS specification of \textcite{riley2024resisting}. The validated sample contains \(N=2{,}639\) observations, with \(\widehat{\beta}_{\mathrm{full}}=69.2072\). The MIS representation replaces the absorbed randomisation-strata fixed effects with explicit indicators, while full-refit validation uses the original fixed-effects estimator. The first searched zero crossing occurs after deleting \(41\) observations, approximately \(1.55\%\) of the estimation sample.
 
 \paragraph*{Study 02: Vaccine Delivery}
 
@@ -48,7 +48,7 @@ paper's  fixed-effects estimator. The coefficient does not cross zero within the
 
 \paragraph*{Study 03: Self-Esteem}
 
-The self-esteem audit uses the first-follow-up full-sample specification from Table 5 of \textcite{gallego2024s} and targets the treatment coefficient for standardized Rosenberg self-esteem. The validated sample contains \(N=634\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.2317\). Heteroskedasticity-robust covariance estimation does not alter the OLS point estimate, so the same linear specification is used for the search and full-refit validation. The coefficient does not cross zero within the audit budget; a \(50\%\) attenuation is first reached after \(16\) deletions, approximately \(2.52\%\) of the sample.
+The self-esteem audit uses the first-follow-up full-sample specification from Table 5 of \textcite{gallego2024s} and targets the treatment coefficient for standardised Rosenberg self-esteem. The validated sample contains \(N=634\) observations, with \(\widehat{\beta}_{\mathrm{full}}=0.2317\). Heteroskedasticity-robust covariance estimation does not alter the OLS point estimate, so the same linear specification is used for the search and full-refit validation. The coefficient does not cross zero within the audit budget; a \(50\%\) attenuation is first reached after \(16\) deletions, approximately \(2.52\%\) of the sample.
 
 \paragraph*{Study 04: Health Information and Survival}
 
@@ -58,7 +58,7 @@ The source study's preferred causal specifications use instrumental variables an
 
 \paragraph*{Study 05: Cash versus In-Kind Transfers}
 
-The cash-versus-in-kind audit considers the aggregate food-consumption analysis of \textcite{cunha2014testing}. The target is the contrast between the in-kind and equal-value cash treatment effects, represented directly by \texttt{ik\_minus\_eq\_cash}. The validated no-village-controls specification contains \(N=10{,}985\) household-wave observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.8861\). The algebraic reparameterization leaves the model span, fitted values, residuals, and estimation sample unchanged. The first searched zero crossing occurs at \(k=1\), approximately \(0.009\%\) of the complete audit sample.
+The cash-versus-in-kind audit considers the aggregate food-consumption analysis of \textcite{cunha2014testing}. The target is the contrast between the in-kind and equal-value cash treatment effects, represented directly by \texttt{ik\_minus\_eq\_cash}. The validated no-village-controls specification contains \(N=10{,}985\) household-wave observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.8861\). The algebraic reparameterisation leaves the model span, fitted values, residuals, and estimation sample unchanged. The first searched zero crossing occurs at \(k=1\), approximately \(0.009\%\) of the complete audit sample.
 
 The \(k=1\) diagnostics provide a direct interpretation of this result. In the sign-reversing direction, the selected observation is a cash-treatment follow-up observation with food consumption of approximately \(2082.0\), the largest observed value within its treatment-arm--wave cell. Deleting this observation changes the audited contrast from \(-0.8861\) to \(0.6737\), and an independent clustered-OLS refit reproduces the audited post-deletion coefficient exactly. The opposite \(k=1\) search direction also selects an extreme cash-treatment observation, in that case at baseline. The one-observation sensitivity therefore coincides with extreme realised food-consumption outcomes in the cash arm.
 
@@ -88,7 +88,7 @@ The immunization audit targets the pooled immunizations-per-dollar policy coeffi
 
 The electricity-information audit targets \texttt{T1} in the Table A5 linear-probability robustness specification of \textcite{westberg2025power}. The validated sample contains \(N=1{,}819\) observations, with \(\widehat{\beta}_{\mathrm{full}}=-0.1168\). The first searched zero crossing occurs after deleting \(63\) observations, approximately \(3.46\%\) of the estimation sample.
 
-The source study's headline specification uses ordered logit. The current MIS search is defined for a linear representation, so the audit applies to the reported linear-probability robustness coefficient for the same randomized treatment contrast and does not constitute a deletion audit of the headline ordered-logit estimate.
+The source study's headline specification uses ordered logit. The current MIS search is defined for a linear representation, so the audit applies to the reported linear-probability robustness coefficient for the same randomised treatment contrast and does not constitute a deletion audit of the headline ordered-logit estimate.
 
 
 
@@ -96,7 +96,7 @@ The source study's headline specification uses ordered logit. The current MIS se
 \subsection{Interpretation of the Study-Specific Audits}
 \label{app:application-interpretation-summary}
 
-The ten audits apply a common coefficient-sensitivity question to validated paper-specific estimands. Fixed effects are represented explicitly where required, fixed weights are handled through exact transformed regressions, and model-selection steps are frozen when repeated selection would change the nuisance specification. Subsequently, full-refit validation evaluate each selected deletion set using the corresponding frozen audit specification.
+The ten audits apply a common coefficient-sensitivity question to validated paper-specific estimands. Fixed effects are represented explicitly where required, fixed weights are handled through exact transformed regressions, and model-selection steps are frozen when repeated selection would change the nuisance specification. Subsequently, full-refit validation evaluates each selected deletion set using the corresponding frozen audit specification.
 
 The paths in \autoref{fig:application-all-paths} describe finite-sample dependence of these audited coefficients on selected observations. Early threshold crossings indicate sensitivity to small subsets, while later or absent crossings indicate greater stability over the searched deletion range. These results do not evaluate the source experiments as a whole, and they do not extend beyond the audited estimand and specification.
 

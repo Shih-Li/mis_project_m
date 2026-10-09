@@ -1,6 +1,6 @@
 \begin{table}[htbp]
 \centering
-\caption{Mean absolute coefficient bias by estimator and contamination mechanism. Results give equal weight to each sample-size, contamination-proportion, predictor-distribution, and finite-moment error-distribution design cell. Under no contamination, oracle k = 0, so MIS coincides with OLS by construction. Monte Carlo standard errors are in parentheses.}
+\caption{Mean absolute coefficient error (MAE) by estimator and contamination mechanism. Within each design cell, MAE is the Monte Carlo mean of the absolute difference between the estimated and true coefficients. Results give equal weight to each sample-size, contamination-proportion, predictor-distribution, and finite-moment error-distribution design cell. Under no contamination, oracle k = 0 applies only to MIS, which therefore coincides with OLS. Leverage, Cook's distance, and \dfbetas{} retain their threshold-based deletion rules, while MM and LTS retain their resistant fitting rules. Monte Carlo standard errors are in parentheses.}
 \label{tab:robust-mean-absolute-bias}
 \resizebox{0.85\columnwidth}{!}{%
 \begin{tabular}{@{}lrrrr@{}}
