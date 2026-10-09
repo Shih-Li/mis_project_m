@@ -40,6 +40,79 @@ The misspecification study instead introduces departures from the fitted regress
 
 For additive conditional-mean departures, severity scales the misspecification component relative to the dispersion of the baseline error. Linear and nonlinear endogeneity instead vary the dependence between the regressor transformation and the structural error, while the heteroskedastic design varies the conditional-error scale gradient. The exact severity grids used for the detection-boundary calculations are fixed independently of the MIS deletion fraction.
 
+
+
+\medskip
+\noindent\textbf{Simulation configuration and reproducibility.}
+Table~\ref{tab:simulation-configuration} summarises the replication counts
+and calibration procedures for the three main simulations.
+Contamination settings and misspecification severity grids are
+specified below.
+
+\begin{table}[htbp]
+	\centering
+	\caption{Monte Carlo replication counts and calibration
+		procedures for the three main simulation studies.}
+	\label{tab:simulation-configuration}
+	\small
+	\setlength{\tabcolsep}{4pt}
+	\renewcommand{\arraystretch}{1.12}
+	\begin{tabular}{@{}p{0.31\linewidth}p{0.15\linewidth}
+			p{0.46\linewidth}@{}}
+		\toprule
+		Study & MC draws & Calibration \\
+		\midrule
+		Distributional recovery
+		& 50/cell
+		& Block-maxima EVT evaluated separately; not used for inference. \\
+		
+		Robust estimation
+		& 100/cell
+		& None; estimation error evaluated against the known coefficient. \\
+		
+		Misspecification detection
+		& 500/cell
+		& 2,500 independent null draws per environment and null-model class;
+		separate 2,500-draw calibration for corrected models. \\
+		\bottomrule
+	\end{tabular}
+\end{table}
+
+
+
+Both contamination studies use magnitude \(m=10\) and deletion size \(k=\max\{\lfloor cn\rfloor,2\}\). The recovery study uses \(c\in\{0.005,0.01,0.025,0.05,0.10\}\), while the robust-estimation study excludes \(c=0.10\). Perturbations use MAD-based scales with normal-consistency factor \(1.4826\) and lower bound \(10^{-4}\). Response outliers receive a common signed outcome shift of \(10s_y\). Good-leverage observations receive a common signed predictor shift of \(10s_x\), with outcomes placed near the clean-sample fitted line and Gaussian noise of standard deviation \(0.01s_y\). Bad-leverage observations receive the same predictor shift and a signed outcome displacement of \(10\max\{s_y,0.5|\beta_1x_i'|\}\) from the true regression relation, where \(x_i'\) denotes the shifted predictor.
+
+
+The formal misspecification detector uses four ten-point severity grids:
+\[
+\begin{aligned}
+	\lambda_{\mathrm{add}}
+	&\in \{0,0.05,0.10,0.15,0.20,0.30,0.45,0.65,0.95,1.40\},\\
+	\lambda_{\mathrm{threshold}}
+	&\in \{0,0.04,0.08,0.12,0.16,0.24,0.32,0.48,0.64,1.00\},\\
+	\lambda_{\mathrm{heterosk}}
+	&\in \{0,0.05,0.10,0.15,0.20,0.30,0.40,0.55,0.75,1.00\},\\
+	\lambda_{\mathrm{endog}}
+	&\in \{0,0.05,0.10,0.15,0.20,0.30,0.45,0.60,0.75,0.90\}.
+\end{aligned}
+\]
+The additive grid applies to nonlinear functional form, omitted variables, heterogeneous slopes, and missing interactions. Threshold behaviour and heteroskedasticity use their respective grids, while linear endogeneity and nonlinear confounding share the endogeneity grid. Additive severity is the standard deviation of the imposed component divided by the baseline-error standard deviation; the remaining grids use their mechanism-specific parameterisations.
+
+
+The simulation implementations are in
+\path{scripts/02_run_sim_dist.R},
+\path{scripts/04_compare_robust.R},
+\path{scripts/05a_detector.R}, and
+\path{scripts/05c_correct_calibration.R}.
+The respective base seeds are 20260415, 20260503, 20260828
+(evaluation), 77260828 (null calibration), and 88260828
+(correct-model calibration). The misspecification detector uses
+common random numbers across severity levels within each
+environment--scenario combination, with separate calibration
+and evaluation seed streams.
+
+
+
 \FloatBarrier
 \subsection{Supplementary Influential-Set Recovery Results}
 \label{app:detection-results}
